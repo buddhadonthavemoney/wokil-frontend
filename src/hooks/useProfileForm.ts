@@ -32,14 +32,31 @@ const initialProfile: Omit<LawyerProfile, 'id' | 'slug'> = {
 };
 
 export function useProfileForm() {
-  const [profile, setProfile] = useState<LawyerProfile>(() => ({
-    ...initialProfile,
-    id: generateId(),
-    slug: '',
-  }));
-  
-  const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 6;
+  
+  // Check if we're editing an existing profile
+  const [profile, setProfile] = useState<LawyerProfile>(() => {
+    const editingSlug = sessionStorage.getItem('editingProfileSlug');
+    if (editingSlug) {
+      const profiles = JSON.parse(localStorage.getItem('lawyerProfiles') || '{}');
+      const existingProfile = profiles[editingSlug];
+      if (existingProfile) {
+        // Clear the editing flag so it doesn't persist
+        sessionStorage.removeItem('editingProfileSlug');
+        return existingProfile;
+      }
+    }
+    return {
+      ...initialProfile,
+      id: generateId(),
+      slug: '',
+    };
+  });
+  
+  // If editing (profile has a slug), start at the last step
+  const [currentStep, setCurrentStep] = useState(() => {
+    return profile.slug ? totalSteps : 1;
+  });
 
   const updateProfile = useCallback(<K extends keyof LawyerProfile>(
     field: K,
@@ -65,12 +82,13 @@ export function useProfileForm() {
   }, [totalSteps]);
 
   const publishProfile = useCallback(() => {
-    const slug = generateSlug(profile.fullName);
+    // If editing an existing profile, keep the same slug
+    const slug = profile.slug || generateSlug(profile.fullName);
     const updatedProfile: LawyerProfile = {
       ...profile,
       slug,
       isPublished: true,
-      publishedAt: new Date().toISOString(),
+      publishedAt: profile.publishedAt || new Date().toISOString(),
     };
     
     // Save to localStorage

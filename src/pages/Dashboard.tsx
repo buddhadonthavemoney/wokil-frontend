@@ -100,12 +100,6 @@ export default function Dashboard() {
                 <p className="text-sm text-muted-foreground">Manage your professional profile</p>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              <Button variant="outline" onClick={() => navigate('/')} className="gap-2">
-                <Plus className="w-4 h-4" />
-                New Profile
-              </Button>
-            </div>
           </div>
         </div>
       </header>
@@ -144,6 +138,21 @@ export default function Dashboard() {
               
               {/* Actions */}
               <div className="flex flex-wrap gap-3">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => {
+                    if (profile?.slug) {
+                      // Store profile slug for editing
+                      sessionStorage.setItem('editingProfileSlug', profile.slug);
+                    }
+                    navigate('/');
+                  }} 
+                  className="gap-2"
+                >
+                  <Edit className="w-4 h-4" />
+                  Edit Profile
+                </Button>
                 <Button variant="outline" size="sm" onClick={copyUrl} className="gap-2">
                   <Copy className="w-4 h-4" />
                   Copy URL
