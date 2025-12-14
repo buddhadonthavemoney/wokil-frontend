@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import ProfileBuilder from "./pages/ProfileBuilder";
 import PublicProfile from "./pages/PublicProfile";
+import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -17,6 +18,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<ProfileBuilder />} />
+          <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/p/:slug" element={<PublicProfile />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
