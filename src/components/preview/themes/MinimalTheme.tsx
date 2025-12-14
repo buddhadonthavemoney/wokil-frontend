@@ -103,7 +103,7 @@ export function MinimalTheme({ profile }: MinimalThemeProps) {
               <img
                 src={profile.profilePhoto}
                 alt={profile.fullName}
-                className="w-full aspect-[4/5] object-cover rounded-sm grayscale hover:grayscale-0 transition-all duration-500"
+                className="w-full aspect-[4/5] object-cover rounded-sm transition-transform duration-500 ease-out hover:scale-105"
               />
             )}
 
