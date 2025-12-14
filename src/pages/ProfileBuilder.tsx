@@ -11,8 +11,9 @@ import { ThemeSelectionStep } from '@/components/form/steps/ThemeSelectionStep';
 import { ProfilePreview } from '@/components/preview/ProfilePreview';
 import { QRCodeCard } from '@/components/preview/QRCodeCard';
 import { Button } from '@/components/ui/button';
-import { Scale, Eye, ArrowLeft, Check, ExternalLink, Copy } from 'lucide-react';
+import { Scale, Eye, ArrowLeft, Check, ExternalLink, Copy, LayoutDashboard } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 
 const STEP_NAMES = [
   'Basic Info',
@@ -38,6 +39,7 @@ export default function ProfileBuilder() {
   const [isPublished, setIsPublished] = useState(false);
   const [publishedSlug, setPublishedSlug] = useState('');
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handlePublish = () => {
     const slug = publishProfile();
@@ -114,15 +116,13 @@ export default function ProfileBuilder() {
           </div>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button onClick={() => window.open(`/p/${publishedSlug}`, '_blank')} className="gap-2">
+            <Button onClick={() => navigate('/dashboard')} className="gap-2">
+              <LayoutDashboard className="w-4 h-4" />
+              Go to Dashboard
+            </Button>
+            <Button variant="outline" onClick={() => window.open(`/p/${publishedSlug}`, '_blank')} className="gap-2">
               <ExternalLink className="w-4 h-4" />
               View Profile
-            </Button>
-            <Button variant="outline" onClick={() => {
-              setIsPublished(false);
-              setIsPreviewMode(false);
-            }}>
-              Create Another
             </Button>
           </div>
           
