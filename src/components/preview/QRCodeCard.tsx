@@ -51,30 +51,29 @@ export function QRCodeCard({ profile }: QRCodeCardProps) {
   };
 
   return (
-    <div className="bg-card border border-border rounded-xl p-6 text-center">
-      <div className="flex items-center justify-center gap-2 mb-4">
-        <QrCode className="w-5 h-5 text-primary" />
-        <h3 className="font-heading font-semibold text-foreground">Save Contact</h3>
+    <div className="group bg-card border border-border rounded-xl p-4 text-center cursor-pointer transition-all duration-300 ease-out overflow-hidden shadow-sm hover:shadow-md">
+      <div className="flex items-center justify-center gap-2">
+        <QrCode className="w-5 h-5 text-primary transition-transform duration-300 group-hover:scale-110" />
+        <h3 className="font-heading font-semibold text-foreground">Contact QR</h3>
       </div>
       
-      {qrCodeUrl && (
-        <div className="mb-4 flex justify-center">
-          <img
-            src={qrCodeUrl}
-            alt="Contact QR Code"
-            className="w-48 h-48 rounded-lg border border-border"
-          />
+      <div className="overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] max-h-0 w-0 group-hover:max-h-[240px] group-hover:w-full">
+        <div className="w-full">
+          {qrCodeUrl && (
+            <div className="mt-4 mb-2 flex justify-center transform opacity-0 translate-y-2 scale-95 group-hover:opacity-100 group-hover:translate-y-0 group-hover:scale-100 transition-all duration-400 ease-out delay-100">
+              <img
+                src={qrCodeUrl}
+                alt="Contact QR Code"
+                className="w-48 h-48 rounded-lg border border-border shadow-sm"
+              />
+            </div>
+          )}
+
+          <p className="text-sm text-muted-foreground text-center opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 ease-out delay-200">
+            Scan to save contact details
+          </p>
         </div>
-      )}
-      
-      <p className="text-sm text-muted-foreground mb-4">
-        Scan to save contact details
-      </p>
-      
-      <Button variant="outline" size="sm" onClick={downloadVCard} className="gap-2">
-        <Download className="w-4 h-4" />
-        Download vCard
-      </Button>
+      </div>
     </div>
   );
 }

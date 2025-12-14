@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { LawyerProfile } from '@/types/lawyer';
 import { ProfilePreview } from '@/components/preview/ProfilePreview';
+import { QRCodeCard } from '@/components/preview/QRCodeCard';
 import { Button } from '@/components/ui/button';
 import { Scale, Home } from 'lucide-react';
 
@@ -55,5 +56,13 @@ export default function PublicProfile() {
     );
   }
 
-  return <ProfilePreview profile={profile} />;
+  return (
+    <>
+      <ProfilePreview profile={profile} />
+      {/* QR Code Overlay */}
+      <div className="fixed bottom-6 right-6 z-40">
+        <QRCodeCard profile={profile} />
+      </div>
+    </>
+  );
 }
