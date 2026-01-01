@@ -6,6 +6,33 @@ interface ClassicThemeProps {
 }
 
 export function ClassicTheme({ profile }: ClassicThemeProps) {
+  const {
+    basicInformation,
+    practiceDetails,
+    contactInformation,
+    professionalProfile,
+    onlinePresence
+  } = profile;
+
+  const fullName = basicInformation.fullName || 'Your Name';
+  const professionalTitle = basicInformation.professionalTitle || 'Barrister & Solicitor';
+  const lawFirmName = basicInformation.lawFirmName;
+  const yearsOfExperience = basicInformation.yearsOfExperience;
+
+  const areasOfPractice = practiceDetails.areasOfPractice || [];
+  const jurisdictions = practiceDetails.jurisdictions || [];
+
+  const phoneNumber = contactInformation.phoneNumber;
+  const email = contactInformation.email;
+  const officeAddress = contactInformation.officeAddress;
+
+  const bio = professionalProfile.bio;
+  const profilePhoto = professionalProfile.profilePhoto;
+  const officeHours = professionalProfile.officeHours;
+
+  const website = onlinePresence.website;
+  const linkedIn = onlinePresence.linkedIn;
+
   return (
     <div className="min-h-screen bg-[#FDFCFB] font-body text-[#1A1A1A]">
       {/* Hero Section */}
@@ -15,10 +42,10 @@ export function ClassicTheme({ profile }: ClassicThemeProps) {
           <div className="flex flex-col md:flex-row items-center gap-12 max-w-6xl mx-auto">
             <div className="relative group">
               <div className="absolute -inset-1 bg-[#C5A059] rounded-full blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200" />
-              {profile.profilePhoto ? (
+              {profilePhoto ? (
                 <img
-                  src={profile.profilePhoto}
-                  alt={profile.fullName}
+                  src={profilePhoto}
+                  alt={fullName}
                   className="w-40 h-40 md:w-56 md:h-56 rounded-full object-cover border-4 border-[#C5A059] shadow-2xl relative"
                 />
               ) : (
@@ -30,21 +57,21 @@ export function ClassicTheme({ profile }: ClassicThemeProps) {
 
             <div className="text-center md:text-left space-y-4">
               <h1 className="font-heading text-5xl md:text-7xl font-bold tracking-tight">
-                {profile.fullName || 'Your Name'}
+                {fullName}
               </h1>
               <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4">
                 <span className="text-[#C5A059] text-2xl font-medium font-heading">
-                  {profile.professionalTitle || 'Barrister & Solicitor'}
+                  {professionalTitle}
                 </span>
-                {profile.lawFirmName && (
+                {lawFirmName && (
                   <>
                     <span className="hidden md:block w-1.5 h-1.5 rounded-full bg-white/20" />
-                    <span className="text-white/80 text-xl font-light italic">{profile.lawFirmName}</span>
+                    <span className="text-white/80 text-xl font-light italic">{lawFirmName}</span>
                   </>
                 )}
               </div>
               <p className="text-white/60 text-lg uppercase tracking-[0.2em] font-medium pt-2">
-                {profile.yearsOfExperience}+ Years of Distinguished Practice
+                {yearsOfExperience}+ Years of Distinguished Practice
               </p>
             </div>
           </div>
@@ -62,19 +89,19 @@ export function ClassicTheme({ profile }: ClassicThemeProps) {
                 Professional Profile
               </h2>
               <p className="text-[#4A4A4A] text-xl leading-relaxed font-light">
-                {profile.bio || 'Detailed professional biography and expertise will be presented here.'}
+                {bio || 'Detailed professional biography and expertise will be presented here.'}
               </p>
             </section>
 
             {/* Practice Areas */}
-            {profile.areasOfPractice.length > 0 && (
+            {areasOfPractice.length > 0 && (
               <section className="bg-white rounded-2xl p-10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-[#F0F0F0]">
                 <h2 className="font-heading text-3xl font-bold text-[#1B2B44] mb-8 flex items-center gap-4">
                   <span className="w-10 h-[2px] bg-[#C5A059]" />
                   Areas of Expertise
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {profile.areasOfPractice.map((area) => (
+                  {areasOfPractice.map((area) => (
                     <div
                       key={area}
                       className="flex items-center gap-3 p-4 bg-[#F8F9FB] rounded-xl border border-[#EDF0F5] hover:border-[#C5A059]/30 transition-colors"
@@ -88,14 +115,14 @@ export function ClassicTheme({ profile }: ClassicThemeProps) {
             )}
 
             {/* Jurisdictions */}
-            {profile.jurisdictions && profile.jurisdictions.length > 0 && (
+            {jurisdictions && jurisdictions.length > 0 && (
               <section className="bg-white rounded-2xl p-10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-[#F0F0F0]">
                 <h2 className="font-heading text-3xl font-bold text-[#1B2B44] mb-8 flex items-center gap-4">
                   <span className="w-10 h-[2px] bg-[#C5A059]" />
                   Jurisdictions
                 </h2>
                 <div className="flex flex-wrap gap-4">
-                  {profile.jurisdictions.map((jurisdiction) => (
+                  {jurisdictions.map((jurisdiction) => (
                     <span
                       key={jurisdiction}
                       className="px-6 py-3 bg-[#1B2B44] text-[#C5A059] rounded-lg text-sm font-bold uppercase tracking-wider"
@@ -122,7 +149,7 @@ export function ClassicTheme({ profile }: ClassicThemeProps) {
                   </div>
                   <div>
                     <p className="text-xs text-white/40 uppercase font-bold tracking-tighter mb-1">Telephone</p>
-                    <a href={`tel:${profile.phoneNumber}`} className="text-lg font-medium hover:text-[#C5A059] transition-colors">{profile.phoneNumber || 'Available upon request'}</a>
+                    <a href={`tel:${phoneNumber}`} className="text-lg font-medium hover:text-[#C5A059] transition-colors">{phoneNumber || 'Available upon request'}</a>
                   </div>
                 </div>
                 <div className="flex items-start gap-4 group">
@@ -131,7 +158,7 @@ export function ClassicTheme({ profile }: ClassicThemeProps) {
                   </div>
                   <div>
                     <p className="text-xs text-white/40 uppercase font-bold tracking-tighter mb-1">Electronic Correspondence</p>
-                    <a href={`mailto:${profile.email}`} className="text-lg font-medium hover:text-[#C5A059] transition-colors break-all leading-snug">{profile.email || 'Professional Inquiry'}</a>
+                    <a href={`mailto:${email}`} className="text-lg font-medium hover:text-[#C5A059] transition-colors break-all leading-snug">{email || 'Professional Inquiry'}</a>
                   </div>
                 </div>
                 <div className="flex items-start gap-4 group">
@@ -140,7 +167,7 @@ export function ClassicTheme({ profile }: ClassicThemeProps) {
                   </div>
                   <div>
                     <p className="text-xs text-white/40 uppercase font-bold tracking-tighter mb-1">Office Location</p>
-                    <p className="text-lg font-medium leading-tight">{profile.officeAddress || 'Global Chambers'}</p>
+                    <p className="text-lg font-medium leading-tight">{officeAddress || 'Global Chambers'}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-4 group">
@@ -149,19 +176,19 @@ export function ClassicTheme({ profile }: ClassicThemeProps) {
                   </div>
                   <div>
                     <p className="text-xs text-white/40 uppercase font-bold tracking-tighter mb-1">Consultation Hours</p>
-                    <p className="text-lg font-medium">{profile.officeHours || 'By Appointment Only'}</p>
+                    <p className="text-lg font-medium">{officeHours || 'By Appointment Only'}</p>
                   </div>
                 </div>
               </div>
 
               <div className="mt-12 pt-8 border-t border-white/10 flex gap-4">
-                {profile.website && (
-                  <a href={profile.website} target="_blank" rel="noopener noreferrer" className="p-3 bg-white/5 hover:bg-[#C5A059]/20 rounded-xl transition-all">
+                {website && (
+                  <a href={website} target="_blank" rel="noopener noreferrer" className="p-3 bg-white/5 hover:bg-[#C5A059]/20 rounded-xl transition-all">
                     <Globe className="w-5 h-5 text-[#C5A059]" />
                   </a>
                 )}
-                {profile.linkedIn && (
-                  <a href={profile.linkedIn} target="_blank" rel="noopener noreferrer" className="p-3 bg-white/5 hover:bg-[#C5A059]/20 rounded-xl transition-all">
+                {linkedIn && (
+                  <a href={linkedIn} target="_blank" rel="noopener noreferrer" className="p-3 bg-white/5 hover:bg-[#C5A059]/20 rounded-xl transition-all">
                     <Linkedin className="w-5 h-5 text-[#C5A059]" />
                   </a>
                 )}
@@ -182,7 +209,7 @@ export function ClassicTheme({ profile }: ClassicThemeProps) {
             Excellence in digital legal representation. Curated for the finest legal minds.
           </p>
           <div className="text-white/20 text-xs tracking-widest font-bold uppercase pt-4">
-            © {new Date().getFullYear()} {profile.fullName || 'Lawyer Name'} · All rights reserved.
+            © {new Date().getFullYear()} {fullName} · All rights reserved.
           </div>
         </div>
       </footer>

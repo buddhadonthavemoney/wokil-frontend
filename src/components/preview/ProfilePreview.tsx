@@ -7,10 +7,15 @@ import { LegalCraftTheme } from './themes/LegalCraftTheme';
 
 interface ProfilePreviewProps {
   profile: LawyerProfile;
+  html?: string;
 }
 
-export function ProfilePreview({ profile }: ProfilePreviewProps) {
-  switch (profile.theme) {
+export function ProfilePreview({ profile, html }: ProfilePreviewProps) {
+  if (html) {
+    return <div dangerouslySetInnerHTML={{ __html: html }} />;
+  }
+
+  switch (profile.themeSelection.theme) {
     case 'modern':
       return <ModernTheme profile={profile} />;
     case 'minimal':

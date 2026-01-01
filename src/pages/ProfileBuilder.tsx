@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useProfileForm } from '@/hooks/useProfileForm';
 import { ProgressIndicator } from '@/components/form/ProgressIndicator';
 import { FormNavigation } from '@/components/form/FormNavigation';
@@ -11,10 +11,9 @@ import { ThemeSelectionStep } from '@/components/form/steps/ThemeSelectionStep';
 import { ProfilePreview } from '@/components/preview/ProfilePreview';
 import { QRCodeCard } from '@/components/preview/QRCodeCard';
 import { Button } from '@/components/ui/button';
-import { Scale, Eye, ArrowLeft, Check, ExternalLink, Copy, LayoutDashboard, LogIn } from 'lucide-react';
+import { Scale, Eye, ArrowLeft, Check, ExternalLink, Copy, LayoutDashboard } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
-import { auth } from '@/lib/api';
 
 const STEP_NAMES = [
   'Basic Info',
@@ -31,15 +30,18 @@ export default function ProfileBuilder() {
     currentStep,
     totalSteps,
     updateProfile,
+    updateNestedProfile,
     nextStep,
     prevStep,
     publishProfile,
+    fetchPreview,
   } = useProfileForm();
 
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [isPublished, setIsPublished] = useState(false);
   const [publishedSlug, setPublishedSlug] = useState('');
-  const previewRef = useRef<HTMLDivElement>(null);
+  const [previewHtml, setPreviewHtml] = useState('');
+  const [loadingPreview, setLoadingPreview] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -49,15 +51,45 @@ export default function ProfileBuilder() {
     }
   }, [navigate]);
 
+  useEffect(() => {
+    let isMounted = true;
+    if (isPreviewMode) {
+      const loadPreview = async () => {
+        setLoadingPreview(true);
+        try {
+          const html = await fetchPreview();
+          if (isMounted) {
+            setPreviewHtml(html);
+          }
+        } catch (err) {
+          console.error("Failed to load preview", err);
+        } finally {
+          if (isMounted) {
+            setLoadingPreview(false);
+          }
+        }
+      };
+      loadPreview();
+    }
+    return () => { isMounted = false; };
+  }, [isPreviewMode, fetchPreview]);
+
   const handlePublish = async () => {
-    const htmlSnippet = previewRef.current?.innerHTML || '';
-    const urlOrSlug = await publishProfile(htmlSnippet);
-    setPublishedSlug(urlOrSlug);
-    setIsPublished(true);
-    toast({
-      title: "Profile Published!",
-      description: "Your professional profile is now live.",
-    });
+    try {
+      const urlOrSlug = await publishProfile();
+      setPublishedSlug(urlOrSlug);
+      setIsPublished(true);
+      toast({
+        title: "Profile Published!",
+        description: "Your professional profile is now live.",
+      });
+    } catch (err) {
+      toast({
+        title: "Publish Failed",
+        description: "There was an error publishing your profile.",
+        variant: "destructive",
+      });
+    }
   };
 
   const getPublicUrl = () => {
@@ -76,17 +108,17 @@ export default function ProfileBuilder() {
   const renderCurrentStep = () => {
     switch (currentStep) {
       case 1:
-        return <BasicInfoStep profile={profile} onUpdate={updateProfile} />;
+        return <BasicInfoStep profile={profile} onUpdate={(fields) => updateNestedProfile('basicInformation', fields)} />;
       case 2:
-        return <PracticeDetailsStep profile={profile} onUpdate={updateProfile} />;
+        return <PracticeDetailsStep profile={profile} onUpdate={(fields) => updateNestedProfile('practiceDetails', fields)} />;
       case 3:
-        return <ContactInfoStep profile={profile} onUpdate={updateProfile} />;
+        return <ContactInfoStep profile={profile} onUpdate={(fields) => updateNestedProfile('contactInformation', fields)} />;
       case 4:
-        return <ProfessionalProfileStep profile={profile} onUpdate={updateProfile} />;
+        return <ProfessionalProfileStep profile={profile} onUpdate={(fields) => updateNestedProfile('professionalProfile', fields)} />;
       case 5:
-        return <OnlinePresenceStep profile={profile} onUpdate={updateProfile} />;
+        return <OnlinePresenceStep profile={profile} onUpdate={(fields) => updateNestedProfile('onlinePresence', fields)} />;
       case 6:
-        return <ThemeSelectionStep profile={profile} onUpdate={updateProfile} />;
+        return <ThemeSelectionStep profile={profile} onUpdate={(fields) => updateNestedProfile('themeSelection', fields)} />;
       default:
         return null;
     }
@@ -100,7 +132,6 @@ export default function ProfileBuilder() {
     }
   };
 
-  // Published State
   if (isPublished) {
     return (
       <div className="min-h-screen bg-[hsl(210,20%,98%)]/50 flex items-center justify-center p-6">
@@ -163,11 +194,9 @@ export default function ProfileBuilder() {
     );
   }
 
-  // Preview Mode
   if (isPreviewMode) {
     return (
       <div className="min-h-screen bg-background">
-        {/* Preview Header */}
         <div className="fixed top-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-md border-b border-border shadow-sm">
           <div className="container mx-auto px-6 py-4 flex items-center justify-between">
             <Button
@@ -192,12 +221,17 @@ export default function ProfileBuilder() {
           </div>
         </div>
 
-        {/* Preview Content */}
-        <div className="pt-20" ref={previewRef}>
-          <ProfilePreview profile={profile} />
+        <div className="pt-20">
+          {loadingPreview ? (
+            <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+              <Scale className="w-12 h-12 text-primary animate-pulse" />
+              <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground animate-pulse">Generating Professional Site...</p>
+            </div>
+          ) : (
+            <ProfilePreview profile={profile} html={previewHtml} />
+          )}
         </div>
 
-        {/* QR Code Overlay */}
         <div className="fixed bottom-6 right-6 z-40 scale-90 origin-bottom-right hover:scale-100 transition-transform">
           <QRCodeCard profile={profile} />
         </div>
@@ -205,22 +239,32 @@ export default function ProfileBuilder() {
     );
   }
 
-  // Form Mode
   return (
     <div className="min-h-screen bg-[hsl(210,20%,98%)]/50 pb-20">
-      {/* Header */}
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border shadow-sm">
         <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shadow-md shadow-primary/20">
+          <div
+            className="flex items-center gap-3 cursor-pointer group"
+            onClick={() => navigate('/dashboard')}
+          >
+            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shadow-md shadow-primary/20 group-hover:scale-105 transition-transform">
               <Scale className="w-4 h-4 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="font-heading font-bold text-lg leading-tight text-foreground">Wokil</h1>
+              <h1 className="font-heading font-bold text-lg leading-tight text-foreground group-hover:text-primary transition-colors">Wokil</h1>
               <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Profile Architect</p>
             </div>
           </div>
           <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/dashboard')}
+              className="text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground gap-2"
+            >
+              <LayoutDashboard className="w-4 h-4" />
+              Dashboard
+            </Button>
             <Button
               variant="ghost"
               size="sm"
@@ -236,7 +280,6 @@ export default function ProfileBuilder() {
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="container mx-auto px-6 py-12 max-w-2xl">
         <div className="space-y-8">
           <ProgressIndicator

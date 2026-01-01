@@ -101,12 +101,15 @@ export default function Dashboard() {
       <header className="sticky top-0 z-10 border-b border-border bg-background/80 backdrop-blur-md">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
+            <div
+              className="flex items-center gap-3 cursor-pointer group"
+              onClick={() => navigate('/dashboard')}
+            >
+              <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20 group-hover:scale-105 transition-transform">
                 <Scale className="w-5 h-5 text-primary-foreground" />
               </div>
               <div>
-                <h1 className="font-heading font-bold text-xl leading-tight text-foreground">Wokil</h1>
+                <h1 className="font-heading font-bold text-xl leading-tight text-foreground group-hover:text-primary transition-colors">Wokil</h1>
                 <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Professional Dashboard</p>
               </div>
             </div>
@@ -165,16 +168,16 @@ export default function Dashboard() {
                   {/* Avatar */}
                   <div className="relative group">
                     <div className="w-24 h-24 rounded-2xl bg-primary/5 flex items-center justify-center p-1 border-2 border-primary/10 transition-colors group-hover:border-primary/20">
-                      {profile.profilePhoto ? (
+                      {profile.professionalProfile.profilePhoto ? (
                         <img
-                          src={profile.profilePhoto}
-                          alt={profile.fullName}
+                          src={profile.professionalProfile.profilePhoto}
+                          alt={profile.basicInformation.fullName}
                           className="w-full h-full rounded-xl object-cover"
                         />
                       ) : (
                         <div className="w-full h-full rounded-xl bg-primary/10 flex items-center justify-center">
                           <span className="text-3xl font-heading font-bold text-primary">
-                            {profile.fullName.split(' ').map(n => n[0]).join('')}
+                            {profile.basicInformation.fullName.split(' ').map(n => n[0]).join('')}
                           </span>
                         </div>
                       )}
@@ -185,14 +188,14 @@ export default function Dashboard() {
                   <div className="flex-1 space-y-4">
                     <div>
                       <h3 className="text-2xl font-heading font-bold text-foreground">
-                        {profile.fullName}
+                        {profile.basicInformation.fullName}
                       </h3>
                       <p className="text-muted-foreground font-medium flex items-center gap-2">
-                        {profile.professionalTitle}
-                        {profile.lawFirmName && (
+                        {profile.basicInformation.professionalTitle}
+                        {profile.basicInformation.lawFirmName && (
                           <>
                             <span className="w-1 h-1 rounded-full bg-muted-foreground/30" />
-                            <span>{profile.lawFirmName}</span>
+                            <span>{profile.basicInformation.lawFirmName}</span>
                           </>
                         )}
                       </p>

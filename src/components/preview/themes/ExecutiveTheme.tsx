@@ -6,6 +6,33 @@ interface ExecutiveThemeProps {
 }
 
 export function ExecutiveTheme({ profile }: ExecutiveThemeProps) {
+    const {
+        basicInformation,
+        practiceDetails,
+        contactInformation,
+        professionalProfile,
+        onlinePresence
+    } = profile;
+
+    const fullName = basicInformation.fullName || 'Professional Advocate';
+    const professionalTitle = basicInformation.professionalTitle || 'Principal Attorney';
+    const lawFirmName = basicInformation.lawFirmName || 'Private Practice';
+    const yearsOfExperience = basicInformation.yearsOfExperience;
+
+    const areasOfPractice = practiceDetails.areasOfPractice || [];
+    const jurisdictions = practiceDetails.jurisdictions || [];
+
+    const phoneNumber = contactInformation.phoneNumber;
+    const email = contactInformation.email;
+    const officeAddress = contactInformation.officeAddress;
+
+    const bio = professionalProfile.bio;
+    const profilePhoto = professionalProfile.profilePhoto;
+    const officeHours = professionalProfile.officeHours;
+
+    const website = onlinePresence.website;
+    const linkedIn = onlinePresence.linkedIn;
+
     return (
         <div className="min-h-screen bg-slate-50 font-body text-slate-900 selection:bg-blue-600/10">
             {/* Top Bar */}
@@ -26,21 +53,21 @@ export function ExecutiveTheme({ profile }: ExecutiveThemeProps) {
                         <div className="flex-1 space-y-8 animate-in fade-in slide-in-from-left duration-700">
                             <div className="space-y-4">
                                 <h2 className="text-blue-700 font-heading font-bold uppercase tracking-[0.25em] text-sm">
-                                    {profile.lawFirmName || 'Private Practice'}
+                                    {lawFirmName}
                                 </h2>
                                 <h1 className="text-5xl md:text-7xl font-heading font-extrabold text-slate-900 tracking-tight leading-none">
-                                    {profile.fullName || 'Professional Advocate'}
+                                    {fullName}
                                 </h1>
                                 <p className="text-2xl text-slate-500 font-light max-w-2xl">
-                                    {profile.professionalTitle || 'Principal Attorney'} specialized in Institutional Advocacy.
+                                    {professionalTitle} specialized in Institutional Advocacy.
                                 </p>
                             </div>
 
                             <div className="flex flex-wrap gap-4">
-                                <a href={`tel:${profile.phoneNumber}`} className="px-10 py-4 bg-slate-900 text-white rounded-lg font-bold hover:bg-blue-700 transition-all shadow-xl shadow-slate-900/10">
+                                <a href={`tel:${phoneNumber}`} className="px-10 py-4 bg-slate-900 text-white rounded-lg font-bold hover:bg-blue-700 transition-all shadow-xl shadow-slate-900/10">
                                     Request Consultation
                                 </a>
-                                <a href={`mailto:${profile.email}`} className="px-10 py-4 border-2 border-slate-200 rounded-lg font-bold text-slate-700 hover:border-blue-700 hover:text-blue-700 transition-all">
+                                <a href={`mailto:${email}`} className="px-10 py-4 border-2 border-slate-200 rounded-lg font-bold text-slate-700 hover:border-blue-700 hover:text-blue-700 transition-all">
                                     Direct Correspondence
                                 </a>
                             </div>
@@ -49,10 +76,10 @@ export function ExecutiveTheme({ profile }: ExecutiveThemeProps) {
                         <div className="w-full md:w-96 animate-in fade-in zoom-in duration-700">
                             <div className="relative group">
                                 <div className="absolute inset-0 bg-blue-700/5 rounded-2xl transform translate-x-4 translate-y-4 -z-10 transition-transform group-hover:translate-x-6 group-hover:translate-y-6" />
-                                {profile.profilePhoto ? (
+                                {profilePhoto ? (
                                     <img
-                                        src={profile.profilePhoto}
-                                        alt={profile.fullName}
+                                        src={profilePhoto}
+                                        alt={fullName}
                                         className="w-full aspect-[4/5] object-cover rounded-2xl shadow-2xl border border-white"
                                     />
                                 ) : (
@@ -76,7 +103,7 @@ export function ExecutiveTheme({ profile }: ExecutiveThemeProps) {
                                 <h3 className="font-heading font-bold text-3xl text-slate-900 tracking-tight">Executive Summary</h3>
                             </div>
                             <p className="text-xl text-slate-600 leading-relaxed font-light">
-                                {profile.bio || 'Professional brief will be curated here.'}
+                                {bio || 'Professional brief will be curated here.'}
                             </p>
                         </section>
 
@@ -86,7 +113,7 @@ export function ExecutiveTheme({ profile }: ExecutiveThemeProps) {
                                 <h3 className="font-heading font-bold text-3xl text-slate-900 tracking-tight">Practice Areas</h3>
                             </div>
                             <div className="grid sm:grid-cols-2 gap-6">
-                                {profile.areasOfPractice.map((area) => (
+                                {areasOfPractice.map((area) => (
                                     <div key={area} className="p-8 bg-white border border-slate-200 rounded-xl hover:border-blue-600 hover:shadow-xl transition-all group">
                                         <div className="w-10 h-10 bg-slate-50 rounded-lg flex items-center justify-center mb-6 group-hover:bg-blue-50 transition-colors">
                                             <Briefcase className="w-5 h-5 text-blue-700" />
@@ -110,41 +137,41 @@ export function ExecutiveTheme({ profile }: ExecutiveThemeProps) {
                                     <Phone className="w-6 h-6 text-blue-700 shrink-0" />
                                     <div className="space-y-1">
                                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Main Office</p>
-                                        <p className="font-bold text-slate-900">{profile.phoneNumber || 'Contact Unavailable'}</p>
+                                        <p className="font-bold text-slate-900">{phoneNumber || 'Contact Unavailable'}</p>
                                     </div>
                                 </div>
                                 <div className="flex gap-4">
                                     <Mail className="w-6 h-6 text-blue-700 shrink-0" />
                                     <div className="space-y-1">
                                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Inquiries</p>
-                                        <p className="font-bold text-slate-900 break-all">{profile.email || 'Professional Inquiry'}</p>
+                                        <p className="font-bold text-slate-900 break-all">{email || 'Professional Inquiry'}</p>
                                     </div>
                                 </div>
                                 <div className="flex gap-4">
                                     <MapPin className="w-6 h-6 text-blue-700 shrink-0" />
                                     <div className="space-y-1">
                                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Chambers</p>
-                                        <p className="font-bold text-slate-900 leading-tight">{profile.officeAddress || 'Private Chambers'}</p>
+                                        <p className="font-bold text-slate-900 leading-tight">{officeAddress || 'Private Chambers'}</p>
                                     </div>
                                 </div>
                                 <div className="flex gap-4">
                                     <Clock className="w-6 h-6 text-blue-700 shrink-0" />
                                     <div className="space-y-1">
                                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Availability</p>
-                                        <p className="font-bold text-slate-900">{profile.officeHours || 'By Appointment Only'}</p>
+                                        <p className="font-bold text-slate-900">{officeHours || 'By Appointment Only'}</p>
                                     </div>
                                 </div>
                             </div>
 
-                            {(profile.website || profile.linkedIn) && (
+                            {(website || linkedIn) && (
                                 <div className="pt-8 border-t border-slate-100 flex gap-4">
-                                    {profile.website && (
-                                        <a href={profile.website} target="_blank" rel="noopener noreferrer" className="p-3 bg-slate-50 rounded-lg hover:bg-blue-600 hover:text-white transition-all text-slate-600">
+                                    {website && (
+                                        <a href={website} target="_blank" rel="noopener noreferrer" className="p-3 bg-slate-50 rounded-lg hover:bg-blue-600 hover:text-white transition-all text-slate-600">
                                             <Globe className="w-5 h-5" />
                                         </a>
                                     )}
-                                    {profile.linkedIn && (
-                                        <a href={profile.linkedIn} target="_blank" rel="noopener noreferrer" className="p-3 bg-slate-50 rounded-lg hover:bg-blue-600 hover:text-white transition-all text-slate-600">
+                                    {linkedIn && (
+                                        <a href={linkedIn} target="_blank" rel="noopener noreferrer" className="p-3 bg-slate-50 rounded-lg hover:bg-blue-600 hover:text-white transition-all text-slate-600">
                                             <Linkedin className="w-5 h-5" />
                                         </a>
                                     )}
@@ -157,9 +184,9 @@ export function ExecutiveTheme({ profile }: ExecutiveThemeProps) {
                             <div className="space-y-4">
                                 <div className="flex items-center gap-3">
                                     <Award className="w-5 h-5 text-blue-300" />
-                                    <span className="font-bold">{profile.yearsOfExperience}+ Years Experience</span>
+                                    <span className="font-bold">{yearsOfExperience}+ Years Experience</span>
                                 </div>
-                                {profile.jurisdictions?.map(j => (
+                                {jurisdictions?.map(j => (
                                     <div key={j} className="flex items-center gap-3">
                                         <Shield className="w-5 h-5 text-blue-300" />
                                         <span className="font-medium text-sm">Admitted: {j}</span>
@@ -182,7 +209,7 @@ export function ExecutiveTheme({ profile }: ExecutiveThemeProps) {
                     </p>
                     <div className="h-px w-24 bg-slate-800" />
                     <p className="text-xs uppercase tracking-widest font-bold">
-                        © {new Date().getFullYear()} {profile.fullName || 'Professional Practitioner'} · Solicitor & Barrister
+                        © {new Date().getFullYear()} {fullName} · Solicitor & Barrister
                     </p>
                 </div>
             </footer>

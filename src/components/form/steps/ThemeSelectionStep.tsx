@@ -5,58 +5,45 @@ import { Check } from 'lucide-react';
 
 interface ThemeSelectionStepProps {
   profile: LawyerProfile;
-  onUpdate: <K extends keyof LawyerProfile>(field: K, value: LawyerProfile[K]) => void;
+  onUpdate: (fields: Partial<LawyerProfile['themeSelection']>) => void;
 }
 
 const themes = [
   {
-    id: 'classic' as const,
-    name: 'Classic',
-    description: 'Traditional, authoritative design with serif typography',
-    preview: {
-      bg: 'bg-[#1B2B44]',
-      accent: 'bg-[#C5A059]',
-    },
+    id: 'classic',
+    name: 'The Classic',
+    description: 'A timeless, authoritative design for traditional practices.',
+    preview: { bg: 'bg-[#1B2B44]', accent: 'bg-[#C5A059]' }
   },
   {
-    id: 'modern' as const,
-    name: 'Modern',
-    description: 'Clean, contemporary layout with bold accents',
-    preview: {
-      bg: 'bg-slate-950',
-      accent: 'bg-blue-600',
-    },
+    id: 'modern',
+    name: 'Modern Professional',
+    description: 'Sleek, dark, and tech-forward for the modern era.',
+    preview: { bg: 'bg-slate-950', accent: 'bg-blue-500' }
   },
   {
-    id: 'minimal' as const,
-    name: 'Minimal',
-    description: 'Elegant simplicity with focus on content',
-    preview: {
-      bg: 'bg-[#F9F8F6]',
-      accent: 'bg-[#1A1816]',
-    },
+    id: 'minimal',
+    name: 'Pure Minimal',
+    description: 'Strip away the noise with a focus on pure typography.',
+    preview: { bg: 'bg-white border-border', accent: 'bg-primary' }
   },
   {
-    id: 'executive' as const,
-    name: 'Executive',
-    description: 'Corporate high-contrast theme with blue/silver accents',
-    preview: {
-      bg: 'bg-white border border-slate-200',
-      accent: 'bg-blue-700',
-    },
+    id: 'executive',
+    name: 'Executive Suite',
+    description: 'Institutional excellence for corporate and prestige law.',
+    preview: { bg: 'bg-slate-50', accent: 'bg-blue-700' }
   },
   {
-    id: 'legal-craft' as const,
-    name: 'LegalCraft',
-    description: 'Artisan heritage theme with dark/gold/warm tones',
-    preview: {
-      bg: 'bg-[#FDFBF7]',
-      accent: 'bg-[#3C2A21]',
-    },
-  },
+    id: 'legal-craft',
+    name: 'Legal Craft',
+    description: 'Artisan heritage with a focus on trust and detail.',
+    preview: { bg: 'bg-[#FDFBF7]', accent: 'bg-[#D4A373]' }
+  }
 ];
 
 export function ThemeSelectionStep({ profile, onUpdate }: ThemeSelectionStepProps) {
+  const { themeSelection } = profile;
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="space-y-2">
@@ -66,12 +53,13 @@ export function ThemeSelectionStep({ profile, onUpdate }: ThemeSelectionStepProp
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {themes.map((theme) => {
-          const isSelected = profile.theme === theme.id;
+          const isSelected = themeSelection.theme === theme.id;
           return (
             <button
               key={theme.id}
               type="button"
-              onClick={() => onUpdate('theme', theme.id)}
+              onClick={() => onUpdate({ theme: theme.id as LawyerProfile['themeSelection']['theme'] })}
+              // ... rest of button content
               className={cn(
                 "relative p-4 rounded-xl border-2 text-left transition-all duration-300",
                 isSelected

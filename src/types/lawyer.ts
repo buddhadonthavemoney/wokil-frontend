@@ -1,38 +1,37 @@
 export interface LawyerProfile {
   id: string;
-  // Basic Information
-  fullName: string;
-  professionalTitle: string;
-  lawFirmName?: string;
-  yearsOfExperience: number;
-
-  // Practice Details
-  areasOfPractice: string[];
-  jurisdictions?: string[];
-
-  // Contact Information
-  phoneNumber: string;
-  email: string;
-  officeAddress: string;
-
-  // Professional Profile
-  bio: string;
-  officeHours: string;
-  profilePhoto?: string;
-
-  // Online Presence
-  website?: string;
-  linkedIn?: string;
-
-  // Theme
-  theme: 'classic' | 'modern' | 'minimal' | 'executive' | 'legal-craft';
-
-  // Status
+  basicInformation: {
+    fullName: string;
+    professionalTitle: string;
+    lawFirmName?: string;
+    yearsOfExperience: number;
+  };
+  practiceDetails: {
+    areasOfPractice: string[];
+    jurisdictions: string[];
+  };
+  contactInformation: {
+    phoneNumber: string;
+    email: string;
+    officeAddress: string;
+  };
+  professionalProfile: {
+    bio: string;
+    profilePhoto?: string;
+    officeHours: string;
+    deploymentURL?: string;
+  };
+  onlinePresence: {
+    website?: string;
+    linkedIn?: string;
+  };
+  themeSelection: {
+    theme: 'classic' | 'modern' | 'minimal' | 'executive' | 'legal-craft';
+  };
   isPublished: boolean;
   publishedAt?: string;
   slug: string;
   siteUrl?: string;
-  generatedHtml?: string;
 }
 
 export const PRACTICE_AREAS = [

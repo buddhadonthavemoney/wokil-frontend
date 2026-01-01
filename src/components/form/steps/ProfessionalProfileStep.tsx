@@ -7,16 +7,18 @@ import { useCallback } from 'react';
 
 interface ProfessionalProfileStepProps {
   profile: LawyerProfile;
-  onUpdate: <K extends keyof LawyerProfile>(field: K, value: LawyerProfile[K]) => void;
+  onUpdate: (fields: Partial<LawyerProfile['professionalProfile']>) => void;
 }
 
 export function ProfessionalProfileStep({ profile, onUpdate }: ProfessionalProfileStepProps) {
+  const { professionalProfile } = profile;
+
   const handlePhotoUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        onUpdate('profilePhoto', reader.result as string);
+        onUpdate({ profilePhoto: reader.result as string });
       };
       reader.readAsDataURL(file);
     }
@@ -28,7 +30,7 @@ export function ProfessionalProfileStep({ profile, onUpdate }: ProfessionalProfi
         <h2 className="heading-section text-foreground">Professional Profile</h2>
         <p className="text-muted-foreground">Tell potential clients about yourself.</p>
       </div>
-      
+
       <div className="grid gap-6">
         <div className="space-y-3">
           <Label className="flex items-center gap-2">
@@ -37,10 +39,10 @@ export function ProfessionalProfileStep({ profile, onUpdate }: ProfessionalProfi
           </Label>
           <div className="flex items-center gap-6">
             <div className="relative w-24 h-24 rounded-full overflow-hidden bg-muted flex items-center justify-center border-2 border-dashed border-border">
-              {profile.profilePhoto ? (
-                <img 
-                  src={profile.profilePhoto} 
-                  alt="Profile" 
+              {professionalProfile.profilePhoto ? (
+                <img
+                  src={professionalProfile.profilePhoto}
+                  alt="Profile"
                   className="w-full h-full object-cover"
                 />
               ) : (
@@ -60,22 +62,22 @@ export function ProfessionalProfileStep({ profile, onUpdate }: ProfessionalProfi
             </div>
           </div>
         </div>
-        
+
         <div className="space-y-2">
           <Label htmlFor="bio">Professional Bio *</Label>
           <Textarea
             id="bio"
             placeholder="Write a compelling summary of your experience, expertise, and approach to legal services..."
-            value={profile.bio}
-            onChange={(e) => onUpdate('bio', e.target.value)}
+            value={professionalProfile.bio}
+            onChange={(e) => onUpdate({ bio: e.target.value })}
             rows={5}
             className="resize-none"
           />
           <p className="text-xs text-muted-foreground">
-            {profile.bio.length}/500 characters recommended
+            {professionalProfile.bio.length}/500 characters recommended
           </p>
         </div>
-        
+
         <div className="space-y-2">
           <Label htmlFor="officeHours" className="flex items-center gap-2">
             <Clock className="w-4 h-4 text-muted-foreground" />
@@ -84,8 +86,8 @@ export function ProfessionalProfileStep({ profile, onUpdate }: ProfessionalProfi
           <Input
             id="officeHours"
             placeholder="e.g., Mon-Fri 9:00 AM - 6:00 PM"
-            value={profile.officeHours}
-            onChange={(e) => onUpdate('officeHours', e.target.value)}
+            value={professionalProfile.officeHours}
+            onChange={(e) => onUpdate({ officeHours: e.target.value })}
             className="h-12"
           />
         </div>

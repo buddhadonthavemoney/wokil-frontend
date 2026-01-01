@@ -15,21 +15,33 @@ const generateId = (): string => {
 };
 
 const initialProfile: Omit<LawyerProfile, 'id' | 'slug'> = {
-  fullName: '',
-  professionalTitle: '',
-  lawFirmName: '',
-  yearsOfExperience: 0,
-  areasOfPractice: [],
-  jurisdictions: [],
-  phoneNumber: '',
-  email: '',
-  officeAddress: '',
-  bio: '',
-  officeHours: '',
-  profilePhoto: '',
-  website: '',
-  linkedIn: '',
-  theme: 'classic',
+  basicInformation: {
+    fullName: '',
+    professionalTitle: '',
+    lawFirmName: '',
+    yearsOfExperience: 0,
+  },
+  practiceDetails: {
+    areasOfPractice: [],
+    jurisdictions: [],
+  },
+  contactInformation: {
+    phoneNumber: '',
+    email: '',
+    officeAddress: '',
+  },
+  professionalProfile: {
+    bio: '',
+    officeHours: '',
+    profilePhoto: '',
+  },
+  onlinePresence: {
+    website: '',
+    linkedIn: '',
+  },
+  themeSelection: {
+    theme: 'classic',
+  },
   isPublished: false,
 };
 
@@ -41,10 +53,10 @@ export function useProfileForm() {
   // Check if we're editing an existing profile
   const [profile, setProfile] = useState<LawyerProfile>(() => {
     return {
-      ...initialProfile,
       id: generateId(),
       slug: '',
-    };
+      ...initialProfile,
+    } as LawyerProfile;
   });
 
   const [currentStep, setCurrentStep] = useState(1);
@@ -58,13 +70,21 @@ export function useProfileForm() {
       try {
         setLoading(true);
         const data = await profileApi.get();
-        // Merge with initial to ensure all fields exist
+        // Merge with initial to ensure all nested fields exist
         setProfile(prev => ({
           ...prev,
           ...data,
-          // Ensure arrays are initialized if null from backend
-          areasOfPractice: data.areasOfPractice || [],
-          jurisdictions: data.jurisdictions || [],
+          basicInformation: { ...prev.basicInformation, ...data.basicInformation },
+          practiceDetails: {
+            ...prev.practiceDetails,
+            ...data.practiceDetails,
+            areasOfPractice: data.practiceDetails?.areasOfPractice || [],
+            jurisdictions: data.practiceDetails?.jurisdictions || [],
+          },
+          contactInformation: { ...prev.contactInformation, ...data.contactInformation },
+          professionalProfile: { ...prev.professionalProfile, ...data.professionalProfile },
+          onlinePresence: { ...prev.onlinePresence, ...data.onlinePresence },
+          themeSelection: { ...prev.themeSelection, ...data.themeSelection },
         }));
         if (data.slug) {
           setCurrentStep(totalSteps);
@@ -86,8 +106,14 @@ export function useProfileForm() {
     setProfile(prev => ({ ...prev, [field]: value }));
   }, []);
 
-  const updateMultipleFields = useCallback((fields: Partial<LawyerProfile>) => {
-    setProfile(prev => ({ ...prev, ...fields }));
+  const updateNestedProfile = useCallback(<K extends keyof Omit<LawyerProfile, 'id' | 'slug' | 'isPublished' | 'publishedAt' | 'siteUrl'>>(
+    category: K,
+    fields: Partial<LawyerProfile[K]>
+  ) => {
+    setProfile(prev => ({
+      ...prev,
+      [category]: { ...prev[category], ...fields }
+    }));
   }, []);
 
   // Better approach for auto-save:
@@ -118,32 +144,27 @@ export function useProfileForm() {
     setCurrentStep(Math.min(Math.max(step, 1), totalSteps));
   }, [totalSteps]);
 
-  const publishProfile = useCallback(async (generatedHtml?: string) => {
+  const publishProfile = useCallback(async () => {
     // If editing an existing profile, keep the same slug
-    const slug = profile.slug || generateSlug(profile.fullName);
+    const slug = profile.slug || generateSlug(profile.basicInformation.fullName);
     let updatedProfile: LawyerProfile = {
       ...profile,
       slug,
       isPublished: true,
       publishedAt: profile.publishedAt || new Date().toISOString(),
-      generatedHtml,
     };
 
     setProfile(updatedProfile);
 
     try {
       await profileApi.save(updatedProfile);
-      if (generatedHtml) {
-        const { url } = await siteApi.deploy({
-          html: generatedHtml,
-          slug
-        });
-        if (url) {
-          updatedProfile = { ...updatedProfile, siteUrl: url };
-          setProfile(updatedProfile);
-          // Also save again with the siteUrl
-          await profileApi.save(updatedProfile);
-        }
+      const { url } = await siteApi.deploy({ slug });
+
+      if (url) {
+        updatedProfile = { ...updatedProfile, siteUrl: url };
+        setProfile(updatedProfile);
+        // Also save again with the siteUrl
+        await profileApi.save(updatedProfile);
       }
       return updatedProfile.siteUrl || slug;
     } catch (err) {
@@ -156,16 +177,26 @@ export function useProfileForm() {
     }
   }, [profile, toast]);
 
+  const fetchPreview = useCallback(async () => {
+    try {
+      return await siteApi.getPreview();
+    } catch (err) {
+      console.error("Failed to fetch preview:", err);
+      return "";
+    }
+  }, []);
+
   return {
     profile,
     currentStep,
     totalSteps,
     loading,
     updateProfile,
-    updateMultipleFields,
+    updateNestedProfile,
     nextStep,
     prevStep,
     goToStep,
     publishProfile,
+    fetchPreview,
   };
 }

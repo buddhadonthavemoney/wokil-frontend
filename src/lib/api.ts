@@ -33,13 +33,20 @@ export enum ApiEndpoints {
     GOOGLE_CALLBACK = '/oauth/google/callback',
     PROFILE = '/profile',
     SITES_DEPLOY = '/sites/deploy',
+    SITES_PREVIEW = '/sites/preview',
 }
 
 export const site = {
-    deploy: async (data: { html: string; slug: string }) => {
+    deploy: async (data: { slug: string }) => {
         const response = await api.post<{ url: string }>(ApiEndpoints.SITES_DEPLOY, data);
         return response.data;
     },
+    getPreview: async () => {
+        const response = await api.get<string>(ApiEndpoints.SITES_PREVIEW, {
+            headers: { 'Accept': 'text/html' }
+        });
+        return response.data;
+    }
 };
 
 export const auth = {

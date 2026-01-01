@@ -7,16 +7,18 @@ import { X } from 'lucide-react';
 
 interface PracticeDetailsStepProps {
   profile: LawyerProfile;
-  onUpdate: <K extends keyof LawyerProfile>(field: K, value: LawyerProfile[K]) => void;
+  onUpdate: (fields: Partial<LawyerProfile['practiceDetails']>) => void;
 }
 
 export function PracticeDetailsStep({ profile, onUpdate }: PracticeDetailsStepProps) {
+  const { practiceDetails } = profile;
+
   const togglePracticeArea = (area: string) => {
-    const current = profile.areasOfPractice;
+    const current = practiceDetails.areasOfPractice;
     if (current.includes(area)) {
-      onUpdate('areasOfPractice', current.filter(a => a !== area));
+      onUpdate({ areasOfPractice: current.filter(a => a !== area) });
     } else {
-      onUpdate('areasOfPractice', [...current, area]);
+      onUpdate({ areasOfPractice: [...current, area] });
     }
   };
 
@@ -25,15 +27,15 @@ export function PracticeDetailsStep({ profile, onUpdate }: PracticeDetailsStepPr
       e.preventDefault();
       const input = e.currentTarget;
       const value = input.value.trim();
-      if (value && !profile.jurisdictions?.includes(value)) {
-        onUpdate('jurisdictions', [...(profile.jurisdictions || []), value]);
+      if (value && !practiceDetails.jurisdictions?.includes(value)) {
+        onUpdate({ jurisdictions: [...(practiceDetails.jurisdictions || []), value] });
         input.value = '';
       }
     }
   };
 
   const removeJurisdiction = (jurisdiction: string) => {
-    onUpdate('jurisdictions', profile.jurisdictions?.filter(j => j !== jurisdiction) || []);
+    onUpdate({ jurisdictions: practiceDetails.jurisdictions?.filter(j => j !== jurisdiction) || [] });
   };
 
   return (
@@ -42,13 +44,13 @@ export function PracticeDetailsStep({ profile, onUpdate }: PracticeDetailsStepPr
         <h2 className="heading-section text-foreground">Practice Details</h2>
         <p className="text-muted-foreground">Select your areas of expertise and jurisdictions.</p>
       </div>
-      
+
       <div className="space-y-6">
         <div className="space-y-3">
           <Label>Areas of Practice *</Label>
           <div className="flex flex-wrap gap-2">
             {PRACTICE_AREAS.map((area) => {
-              const isSelected = profile.areasOfPractice.includes(area);
+              const isSelected = practiceDetails.areasOfPractice.includes(area);
               return (
                 <button
                   key={area}
@@ -66,13 +68,13 @@ export function PracticeDetailsStep({ profile, onUpdate }: PracticeDetailsStepPr
               );
             })}
           </div>
-          {profile.areasOfPractice.length > 0 && (
+          {practiceDetails.areasOfPractice.length > 0 && (
             <p className="text-sm text-muted-foreground">
-              {profile.areasOfPractice.length} area(s) selected
+              {practiceDetails.areasOfPractice.length} area(s) selected
             </p>
           )}
         </div>
-        
+
         <div className="space-y-3">
           <Label htmlFor="jurisdictions">Jurisdictions Served (Optional)</Label>
           <Input
@@ -81,9 +83,9 @@ export function PracticeDetailsStep({ profile, onUpdate }: PracticeDetailsStepPr
             onKeyDown={addJurisdiction}
             className="h-12"
           />
-          {profile.jurisdictions && profile.jurisdictions.length > 0 && (
+          {practiceDetails.jurisdictions && practiceDetails.jurisdictions.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-2">
-              {profile.jurisdictions.map((jurisdiction) => (
+              {practiceDetails.jurisdictions.map((jurisdiction) => (
                 <Badge
                   key={jurisdiction}
                   variant="secondary"

@@ -24,15 +24,15 @@ export function QRCodeCard({ profile }: QRCodeCardProps) {
     const lines = [
       'BEGIN:VCARD',
       'VERSION:3.0',
-      `FN:${p.fullName}`,
-      `TITLE:${p.professionalTitle}`,
-      p.lawFirmName ? `ORG:${p.lawFirmName}` : '',
-      `TEL;TYPE=WORK:${p.phoneNumber}`,
-      `EMAIL:${p.email}`,
-      `ADR;TYPE=WORK:;;${p.officeAddress.replace(/\n/g, ', ')};;;;`,
-      p.website ? `URL:${p.website}` : '',
-      p.linkedIn ? `X-SOCIALPROFILE;TYPE=linkedin:${p.linkedIn}` : '',
-      `NOTE:${p.areasOfPractice.join(', ')}`,
+      `FN:${p.basicInformation.fullName}`,
+      `TITLE:${p.basicInformation.professionalTitle}`,
+      p.basicInformation.lawFirmName ? `ORG:${p.basicInformation.lawFirmName}` : '',
+      `TEL;TYPE=WORK:${p.contactInformation.phoneNumber}`,
+      `EMAIL:${p.contactInformation.email}`,
+      `ADR;TYPE=WORK:;;${p.contactInformation.officeAddress.replace(/\n/g, ', ')};;;;`,
+      p.onlinePresence.website ? `URL:${p.onlinePresence.website}` : '',
+      p.onlinePresence.linkedIn ? `X-SOCIALPROFILE;TYPE=linkedin:${p.onlinePresence.linkedIn}` : '',
+      `NOTE:${p.practiceDetails.areasOfPractice.join(', ')}`,
       'END:VCARD',
     ].filter(Boolean);
 
@@ -45,7 +45,7 @@ export function QRCodeCard({ profile }: QRCodeCardProps) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${profile.fullName.replace(/\s+/g, '_')}.vcf`;
+    a.download = `${profile.basicInformation.fullName.replace(/\s+/g, '_')}.vcf`;
     a.click();
     URL.revokeObjectURL(url);
   };
