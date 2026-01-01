@@ -16,7 +16,8 @@ import {
   TrendingUp,
   Calendar,
   Globe,
-  Plus
+  Plus,
+  Shield
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { profile as profileApi } from '@/lib/api';
@@ -94,27 +95,28 @@ export default function Dashboard() {
   const maxViews = analytics ? Math.max(...analytics.viewsThisWeek) : 1;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[hsl(210,20%,98%)]/50">
       {/* Header */}
-      <header className="border-b border-border bg-card">
-        <div className="container mx-auto px-6 py-6">
+      <header className="sticky top-0 z-10 border-b border-border bg-background/80 backdrop-blur-md">
+        <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
                 <Scale className="w-5 h-5 text-primary-foreground" />
               </div>
               <div>
-                <h1 className="font-heading font-semibold text-foreground">Dashboard</h1>
-                <p className="text-sm text-muted-foreground">Manage your professional profile</p>
+                <h1 className="font-heading font-bold text-xl leading-tight text-foreground">Wokil</h1>
+                <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Professional Dashboard</p>
               </div>
             </div>
             <Button
               variant="ghost"
+              size="sm"
               onClick={() => {
                 localStorage.removeItem('token');
                 navigate('/');
               }}
-              className="text-muted-foreground hover:text-foreground"
+              className="text-muted-foreground hover:text-foreground hover:bg-muted font-medium"
             >
               Log Out
             </Button>
@@ -123,65 +125,32 @@ export default function Dashboard() {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-6 py-8">
-        {/* Profile Card */}
-        <Card className="mb-8">
-          <CardContent className="p-6">
-            <div className="flex flex-col md:flex-row md:items-center gap-6">
-              {/* Avatar */}
-              <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                {profile.profilePhoto ? (
-                  <img
-                    src={profile.profilePhoto}
-                    alt={profile.fullName}
-                    className="w-20 h-20 rounded-full object-cover"
-                  />
-                ) : (
-                  <span className="text-2xl font-heading font-bold text-primary">
-                    {profile.fullName.split(' ').map(n => n[0]).join('')}
-                  </span>
-                )}
-              </div>
-
-              {/* Info */}
-              <div className="flex-1">
-                <h2 className="text-xl font-heading font-semibold text-foreground mb-1">
-                  {profile.fullName}
-                </h2>
-                <p className="text-muted-foreground mb-2">{profile.professionalTitle}</p>
-                {profile.lawFirmName && (
-                  <p className="text-sm text-muted-foreground">{profile.lawFirmName}</p>
-                )}
-              </div>
-
-              {/* Actions */}
-              <div className="flex flex-wrap gap-3">
+      <main className="container mx-auto px-6 py-10 max-w-6xl">
+        <div className="flex flex-col gap-10">
+          {/* Profile Section */}
+          <section>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="font-heading text-2xl font-bold tracking-tight text-foreground">Your Profile</h2>
+              <div className="flex gap-3">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => {
                     if (profile?.slug) {
-                      // Store profile slug for editing
                       sessionStorage.setItem('editingProfileSlug', profile.slug);
                     }
                     navigate('/profile-builder');
                   }}
-                  className="gap-2"
+                  className="gap-2 rounded-lg font-medium shadow-sm hover:shadow-md transition-all"
                 >
                   <Edit className="w-4 h-4" />
                   Edit Profile
                 </Button>
-                <Button variant="outline" size="sm" onClick={copyUrl} className="gap-2">
-                  <Copy className="w-4 h-4" />
-                  Copy URL
-                </Button>
                 <Button
-                  variant="outline"
-                  size="sm"
                   onClick={() => window.open(`/p/${profile.slug || profile.id}`, '_blank')}
-                  className="gap-2"
+                  size="sm"
+                  className="gap-2 rounded-lg font-medium shadow-lg shadow-primary/10 hover:shadow-primary/20 transition-all"
                   disabled={(!profile.slug && !profile.id) || !profile.isPublished}
-                  title={(!profile.slug && !profile.id) ? "Set a slug in the builder to view site" : !profile.isPublished ? "Publish your profile to view site" : ""}
                 >
                   <ExternalLink className="w-4 h-4" />
                   View Site
@@ -189,162 +158,230 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* URL Display */}
-            <div className="mt-6 p-4 bg-muted/50 rounded-lg">
-              <div className="flex items-center gap-2 text-sm">
-                <Globe className="w-4 h-4 text-muted-foreground" />
-                <code className="text-foreground break-all">{getPublicUrl()}</code>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Analytics Grid */}
-        {analytics && (
-          <>
-            <h3 className="font-heading font-semibold text-foreground mb-4">Analytics Overview</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <Eye className="w-5 h-5 text-primary" />
+            <Card className="border-none shadow-premium bg-white overflow-hidden">
+              <CardContent className="p-8">
+                <div className="flex flex-col md:flex-row gap-8 items-start">
+                  {/* Avatar */}
+                  <div className="relative group">
+                    <div className="w-24 h-24 rounded-2xl bg-primary/5 flex items-center justify-center p-1 border-2 border-primary/10 transition-colors group-hover:border-primary/20">
+                      {profile.profilePhoto ? (
+                        <img
+                          src={profile.profilePhoto}
+                          alt={profile.fullName}
+                          className="w-full h-full rounded-xl object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full rounded-xl bg-primary/10 flex items-center justify-center">
+                          <span className="text-3xl font-heading font-bold text-primary">
+                            {profile.fullName.split(' ').map(n => n[0]).join('')}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </div>
-                  <p className="text-2xl font-heading font-bold text-foreground">
-                    {analytics.totalViews.toLocaleString()}
-                  </p>
-                  <p className="text-sm text-muted-foreground">Total Page Views</p>
-                </CardContent>
-              </Card>
 
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center">
-                      <Users className="w-5 h-5 text-accent" />
+                  {/* Info */}
+                  <div className="flex-1 space-y-4">
+                    <div>
+                      <h3 className="text-2xl font-heading font-bold text-foreground">
+                        {profile.fullName}
+                      </h3>
+                      <p className="text-muted-foreground font-medium flex items-center gap-2">
+                        {profile.professionalTitle}
+                        {profile.lawFirmName && (
+                          <>
+                            <span className="w-1 h-1 rounded-full bg-muted-foreground/30" />
+                            <span>{profile.lawFirmName}</span>
+                          </>
+                        )}
+                      </p>
                     </div>
-                  </div>
-                  <p className="text-2xl font-heading font-bold text-foreground">
-                    {analytics.uniqueVisitors.toLocaleString()}
-                  </p>
-                  <p className="text-sm text-muted-foreground">Unique Visitors</p>
-                </CardContent>
-              </Card>
 
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center">
-                      <QrCode className="w-5 h-5 text-green-600" />
-                    </div>
-                  </div>
-                  <p className="text-2xl font-heading font-bold text-foreground">
-                    {analytics.qrScans}
-                  </p>
-                  <p className="text-sm text-muted-foreground">QR Code Scans</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                      <Phone className="w-5 h-5 text-blue-600" />
-                    </div>
-                  </div>
-                  <p className="text-2xl font-heading font-bold text-foreground">
-                    {analytics.contactClicks}
-                  </p>
-                  <p className="text-sm text-muted-foreground">Contact Clicks</p>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Charts Row */}
-            <div className="grid md:grid-cols-2 gap-6">
-              {/* Weekly Views Chart */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base font-heading flex items-center gap-2">
-                    <TrendingUp className="w-4 h-4" />
-                    Views This Week
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-end justify-between gap-2 h-40">
-                    {analytics.viewsThisWeek.map((views, index) => (
-                      <div key={index} className="flex-1 flex flex-col items-center gap-2">
-                        <div
-                          className="w-full bg-primary/20 rounded-t transition-all hover:bg-primary/30"
-                          style={{
-                            height: `${(views / maxViews) * 100}%`,
-                            minHeight: '8px'
-                          }}
+                    <div className="flex flex-wrap gap-4 pt-2">
+                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/50 border border-border/50 text-sm font-medium">
+                        <Globe className="w-4 h-4 text-primary" />
+                        <code className="text-foreground/80">{getPublicUrl()}</code>
+                        <button
+                          onClick={copyUrl}
+                          className="ml-1 p-1 hover:bg-primary/10 rounded transition-colors"
+                          title="Copy Link"
                         >
-                          <div
-                            className="w-full h-full bg-primary rounded-t"
-                            style={{ opacity: 0.6 + (views / maxViews) * 0.4 }}
-                          />
-                        </div>
-                        <span className="text-xs text-muted-foreground">
-                          {DAYS[(new Date().getDay() - 6 + index + 7) % 7]}
-                        </span>
+                          <Copy className="w-3.5 h-3.5 text-muted-foreground hover:text-primary" />
+                        </button>
                       </div>
-                    ))}
+                    </div>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </CardContent>
+            </Card>
+          </section>
 
-              {/* Top Referrers */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base font-heading flex items-center gap-2">
-                    <Globe className="w-4 h-4" />
-                    Traffic Sources
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {analytics.topReferrers.map((referrer, index) => {
-                      const totalVisits = analytics.topReferrers.reduce((sum, r) => sum + r.visits, 0);
-                      const percentage = Math.round((referrer.visits / totalVisits) * 100);
-
-                      return (
-                        <div key={index}>
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="text-sm font-medium text-foreground">{referrer.source}</span>
-                            <span className="text-sm text-muted-foreground">{referrer.visits} visits</span>
-                          </div>
-                          <div className="h-2 bg-muted rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-primary rounded-full transition-all"
-                              style={{ width: `${percentage}%` }}
-                            />
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Published Date */}
-            {profile.publishedAt && (
-              <div className="mt-8 flex items-center gap-2 text-sm text-muted-foreground">
-                <Calendar className="w-4 h-4" />
-                <span>
-                  Published on {new Date(profile.publishedAt).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                  })}
-                </span>
+          {/* Analytics Overview */}
+          {analytics && (
+            <section className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="font-heading text-2xl font-bold tracking-tight text-foreground">Insights</h2>
+                <div className="text-xs text-muted-foreground font-medium uppercase tracking-widest flex items-center gap-2">
+                  <TrendingUp className="w-3.5 h-3.5 text-green-600" />
+                  Live Activity
+                </div>
               </div>
-            )}
-          </>
-        )}
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                <Card className="border-none shadow-premium bg-white group hover:translate-y-[-2px] transition-all">
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                        <Eye className="w-5 h-5 text-primary" />
+                      </div>
+                    </div>
+                    <p className="text-3xl font-heading font-bold text-foreground mb-1 tracking-tight">
+                      {analytics.totalViews.toLocaleString()}
+                    </p>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Total Views</p>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-none shadow-premium bg-white group hover:translate-y-[-2px] transition-all">
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center group-hover:bg-accent/20 transition-colors">
+                        <Users className="w-5 h-5 text-accent" />
+                      </div>
+                    </div>
+                    <p className="text-3xl font-heading font-bold text-foreground mb-1 tracking-tight">
+                      {analytics.uniqueVisitors.toLocaleString()}
+                    </p>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Visitors</p>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-none shadow-premium bg-white group hover:translate-y-[-2px] transition-all">
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center group-hover:bg-emerald-500/20 transition-colors">
+                        <QrCode className="w-5 h-5 text-emerald-600" />
+                      </div>
+                    </div>
+                    <p className="text-3xl font-heading font-bold text-foreground mb-1 tracking-tight">
+                      {analytics.qrScans}
+                    </p>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">QR Scans</p>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-none shadow-premium bg-white group hover:translate-y-[-2px] transition-all">
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center group-hover:bg-amber-500/20 transition-colors">
+                        <Phone className="w-5 h-5 text-amber-600" />
+                      </div>
+                    </div>
+                    <p className="text-3xl font-heading font-bold text-foreground mb-1 tracking-tight">
+                      {analytics.contactClicks}
+                    </p>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Leads</p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Detailed Charts */}
+              <div className="grid lg:grid-cols-2 gap-8">
+                <Card className="border-none shadow-premium bg-white overflow-hidden">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg font-heading font-bold flex items-center gap-2">
+                      <TrendingUp className="w-4 h-4 text-primary" />
+                      Profile Engagement
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-end justify-between gap-3 h-48 pt-6">
+                      {analytics.viewsThisWeek.map((views, index) => (
+                        <div key={index} className="flex-1 flex flex-col items-center gap-3 group">
+                          <div
+                            className="w-full bg-primary/5 rounded-lg transition-all hover:bg-primary/10 relative overflow-hidden"
+                            style={{
+                              height: `${Math.max((views / maxViews) * 100, 5)}%`,
+                            }}
+                          >
+                            <div
+                              className="absolute bottom-0 left-0 w-full bg-primary/80 rounded-t-lg transition-all"
+                              style={{ height: '100%', opacity: 0.4 + (views / maxViews) * 0.6 }}
+                            />
+                            {/* Value tooltip on hover */}
+                            <div className="absolute top-[-24px] left-1/2 translate-x-[-50%] opacity-0 group-hover:opacity-100 transition-opacity bg-primary text-primary-foreground text-[10px] py-1 px-1.5 rounded font-bold pointer-events-none">
+                              {views}
+                            </div>
+                          </div>
+                          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                            {DAYS[(new Date().getDay() - 6 + index + 7) % 7]}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-none shadow-premium bg-white overflow-hidden">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg font-heading font-bold flex items-center gap-2">
+                      <Globe className="w-4 h-4 text-primary" />
+                      Traffic Origins
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-6 pt-4">
+                      {analytics.topReferrers.map((referrer, index) => {
+                        const totalVisits = analytics.topReferrers.reduce((sum, r) => sum + r.visits, 0);
+                        const percentage = Math.round((referrer.visits / totalVisits) * 100);
+
+                        return (
+                          <div key={index} className="space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm font-bold text-foreground/80">{referrer.source}</span>
+                              <span className="text-xs font-bold text-primary">{percentage}%</span>
+                            </div>
+                            <div className="h-2 bg-muted rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-primary rounded-full transition-all duration-1000 ease-out"
+                                style={{ width: `${percentage}%` }}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                      {analytics.topReferrers.length === 0 && (
+                        <div className="flex flex-col items-center justify-center h-full py-10 opacity-40">
+                          <Globe className="w-8 h-8 mb-2" />
+                          <p className="text-xs font-bold uppercase tracking-widest">No traffic data yet</p>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </section>
+          )}
+
+          {/* Footer Metadata */}
+          {profile.publishedAt && (
+            <footer className="pt-6 border-t border-border/50 flex items-center gap-4 text-xs text-muted-foreground font-medium uppercase tracking-widest">
+              <div className="flex items-center gap-2">
+                <Calendar className="w-3.5 h-3.5" />
+                <span>Established {new Date(profile.publishedAt).toLocaleDateString('en-US', {
+                  month: 'short',
+                  day: 'numeric',
+                  year: 'numeric'
+                })}</span>
+              </div>
+              <div className="w-1 h-1 rounded-full bg-muted-foreground/30" />
+              <div className="flex items-center gap-2">
+                <Shield className="w-3.5 h-3.5" />
+                <span>Verified Professional</span>
+              </div>
+            </footer>
+          )}
+        </div>
       </main>
     </div>
   );

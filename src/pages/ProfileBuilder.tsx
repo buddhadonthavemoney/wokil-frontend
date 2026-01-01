@@ -102,41 +102,60 @@ export default function ProfileBuilder() {
   // Published State
   if (isPublished) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-6">
-        <div className="max-w-lg w-full text-center">
-          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-6">
-            <Check className="w-8 h-8 text-primary" />
+      <div className="min-h-screen bg-[hsl(210,20%,98%)]/50 flex items-center justify-center p-6">
+        <div className="max-w-xl w-full text-center space-y-10 animate-fade-in">
+          <div className="relative inline-block">
+            <div className="w-24 h-24 rounded-3xl bg-primary flex items-center justify-center mx-auto shadow-2xl shadow-primary/40 relative z-10">
+              <Check className="w-12 h-12 text-primary-foreground stroke-[3]" />
+            </div>
+            <div className="absolute inset-0 bg-primary/20 rounded-3xl blur-2xl animate-pulse" />
           </div>
-          <h1 className="heading-section text-foreground mb-4">Your Profile is Live!</h1>
-          <p className="text-muted-foreground mb-8">
-            Share your professional profile with potential clients.
-          </p>
 
-          <div className="bg-card border border-border rounded-xl p-4 mb-6">
-            <p className="text-sm text-muted-foreground mb-2">Your profile URL:</p>
-            <div className="flex items-center gap-2">
-              <code className="flex-1 bg-muted px-3 py-2 rounded text-sm break-all text-foreground">
-                {getPublicUrl()}
-              </code>
-              <Button variant="outline" size="icon" onClick={copyUrl}>
-                <Copy className="w-4 h-4" />
-              </Button>
+          <div className="space-y-4">
+            <h1 className="font-heading text-4xl font-bold tracking-tight text-foreground">Congratulations!</h1>
+            <p className="text-lg text-muted-foreground max-w-md mx-auto">
+              Your professional digital identity is officially live and ready to attract clients.
+            </p>
+          </div>
+
+          <div className="bg-white border-none shadow-premium rounded-2xl p-8 space-y-6">
+            <div className="space-y-2">
+              <p className="text-xs font-bold uppercase tracking-widest text-primary/60">Your Public URL</p>
+              <div className="flex items-center gap-2 bg-muted p-3 rounded-xl border border-border/50">
+                <code className="flex-1 text-sm font-medium break-all text-primary/80">
+                  {getPublicUrl()}
+                </code>
+                <button
+                  onClick={copyUrl}
+                  className="p-2 hover:bg-white rounded-lg transition-all shadow-sm active:scale-95"
+                  title="Copy Link"
+                >
+                  <Copy className="w-4 h-4 text-primary" />
+                </button>
+              </div>
+            </div>
+
+            <div className="pt-2">
+              <QRCodeCard profile={profile} />
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button onClick={() => navigate('/dashboard')} className="gap-2">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <Button
+              onClick={() => navigate('/dashboard')}
+              className="w-full sm:w-auto gap-2 px-8 py-6 rounded-xl font-bold text-sm uppercase tracking-widest shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all"
+            >
               <LayoutDashboard className="w-4 h-4" />
               Go to Dashboard
             </Button>
-            <Button variant="outline" onClick={() => window.open(`/p/${publishedSlug}`, '_blank')} className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => window.open(`/p/${publishedSlug}`, '_blank')}
+              className="w-full sm:w-auto gap-2 px-8 py-6 rounded-xl font-bold text-sm uppercase tracking-widest border-2 hover:bg-muted transition-all"
+            >
               <ExternalLink className="w-4 h-4" />
-              View Profile
+              View Website
             </Button>
-          </div>
-
-          <div className="mt-8">
-            <QRCodeCard profile={profile} />
           </div>
         </div>
       </div>
@@ -148,30 +167,37 @@ export default function ProfileBuilder() {
     return (
       <div className="min-h-screen bg-background">
         {/* Preview Header */}
-        <div className="fixed top-0 left-0 right-0 z-50 bg-card/95 backdrop-blur border-b border-border">
+        <div className="fixed top-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-md border-b border-border shadow-sm">
           <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-            <Button variant="ghost" onClick={() => setIsPreviewMode(false)} className="gap-2">
+            <Button
+              variant="ghost"
+              onClick={() => setIsPreviewMode(false)}
+              className="gap-2 font-bold text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground"
+            >
               <ArrowLeft className="w-4 h-4" />
-              Edit Profile
+              Back to Editor
             </Button>
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Eye className="w-4 h-4" />
-              <span className="text-sm font-medium">Preview Mode</span>
+            <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary">
+              <Eye className="w-3.5 h-3.5" />
+              <span className="text-[10px] font-bold uppercase tracking-widest">Live Preview</span>
             </div>
-            <Button onClick={handlePublish} className="gap-2">
+            <Button
+              onClick={handlePublish}
+              className="gap-2 font-bold text-xs uppercase tracking-widest px-6 shadow-lg shadow-primary/20"
+            >
               <Check className="w-4 h-4" />
-              Publish Profile
+              Publish Now
             </Button>
           </div>
         </div>
 
         {/* Preview Content */}
-        <div className="pt-16" ref={previewRef}>
+        <div className="pt-20" ref={previewRef}>
           <ProfilePreview profile={profile} />
         </div>
 
         {/* QR Code Overlay */}
-        <div className="fixed bottom-6 right-6 z-40">
+        <div className="fixed bottom-6 right-6 z-40 scale-90 origin-bottom-right hover:scale-100 transition-transform">
           <QRCodeCard profile={profile} />
         </div>
       </div>
@@ -180,17 +206,17 @@ export default function ProfileBuilder() {
 
   // Form Mode
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[hsl(210,20%,98%)]/50 pb-20">
       {/* Header */}
-      <header className="border-b border-border bg-card">
-        <div className="container mx-auto px-6 py-6 flex items-center justify-between">
+      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border shadow-sm">
+        <div className="container mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
-              <Scale className="w-5 h-5 text-primary-foreground" />
+            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shadow-md shadow-primary/20">
+              <Scale className="w-4 h-4 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="font-heading font-semibold text-foreground">LawyerProfile</h1>
-              <p className="text-sm text-muted-foreground">Build your professional website</p>
+              <h1 className="font-heading font-bold text-lg leading-tight text-foreground">Wokil</h1>
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Profile Architect</p>
             </div>
           </div>
           <div className="flex items-center gap-4">
@@ -201,9 +227,9 @@ export default function ProfileBuilder() {
                 localStorage.removeItem('token');
                 navigate('/');
               }}
-              className="text-muted-foreground hover:text-foreground"
+              className="text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground"
             >
-              Log Out
+              Sign Out
             </Button>
           </div>
         </div>
@@ -211,21 +237,30 @@ export default function ProfileBuilder() {
 
       {/* Main Content */}
       <main className="container mx-auto px-6 py-12 max-w-2xl">
-        <ProgressIndicator
-          currentStep={currentStep}
-          totalSteps={totalSteps}
-          steps={STEP_NAMES}
-        />
-
-        <div className="bg-card border border-border rounded-xl p-8 shadow-card">
-          {renderCurrentStep()}
-
-          <FormNavigation
+        <div className="space-y-8">
+          <ProgressIndicator
             currentStep={currentStep}
             totalSteps={totalSteps}
-            onNext={handleNext}
-            onPrev={prevStep}
+            steps={STEP_NAMES}
           />
+
+          <div className="bg-white border-none rounded-2xl p-8 md:p-10 shadow-premium animate-fade-in relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-primary/10" />
+            <div className="relative">
+              {renderCurrentStep()}
+
+              <FormNavigation
+                currentStep={currentStep}
+                totalSteps={totalSteps}
+                onNext={handleNext}
+                onPrev={prevStep}
+              />
+            </div>
+          </div>
+
+          <p className="text-center text-[10px] font-bold text-muted-foreground uppercase tracking-widest opacity-50">
+            Step {currentStep} of {totalSteps} • Your progress is saved automatically
+          </p>
         </div>
       </main>
     </div>

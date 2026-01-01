@@ -54,9 +54,9 @@ export function QRCodeCard({ profile }: QRCodeCardProps) {
     <div className="group bg-card border border-border rounded-xl p-4 text-center cursor-pointer transition-all duration-300 ease-out overflow-hidden shadow-sm hover:shadow-md">
       <div className="flex items-center justify-center gap-2">
         <QrCode className="w-5 h-5 text-primary transition-transform duration-300 group-hover:scale-110" />
-        <h3 className="font-heading font-semibold text-foreground">Contact QR</h3>
+        <h3 className="font-heading font-semibold text-lg text-foreground">Contact QR</h3>
       </div>
-      
+
       <div className="overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] max-h-0 w-0 group-hover:max-h-[240px] group-hover:w-full">
         <div className="w-full">
           {qrCodeUrl && (
