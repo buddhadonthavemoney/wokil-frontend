@@ -49,10 +49,10 @@ export default function ProfileBuilder() {
     }
   }, [navigate]);
 
-  const handlePublish = () => {
+  const handlePublish = async () => {
     const htmlSnippet = previewRef.current?.innerHTML || '';
-    const slug = publishProfile(htmlSnippet);
-    setPublishedSlug(slug);
+    const urlOrSlug = await publishProfile(htmlSnippet);
+    setPublishedSlug(urlOrSlug);
     setIsPublished(true);
     toast({
       title: "Profile Published!",
@@ -61,6 +61,7 @@ export default function ProfileBuilder() {
   };
 
   const getPublicUrl = () => {
+    if (publishedSlug.startsWith('http')) return publishedSlug;
     return `${window.location.origin}/p/${publishedSlug}`;
   };
 
@@ -150,7 +151,7 @@ export default function ProfileBuilder() {
             </Button>
             <Button
               variant="outline"
-              onClick={() => window.open(`/p/${publishedSlug}`, '_blank')}
+              onClick={() => window.open(getPublicUrl(), '_blank')}
               className="w-full sm:w-auto gap-2 px-8 py-6 rounded-xl font-bold text-sm uppercase tracking-widest border-2 hover:bg-muted transition-all"
             >
               <ExternalLink className="w-4 h-4" />

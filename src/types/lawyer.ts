@@ -25,12 +25,13 @@ export interface LawyerProfile {
   linkedIn?: string;
 
   // Theme
-  theme: 'classic' | 'modern' | 'minimal';
+  theme: 'classic' | 'modern' | 'minimal' | 'executive' | 'legal-craft';
 
   // Status
   isPublished: boolean;
   publishedAt?: string;
   slug: string;
+  siteUrl?: string;
   generatedHtml?: string;
 }
 

@@ -119,7 +119,7 @@ export function MinimalTheme({ profile }: MinimalThemeProps) {
                 <img
                   src={profile.profilePhoto}
                   alt={profile.fullName}
-                  className="w-full aspect-[4/5] object-cover scale-102 group-hover:scale-110 transition-transform duration-1000 grayscale hover:grayscale-0"
+                  className="w-full aspect-[4/5] object-cover scale-102 group-hover:scale-110 transition-transform"
                 />
               ) : (
                 <div className="w-full aspect-[4/5] bg-[#E5E1DA] flex items-center justify-center">

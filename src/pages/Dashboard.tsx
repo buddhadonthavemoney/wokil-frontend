@@ -51,6 +51,7 @@ export default function Dashboard() {
 
   const getPublicUrl = () => {
     if (!profile) return '';
+    if (profile.siteUrl) return profile.siteUrl;
     const identifier = profile.slug || profile.id;
     if (!identifier) return 'Profile identifier not set';
     return `${window.location.origin}/p/${identifier}`;
@@ -147,7 +148,7 @@ export default function Dashboard() {
                   Edit Profile
                 </Button>
                 <Button
-                  onClick={() => window.open(`/p/${profile.slug || profile.id}`, '_blank')}
+                  onClick={() => window.open(getPublicUrl(), '_blank')}
                   size="sm"
                   className="gap-2 rounded-lg font-medium shadow-lg shadow-primary/10 hover:shadow-primary/20 transition-all"
                   disabled={(!profile.slug && !profile.id) || !profile.isPublished}

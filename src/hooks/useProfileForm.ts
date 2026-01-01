@@ -118,10 +118,10 @@ export function useProfileForm() {
     setCurrentStep(Math.min(Math.max(step, 1), totalSteps));
   }, [totalSteps]);
 
-  const publishProfile = useCallback((generatedHtml?: string) => {
+  const publishProfile = useCallback(async (generatedHtml?: string) => {
     // If editing an existing profile, keep the same slug
     const slug = profile.slug || generateSlug(profile.fullName);
-    const updatedProfile: LawyerProfile = {
+    let updatedProfile: LawyerProfile = {
       ...profile,
       slug,
       isPublished: true,
@@ -130,28 +130,30 @@ export function useProfileForm() {
     };
 
     setProfile(updatedProfile);
-    // Trigger immediate save and deploy
-    const handlePublish = async () => {
-      try {
-        await profileApi.save(updatedProfile);
-        if (generatedHtml) {
-          await siteApi.deploy({
-            html: generatedHtml,
-            slug
-          });
-        }
-      } catch (err) {
-        toast({
-          title: "Error",
-          description: "Failed to publish profile.",
-          variant: "destructive"
+
+    try {
+      await profileApi.save(updatedProfile);
+      if (generatedHtml) {
+        const { url } = await siteApi.deploy({
+          html: generatedHtml,
+          slug
         });
+        if (url) {
+          updatedProfile = { ...updatedProfile, siteUrl: url };
+          setProfile(updatedProfile);
+          // Also save again with the siteUrl
+          await profileApi.save(updatedProfile);
+        }
       }
-    };
-
-    handlePublish();
-
-    return slug;
+      return updatedProfile.siteUrl || slug;
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: "Failed to publish profile.",
+        variant: "destructive"
+      });
+      return slug;
+    }
   }, [profile, toast]);
 
   return {

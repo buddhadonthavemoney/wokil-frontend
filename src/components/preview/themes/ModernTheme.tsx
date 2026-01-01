@@ -50,7 +50,7 @@ export function ModernTheme({ profile }: ModernThemeProps) {
                   <img
                     src={profile.profilePhoto}
                     alt={profile.fullName}
-                    className="w-72 h-72 md:w-96 md:h-96 rounded-[2rem] object-cover border border-white/10 shadow-2xl relative z-10 grayscale hover:grayscale-0 transition-all duration-700"
+                    className="w-72 h-72 md:w-96 md:h-96 rounded-[2rem] object-cover border border-white/10 shadow-2xl relative z-10 transition-all"
                   />
                 ) : (
                   <div className="w-72 h-72 md:w-96 md:h-96 rounded-[2rem] bg-slate-900 flex items-center justify-center border border-white/10 relative z-10 shadow-2xl">
