@@ -1,5 +1,7 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { LawyerProfile } from '@/types/lawyer';
+import { profile as profileApi, site as siteApi } from '@/lib/api';
+import { useToast } from '@/hooks/use-toast';
 
 const generateSlug = (name: string): string => {
   return name
@@ -33,30 +35,49 @@ const initialProfile: Omit<LawyerProfile, 'id' | 'slug'> = {
 
 export function useProfileForm() {
   const totalSteps = 6;
-  
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
+
   // Check if we're editing an existing profile
   const [profile, setProfile] = useState<LawyerProfile>(() => {
-    const editingSlug = sessionStorage.getItem('editingProfileSlug');
-    if (editingSlug) {
-      const profiles = JSON.parse(localStorage.getItem('lawyerProfiles') || '{}');
-      const existingProfile = profiles[editingSlug];
-      if (existingProfile) {
-        // Clear the editing flag so it doesn't persist
-        sessionStorage.removeItem('editingProfileSlug');
-        return existingProfile;
-      }
-    }
     return {
       ...initialProfile,
       id: generateId(),
       slug: '',
     };
   });
-  
-  // If editing (profile has a slug), start at the last step
-  const [currentStep, setCurrentStep] = useState(() => {
-    return profile.slug ? totalSteps : 1;
-  });
+
+  const [currentStep, setCurrentStep] = useState(1);
+
+  // Fetch profile on mount
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      try {
+        setLoading(true);
+        const data = await profileApi.get();
+        // Merge with initial to ensure all fields exist
+        setProfile(prev => ({
+          ...prev,
+          ...data,
+          // Ensure arrays are initialized if null from backend
+          areasOfPractice: data.areasOfPractice || [],
+          jurisdictions: data.jurisdictions || [],
+        }));
+        if (data.slug) {
+          setCurrentStep(totalSteps);
+        }
+      } catch (error) {
+        console.error("Failed to fetch profile", error);
+        // If 404/empty, that's fine, we start fresh
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProfile();
+  }, []);
 
   const updateProfile = useCallback(<K extends keyof LawyerProfile>(
     field: K,
@@ -68,6 +89,22 @@ export function useProfileForm() {
   const updateMultipleFields = useCallback((fields: Partial<LawyerProfile>) => {
     setProfile(prev => ({ ...prev, ...fields }));
   }, []);
+
+  // Better approach for auto-save:
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    const timer = setTimeout(async () => {
+      try {
+        await profileApi.save(profile);
+      } catch (error) {
+        console.error("Failed to save profile", error);
+      }
+    }, 1000); // 1s debounce
+
+    return () => clearTimeout(timer);
+  }, [profile]); // Triggers on every profile change
 
   const nextStep = useCallback(() => {
     setCurrentStep(prev => Math.min(prev + 1, totalSteps));
@@ -81,7 +118,7 @@ export function useProfileForm() {
     setCurrentStep(Math.min(Math.max(step, 1), totalSteps));
   }, [totalSteps]);
 
-  const publishProfile = useCallback(() => {
+  const publishProfile = useCallback((generatedHtml?: string) => {
     // If editing an existing profile, keep the same slug
     const slug = profile.slug || generateSlug(profile.fullName);
     const updatedProfile: LawyerProfile = {
@@ -89,21 +126,39 @@ export function useProfileForm() {
       slug,
       isPublished: true,
       publishedAt: profile.publishedAt || new Date().toISOString(),
+      generatedHtml,
     };
-    
-    // Save to localStorage
-    const profiles = JSON.parse(localStorage.getItem('lawyerProfiles') || '{}');
-    profiles[slug] = updatedProfile;
-    localStorage.setItem('lawyerProfiles', JSON.stringify(profiles));
-    
+
     setProfile(updatedProfile);
+    // Trigger immediate save and deploy
+    const handlePublish = async () => {
+      try {
+        await profileApi.save(updatedProfile);
+        if (generatedHtml) {
+          await siteApi.deploy({
+            html: generatedHtml,
+            slug
+          });
+        }
+      } catch (err) {
+        toast({
+          title: "Error",
+          description: "Failed to publish profile.",
+          variant: "destructive"
+        });
+      }
+    };
+
+    handlePublish();
+
     return slug;
-  }, [profile]);
+  }, [profile, toast]);
 
   return {
     profile,
     currentStep,
     totalSteps,
+    loading,
     updateProfile,
     updateMultipleFields,
     nextStep,

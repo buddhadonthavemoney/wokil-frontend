@@ -5,32 +5,33 @@ export interface LawyerProfile {
   professionalTitle: string;
   lawFirmName?: string;
   yearsOfExperience: number;
-  
+
   // Practice Details
   areasOfPractice: string[];
   jurisdictions?: string[];
-  
+
   // Contact Information
   phoneNumber: string;
   email: string;
   officeAddress: string;
-  
+
   // Professional Profile
   bio: string;
   officeHours: string;
   profilePhoto?: string;
-  
+
   // Online Presence
   website?: string;
   linkedIn?: string;
-  
+
   // Theme
   theme: 'classic' | 'modern' | 'minimal';
-  
+
   // Status
   isPublished: boolean;
   publishedAt?: string;
   slug: string;
+  generatedHtml?: string;
 }
 
 export const PRACTICE_AREAS = [

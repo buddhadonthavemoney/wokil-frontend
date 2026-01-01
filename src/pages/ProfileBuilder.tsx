@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useProfileForm } from '@/hooks/useProfileForm';
 import { ProgressIndicator } from '@/components/form/ProgressIndicator';
 import { FormNavigation } from '@/components/form/FormNavigation';
@@ -11,9 +11,10 @@ import { ThemeSelectionStep } from '@/components/form/steps/ThemeSelectionStep';
 import { ProfilePreview } from '@/components/preview/ProfilePreview';
 import { QRCodeCard } from '@/components/preview/QRCodeCard';
 import { Button } from '@/components/ui/button';
-import { Scale, Eye, ArrowLeft, Check, ExternalLink, Copy, LayoutDashboard } from 'lucide-react';
+import { Scale, Eye, ArrowLeft, Check, ExternalLink, Copy, LayoutDashboard, LogIn } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import { auth } from '@/lib/api';
 
 const STEP_NAMES = [
   'Basic Info',
@@ -34,15 +35,23 @@ export default function ProfileBuilder() {
     prevStep,
     publishProfile,
   } = useProfileForm();
-  
+
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [isPublished, setIsPublished] = useState(false);
   const [publishedSlug, setPublishedSlug] = useState('');
+  const previewRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  useEffect(() => {
+    if (!localStorage.getItem('token')) {
+      navigate('/');
+    }
+  }, [navigate]);
+
   const handlePublish = () => {
-    const slug = publishProfile();
+    const htmlSnippet = previewRef.current?.innerHTML || '';
+    const slug = publishProfile(htmlSnippet);
     setPublishedSlug(slug);
     setIsPublished(true);
     toast({
@@ -102,7 +111,7 @@ export default function ProfileBuilder() {
           <p className="text-muted-foreground mb-8">
             Share your professional profile with potential clients.
           </p>
-          
+
           <div className="bg-card border border-border rounded-xl p-4 mb-6">
             <p className="text-sm text-muted-foreground mb-2">Your profile URL:</p>
             <div className="flex items-center gap-2">
@@ -114,7 +123,7 @@ export default function ProfileBuilder() {
               </Button>
             </div>
           </div>
-          
+
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button onClick={() => navigate('/dashboard')} className="gap-2">
               <LayoutDashboard className="w-4 h-4" />
@@ -125,7 +134,7 @@ export default function ProfileBuilder() {
               View Profile
             </Button>
           </div>
-          
+
           <div className="mt-8">
             <QRCodeCard profile={profile} />
           </div>
@@ -155,12 +164,12 @@ export default function ProfileBuilder() {
             </Button>
           </div>
         </div>
-        
+
         {/* Preview Content */}
-        <div className="pt-16">
+        <div className="pt-16" ref={previewRef}>
           <ProfilePreview profile={profile} />
         </div>
-        
+
         {/* QR Code Overlay */}
         <div className="fixed bottom-6 right-6 z-40">
           <QRCodeCard profile={profile} />
@@ -174,7 +183,7 @@ export default function ProfileBuilder() {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b border-border bg-card">
-        <div className="container mx-auto px-6 py-6">
+        <div className="container mx-auto px-6 py-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
               <Scale className="w-5 h-5 text-primary-foreground" />
@@ -183,6 +192,19 @@ export default function ProfileBuilder() {
               <h1 className="font-heading font-semibold text-foreground">LawyerProfile</h1>
               <p className="text-sm text-muted-foreground">Build your professional website</p>
             </div>
+          </div>
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                localStorage.removeItem('token');
+                navigate('/');
+              }}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              Log Out
+            </Button>
           </div>
         </div>
       </header>
@@ -194,10 +216,10 @@ export default function ProfileBuilder() {
           totalSteps={totalSteps}
           steps={STEP_NAMES}
         />
-        
+
         <div className="bg-card border border-border rounded-xl p-8 shadow-card">
           {renderCurrentStep()}
-          
+
           <FormNavigation
             currentStep={currentStep}
             totalSteps={totalSteps}

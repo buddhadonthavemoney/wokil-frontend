@@ -6,6 +6,9 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import ProfileBuilder from "./pages/ProfileBuilder";
 import PublicProfile from "./pages/PublicProfile";
 import Dashboard from "./pages/Dashboard";
+import GoogleCallback from "./pages/auth/GoogleCallback";
+import Login from "./pages/Login";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -17,9 +20,16 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<ProfileBuilder />} />
-          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/" element={<Login />} />
+          <Route path="/auth/google/callback" element={<GoogleCallback />} />
           <Route path="/p/:slug" element={<PublicProfile />} />
+
+          {/* Protected Routes */}
+          <Route element={<ProtectedRoute />}>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/profile-builder" element={<ProfileBuilder />} />
+          </Route>
+
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

@@ -4,21 +4,22 @@ import { LawyerProfile } from '@/types/lawyer';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { 
-  Scale, 
-  Eye, 
-  Users, 
-  QrCode, 
-  Phone, 
-  ExternalLink, 
-  Copy, 
-  Edit, 
+import {
+  Scale,
+  Eye,
+  Users,
+  QrCode,
+  Phone,
+  ExternalLink,
+  Copy,
+  Edit,
   TrendingUp,
   Calendar,
   Globe,
   Plus
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { profile as profileApi } from '@/lib/api';
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -30,21 +31,28 @@ export default function Dashboard() {
   const { toast } = useToast();
 
   useEffect(() => {
-    const profiles = JSON.parse(localStorage.getItem('lawyerProfiles') || '{}');
-    const profileList = Object.values(profiles) as LawyerProfile[];
-    
-    if (profileList.length > 0) {
-      // Get the most recently published profile
-      const sortedProfiles = profileList.sort((a, b) => 
-        new Date(b.publishedAt || 0).getTime() - new Date(a.publishedAt || 0).getTime()
-      );
-      setProfile(sortedProfiles[0]);
-    }
-    setLoading(false);
+    const fetchProfile = async () => {
+      try {
+        const data = await profileApi.get();
+        if (data && data.id) {
+          setProfile(data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch profile:", error);
+        // Error handling if needed
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
   }, []);
 
   const getPublicUrl = () => {
-    return profile ? `${window.location.origin}/p/${profile.slug}` : '';
+    if (!profile) return '';
+    const identifier = profile.slug || profile.id;
+    if (!identifier) return 'Profile identifier not set';
+    return `${window.location.origin}/p/${identifier}`;
   };
 
   const copyUrl = () => {
@@ -74,7 +82,7 @@ export default function Dashboard() {
           <p className="text-muted-foreground mb-8">
             Create your professional lawyer profile to start attracting clients.
           </p>
-          <Button onClick={() => navigate('/')} className="gap-2">
+          <Button onClick={() => navigate('/profile-builder')} className="gap-2">
             <Plus className="w-4 h-4" />
             Create Your Profile
           </Button>
@@ -100,6 +108,16 @@ export default function Dashboard() {
                 <p className="text-sm text-muted-foreground">Manage your professional profile</p>
               </div>
             </div>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                localStorage.removeItem('token');
+                navigate('/');
+              }}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              Log Out
+            </Button>
           </div>
         </div>
       </header>
@@ -113,8 +131,8 @@ export default function Dashboard() {
               {/* Avatar */}
               <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                 {profile.profilePhoto ? (
-                  <img 
-                    src={profile.profilePhoto} 
+                  <img
+                    src={profile.profilePhoto}
                     alt={profile.fullName}
                     className="w-20 h-20 rounded-full object-cover"
                   />
@@ -124,7 +142,7 @@ export default function Dashboard() {
                   </span>
                 )}
               </div>
-              
+
               {/* Info */}
               <div className="flex-1">
                 <h2 className="text-xl font-heading font-semibold text-foreground mb-1">
@@ -135,19 +153,19 @@ export default function Dashboard() {
                   <p className="text-sm text-muted-foreground">{profile.lawFirmName}</p>
                 )}
               </div>
-              
+
               {/* Actions */}
               <div className="flex flex-wrap gap-3">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={() => {
                     if (profile?.slug) {
                       // Store profile slug for editing
                       sessionStorage.setItem('editingProfileSlug', profile.slug);
                     }
-                    navigate('/');
-                  }} 
+                    navigate('/profile-builder');
+                  }}
                   className="gap-2"
                 >
                   <Edit className="w-4 h-4" />
@@ -157,18 +175,20 @@ export default function Dashboard() {
                   <Copy className="w-4 h-4" />
                   Copy URL
                 </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => window.open(`/p/${profile.slug}`, '_blank')}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => window.open(`/p/${profile.slug || profile.id}`, '_blank')}
                   className="gap-2"
+                  disabled={(!profile.slug && !profile.id) || !profile.isPublished}
+                  title={(!profile.slug && !profile.id) ? "Set a slug in the builder to view site" : !profile.isPublished ? "Publish your profile to view site" : ""}
                 >
                   <ExternalLink className="w-4 h-4" />
                   View Site
                 </Button>
               </div>
             </div>
-            
+
             {/* URL Display */}
             <div className="mt-6 p-4 bg-muted/50 rounded-lg">
               <div className="flex items-center gap-2 text-sm">
@@ -197,7 +217,7 @@ export default function Dashboard() {
                   <p className="text-sm text-muted-foreground">Total Page Views</p>
                 </CardContent>
               </Card>
-              
+
               <Card>
                 <CardContent className="p-6">
                   <div className="flex items-center gap-3 mb-3">
@@ -211,7 +231,7 @@ export default function Dashboard() {
                   <p className="text-sm text-muted-foreground">Unique Visitors</p>
                 </CardContent>
               </Card>
-              
+
               <Card>
                 <CardContent className="p-6">
                   <div className="flex items-center gap-3 mb-3">
@@ -225,7 +245,7 @@ export default function Dashboard() {
                   <p className="text-sm text-muted-foreground">QR Code Scans</p>
                 </CardContent>
               </Card>
-              
+
               <Card>
                 <CardContent className="p-6">
                   <div className="flex items-center gap-3 mb-3">
@@ -255,14 +275,14 @@ export default function Dashboard() {
                   <div className="flex items-end justify-between gap-2 h-40">
                     {analytics.viewsThisWeek.map((views, index) => (
                       <div key={index} className="flex-1 flex flex-col items-center gap-2">
-                        <div 
+                        <div
                           className="w-full bg-primary/20 rounded-t transition-all hover:bg-primary/30"
-                          style={{ 
+                          style={{
                             height: `${(views / maxViews) * 100}%`,
                             minHeight: '8px'
                           }}
                         >
-                          <div 
+                          <div
                             className="w-full h-full bg-primary rounded-t"
                             style={{ opacity: 0.6 + (views / maxViews) * 0.4 }}
                           />
@@ -289,7 +309,7 @@ export default function Dashboard() {
                     {analytics.topReferrers.map((referrer, index) => {
                       const totalVisits = analytics.topReferrers.reduce((sum, r) => sum + r.visits, 0);
                       const percentage = Math.round((referrer.visits / totalVisits) * 100);
-                      
+
                       return (
                         <div key={index}>
                           <div className="flex items-center justify-between mb-1">
@@ -297,7 +317,7 @@ export default function Dashboard() {
                             <span className="text-sm text-muted-foreground">{referrer.visits} visits</span>
                           </div>
                           <div className="h-2 bg-muted rounded-full overflow-hidden">
-                            <div 
+                            <div
                               className="h-full bg-primary rounded-full transition-all"
                               style={{ width: `${percentage}%` }}
                             />

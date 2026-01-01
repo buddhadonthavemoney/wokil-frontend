@@ -5,6 +5,7 @@ import { ProfilePreview } from '@/components/preview/ProfilePreview';
 import { QRCodeCard } from '@/components/preview/QRCodeCard';
 import { Button } from '@/components/ui/button';
 import { Scale, Home } from 'lucide-react';
+import { profile as profileApi } from '@/lib/api';
 
 export default function PublicProfile() {
   const { slug } = useParams<{ slug: string }>();
@@ -13,17 +14,25 @@ export default function PublicProfile() {
   const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
-    if (slug) {
-      const profiles = JSON.parse(localStorage.getItem('lawyerProfiles') || '{}');
-      const foundProfile = profiles[slug];
-      
-      if (foundProfile) {
-        setProfile(foundProfile);
-      } else {
-        setNotFound(true);
+    const fetchProfile = async () => {
+      if (slug) {
+        try {
+          const data = await profileApi.getPublic(slug);
+          if (data) {
+            setProfile(data);
+          } else {
+            setNotFound(true);
+          }
+        } catch (error) {
+          console.error("Failed to fetch public profile:", error);
+          setNotFound(true);
+        } finally {
+          setLoading(false);
+        }
       }
-      setLoading(false);
-    }
+    };
+
+    fetchProfile();
   }, [slug]);
 
   if (loading) {
