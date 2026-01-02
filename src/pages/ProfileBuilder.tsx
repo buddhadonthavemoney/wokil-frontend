@@ -167,9 +167,9 @@ export default function ProfileBuilder() {
               </div>
             </div>
 
-            <div className="pt-2">
+            {/* <div className="pt-2">
               <QRCodeCard profile={profile} />
-            </div>
+            </div> */}
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
@@ -232,9 +232,9 @@ export default function ProfileBuilder() {
           )}
         </div>
 
-        <div className="fixed bottom-6 right-6 z-40 scale-90 origin-bottom-right hover:scale-100 transition-transform">
+        {/* <div className="fixed bottom-6 right-6 z-40 scale-90 origin-bottom-right hover:scale-100 transition-transform">
           <QRCodeCard profile={profile} />
-        </div>
+        </div> */}
       </div>
     );
   }

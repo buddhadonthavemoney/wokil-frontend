@@ -1,13 +1,16 @@
 import axios from 'axios';
 import { LawyerProfile } from '@/types/lawyer';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 const api = axios.create({
-    baseURL: '/api',
+    baseURL: API_BASE_URL,
     headers: {
         'Content-Type': 'application/json',
     },
 });
 
+// Request interceptor for auth token
 api.interceptors.request.use((config) => {
     const token = localStorage.getItem('token');
     if (token) {
@@ -16,13 +19,13 @@ api.interceptors.request.use((config) => {
     return config;
 });
 
+// Response interceptor
 api.interceptors.response.use(
     (response) => response,
     (error) => {
         if (error.response?.status === 401) {
             localStorage.removeItem('token');
-            // Optional: Redirect to login page or handle logout
-            // window.location.href = '/login'; 
+            // window.location.href = '/login'; // optional
         }
         return Promise.reject(error);
     }
