@@ -3,7 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { LawyerProfile } from '@/types/lawyer';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { Button } from '@/components/ui/button';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
+import QRCode from "react-qr-code";
 import {
   Scale,
   Eye,
@@ -159,6 +162,30 @@ export default function Dashboard() {
                   <ExternalLink className="w-4 h-4" />
                   View Site
                 </Button>
+                <HoverCard openDelay={0} closeDelay={0}>
+                  <HoverCardTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-2 rounded-lg font-medium shadow-sm hover:shadow-md transition-all px-2.5"
+                    >
+                      <QrCode className="w-4 h-4" />
+                    </Button>
+                  </HoverCardTrigger>
+                  <HoverCardContent className="w-auto p-4 bg-white">
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="p-2 bg-white rounded-lg">
+                        <QRCode
+                          value={getPublicUrl()}
+                          size={128}
+                          style={{ height: "auto", maxWidth: "100%", width: "100%" }}
+                          viewBox={`0 0 256 256`}
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground font-medium">Scan to visit website</p>
+                    </div>
+                  </HoverCardContent>
+                </HoverCard>
               </div>
             </div>
 
