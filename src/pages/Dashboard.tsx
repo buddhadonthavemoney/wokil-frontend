@@ -474,153 +474,174 @@ export default function Dashboard() {
           </section>
 
           {/* Analytics Overview */}
-          {analytics && (
-            <section className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h2 className="font-heading text-2xl font-bold tracking-tight text-foreground">Insights</h2>
-                <div className="text-xs text-muted-foreground font-medium uppercase tracking-widest flex items-center gap-2">
-                  <TrendingUp className="w-3.5 h-3.5 text-green-600" />
-                  Live Activity
-                </div>
+          {/* Analytics Overview */}
+          <section className="space-y-6 relative">
+            <div className="absolute inset-0 z-50 flex items-center justify-center pointer-events-none">
+              <div className="bg-white/90 backdrop-blur-md border border-primary/20 px-8 py-4 rounded-3xl shadow-premium animate-in fade-in zoom-in duration-500 hover:scale-105 transition-transform pointer-events-auto cursor-default">
+                <p className="text-base font-bold uppercase tracking-widest text-primary flex items-center gap-2">
+                  <Sparkles className="w-5 h-5" />
+                  Coming Soon
+                </p>
               </div>
+            </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                <Card className="border-none shadow-premium bg-white group hover:translate-y-[-2px] transition-all">
-                  <CardContent className="p-6">
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                        <Eye className="w-5 h-5 text-primary" />
-                      </div>
+            {(() => {
+              const displayAnalytics = analytics || {
+                totalViews: 0,
+                uniqueVisitors: 0,
+                qrScans: 0,
+                contactClicks: 0,
+                viewsThisWeek: [0, 0, 0, 0, 0, 0, 0],
+                topReferrers: []
+              };
+              const displayMaxViews = Math.max(...displayAnalytics.viewsThisWeek, 1);
+
+              return (
+                <div className="opacity-75 pointer-events-none space-y-6 select-none">
+                  <div className="flex items-center justify-between">
+                    <h2 className="font-heading text-2xl font-bold tracking-tight text-foreground">Insights</h2>
+                    <div className="text-xs text-muted-foreground font-medium uppercase tracking-widest flex items-center gap-2">
+                      <TrendingUp className="w-3.5 h-3.5 text-green-600" />
+                      Live Activity
                     </div>
-                    <p className="text-3xl font-heading font-bold text-foreground mb-1 tracking-tight">
-                      {analytics.totalViews.toLocaleString()}
-                    </p>
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Total Views</p>
-                  </CardContent>
-                </Card>
+                  </div>
 
-                <Card className="border-none shadow-premium bg-white group hover:translate-y-[-2px] transition-all">
-                  <CardContent className="p-6">
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center group-hover:bg-accent/20 transition-colors">
-                        <Users className="w-5 h-5 text-accent" />
-                      </div>
-                    </div>
-                    <p className="text-3xl font-heading font-bold text-foreground mb-1 tracking-tight">
-                      {analytics.uniqueVisitors.toLocaleString()}
-                    </p>
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Visitors</p>
-                  </CardContent>
-                </Card>
-
-                <Card className="border-none shadow-premium bg-white group hover:translate-y-[-2px] transition-all">
-                  <CardContent className="p-6">
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center group-hover:bg-emerald-500/20 transition-colors">
-                        <QrCode className="w-5 h-5 text-emerald-600" />
-                      </div>
-                    </div>
-                    <p className="text-3xl font-heading font-bold text-foreground mb-1 tracking-tight">
-                      {analytics.qrScans}
-                    </p>
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">QR Scans</p>
-                  </CardContent>
-                </Card>
-
-                <Card className="border-none shadow-premium bg-white group hover:translate-y-[-2px] transition-all">
-                  <CardContent className="p-6">
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center group-hover:bg-amber-500/20 transition-colors">
-                        <Phone className="w-5 h-5 text-amber-600" />
-                      </div>
-                    </div>
-                    <p className="text-3xl font-heading font-bold text-foreground mb-1 tracking-tight">
-                      {analytics.contactClicks}
-                    </p>
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Leads</p>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Detailed Charts */}
-              <div className="grid lg:grid-cols-2 gap-8">
-                <Card className="border-none shadow-premium bg-white overflow-hidden">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-lg font-heading font-bold flex items-center gap-2">
-                      <TrendingUp className="w-4 h-4 text-primary" />
-                      Profile Engagement
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-end justify-between gap-3 h-48 pt-6">
-                      {analytics.viewsThisWeek.map((views, index) => (
-                        <div key={index} className="flex-1 flex flex-col items-center gap-3 group">
-                          <div
-                            className="w-full bg-primary/5 rounded-lg transition-all hover:bg-primary/10 relative overflow-hidden"
-                            style={{
-                              height: `${Math.max((views / maxViews) * 100, 5)}%`,
-                            }}
-                          >
-                            <div
-                              className="absolute bottom-0 left-0 w-full bg-primary/80 rounded-t-lg transition-all"
-                              style={{ height: '100%', opacity: 0.4 + (views / maxViews) * 0.6 }}
-                            />
-                            {/* Value tooltip on hover */}
-                            <div className="absolute top-[-24px] left-1/2 translate-x-[-50%] opacity-0 group-hover:opacity-100 transition-opacity bg-primary text-primary-foreground text-[10px] py-1 px-1.5 rounded font-bold pointer-events-none">
-                              {views}
-                            </div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                    <Card className="border-none shadow-premium bg-white group transition-all">
+                      <CardContent className="p-6">
+                        <div className="flex items-center gap-3 mb-4">
+                          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center transition-colors">
+                            <Eye className="w-5 h-5 text-primary" />
                           </div>
-                          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                            {DAYS[(new Date().getDay() - 6 + index + 7) % 7]}
-                          </span>
                         </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
+                        <p className="text-3xl font-heading font-bold text-foreground mb-1 tracking-tight">
+                          {displayAnalytics.totalViews.toLocaleString()}
+                        </p>
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Total Views</p>
+                      </CardContent>
+                    </Card>
 
-                <Card className="border-none shadow-premium bg-white overflow-hidden">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-lg font-heading font-bold flex items-center gap-2">
-                      <Globe className="w-4 h-4 text-primary" />
-                      Traffic Origins
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-6 pt-4">
-                      {analytics.topReferrers.map((referrer, index) => {
-                        const totalVisits = analytics.topReferrers.reduce((sum, r) => sum + r.visits, 0);
-                        const percentage = Math.round((referrer.visits / totalVisits) * 100);
+                    <Card className="border-none shadow-premium bg-white group transition-all">
+                      <CardContent className="p-6">
+                        <div className="flex items-center gap-3 mb-4">
+                          <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center transition-colors">
+                            <Users className="w-5 h-5 text-accent" />
+                          </div>
+                        </div>
+                        <p className="text-3xl font-heading font-bold text-foreground mb-1 tracking-tight">
+                          {displayAnalytics.uniqueVisitors.toLocaleString()}
+                        </p>
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Visitors</p>
+                      </CardContent>
+                    </Card>
 
-                        return (
-                          <div key={index} className="space-y-2">
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm font-bold text-foreground/80">{referrer.source}</span>
-                              <span className="text-xs font-bold text-primary">{percentage}%</span>
-                            </div>
-                            <div className="h-2 bg-muted rounded-full overflow-hidden">
+                    <Card className="border-none shadow-premium bg-white group transition-all">
+                      <CardContent className="p-6">
+                        <div className="flex items-center gap-3 mb-4">
+                          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center transition-colors">
+                            <QrCode className="w-5 h-5 text-emerald-600" />
+                          </div>
+                        </div>
+                        <p className="text-3xl font-heading font-bold text-foreground mb-1 tracking-tight">
+                          {displayAnalytics.qrScans}
+                        </p>
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">QR Scans</p>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="border-none shadow-premium bg-white group transition-all">
+                      <CardContent className="p-6">
+                        <div className="flex items-center gap-3 mb-4">
+                          <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center transition-colors">
+                            <Phone className="w-5 h-5 text-amber-600" />
+                          </div>
+                        </div>
+                        <p className="text-3xl font-heading font-bold text-foreground mb-1 tracking-tight">
+                          {displayAnalytics.contactClicks}
+                        </p>
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Leads</p>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  <div className="grid lg:grid-cols-2 gap-8">
+                    <Card className="border-none shadow-premium bg-white overflow-hidden">
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-lg font-heading font-bold flex items-center gap-2">
+                          <TrendingUp className="w-4 h-4 text-primary" />
+                          Profile Engagement
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="flex items-end justify-between gap-3 h-48 pt-6">
+                          {displayAnalytics.viewsThisWeek.map((views, index) => (
+                            <div key={index} className="flex-1 flex flex-col items-center gap-3 group">
                               <div
-                                className="h-full bg-primary rounded-full transition-all duration-1000 ease-out"
-                                style={{ width: `${percentage}%` }}
-                              />
+                                className="w-full bg-primary/5 rounded-lg transition-all relative overflow-hidden"
+                                style={{
+                                  height: `${Math.max((views / displayMaxViews) * 100, 5)}%`,
+                                }}
+                              >
+                                <div
+                                  className="absolute bottom-0 left-0 w-full bg-primary/80 rounded-t-lg transition-all"
+                                  style={{ height: '100%', opacity: 0.4 + (views / displayMaxViews) * 0.6 }}
+                                />
+                              </div>
+                              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                                {DAYS[(new Date().getDay() - 6 + index + 7) % 7]}
+                              </span>
                             </div>
-                          </div>
-                        );
-                      })}
-                      {analytics.topReferrers.length === 0 && (
-                        <div className="flex flex-col items-center justify-center h-full py-10 opacity-40">
-                          <Globe className="w-8 h-8 mb-2" />
-                          <p className="text-xs font-bold uppercase tracking-widest">No traffic data yet</p>
+                          ))}
                         </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </section>
-          )}
+                      </CardContent>
+                    </Card>
 
-          {/* Footer Metadata */}
+                    <Card className="border-none shadow-premium bg-white overflow-hidden">
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-lg font-heading font-bold flex items-center gap-2">
+                          <Globe className="w-4 h-4 text-primary" />
+                          Traffic Origins
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-6 pt-4">
+                          {(() => {
+                            let totalVisits = 0;
+                            displayAnalytics.topReferrers.forEach(r => { totalVisits += r.visits; });
+
+                            return displayAnalytics.topReferrers.map((referrer, index) => {
+                              const percentage = totalVisits > 0 ? Math.round((referrer.visits / totalVisits) * 100) : 0;
+
+                              return (
+                                <div key={index} className="space-y-2">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-sm font-bold text-foreground/80">{referrer.source}</span>
+                                    <span className="text-xs font-bold text-primary">{percentage}%</span>
+                                  </div>
+                                  <div className="h-2 bg-muted rounded-full overflow-hidden">
+                                    <div
+                                      className="h-full bg-primary rounded-full"
+                                      style={{ width: `${percentage}%` }}
+                                    />
+                                  </div>
+                                </div>
+                              );
+                            })
+                          })()}
+                          {displayAnalytics.topReferrers.length === 0 && (
+                            <div className="flex flex-col items-center justify-center h-full py-10 opacity-40">
+                              <Globe className="w-8 h-8 mb-2" />
+                              <p className="text-xs font-bold uppercase tracking-widest">No traffic data yet</p>
+                            </div>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
+              );
+            })()}
+          </section>   {/* Footer Metadata */}
           {profile.publishedAt && (
             <footer className="pt-6 border-t border-border/50 flex items-center gap-4 text-xs text-muted-foreground font-medium uppercase tracking-widest">
               <div className="flex items-center gap-2">
