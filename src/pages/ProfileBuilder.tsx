@@ -11,7 +11,7 @@ import { ThemeSelectionStep } from '@/components/form/steps/ThemeSelectionStep';
 import { ProfilePreview } from '@/components/preview/ProfilePreview';
 import { QRCodeCard } from '@/components/preview/QRCodeCard';
 import { Button } from '@/components/ui/button';
-import { Scale, Eye, ArrowLeft, Check, ExternalLink, Copy, LayoutDashboard } from 'lucide-react';
+import { Scale, Eye, ArrowLeft, Check, ExternalLink, Copy, LayoutDashboard, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 
@@ -38,10 +38,10 @@ export default function ProfileBuilder() {
   } = useProfileForm();
 
   const [isPreviewMode, setIsPreviewMode] = useState(false);
-  const [isPublished, setIsPublished] = useState(false);
-  const [publishedSlug, setPublishedSlug] = useState('');
   const [previewHtml, setPreviewHtml] = useState('');
   const [loadingPreview, setLoadingPreview] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [publishStatus, setPublishStatus] = useState("Initializing...");
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -75,35 +75,30 @@ export default function ProfileBuilder() {
   }, [isPreviewMode, fetchPreview]);
 
   const handlePublish = async () => {
+    setIsPublishing(true);
     try {
-      const urlOrSlug = await publishProfile();
-      setPublishedSlug(urlOrSlug);
-      setIsPublished(true);
-      toast({
-        title: "Profile Published!",
-        description: "Your professional profile is now live.",
+      // Trigger deployment initialization
+      await publishProfile();
+
+      // Navigate to dashboard immediately with deploying state
+      navigate('/dashboard', {
+        state: {
+          deploying: true, // Signal to start tracking deployment
+        }
       });
-    } catch (err) {
+
+    } catch (err: any) {
+      console.error("Publish failed:", err);
       toast({
         title: "Publish Failed",
-        description: "There was an error publishing your profile.",
+        description: err.message || "There was an error initiating publication.",
         variant: "destructive",
       });
+      setIsPublishing(false);
     }
   };
 
-  const getPublicUrl = () => {
-    if (publishedSlug.startsWith('http')) return publishedSlug;
-    return `${window.location.origin}/p/${publishedSlug}`;
-  };
 
-  const copyUrl = () => {
-    navigator.clipboard.writeText(getPublicUrl());
-    toast({
-      title: "URL Copied!",
-      description: "The profile URL has been copied to your clipboard.",
-    });
-  };
 
   const renderCurrentStep = () => {
     switch (currentStep) {
@@ -132,67 +127,7 @@ export default function ProfileBuilder() {
     }
   };
 
-  if (isPublished) {
-    return (
-      <div className="min-h-screen bg-[hsl(210,20%,98%)]/50 flex items-center justify-center p-6">
-        <div className="max-w-xl w-full text-center space-y-10 animate-fade-in">
-          <div className="relative inline-block">
-            <div className="w-24 h-24 rounded-3xl bg-primary flex items-center justify-center mx-auto shadow-2xl shadow-primary/40 relative z-10">
-              <Check className="w-12 h-12 text-primary-foreground stroke-[3]" />
-            </div>
-            <div className="absolute inset-0 bg-primary/20 rounded-3xl blur-2xl animate-pulse" />
-          </div>
 
-          <div className="space-y-4">
-            <h1 className="font-heading text-4xl font-bold tracking-tight text-foreground">Congratulations!</h1>
-            <p className="text-lg text-muted-foreground max-w-md mx-auto">
-              Your professional digital identity is officially live and ready to attract clients.
-            </p>
-          </div>
-
-          <div className="bg-white border-none shadow-premium rounded-2xl p-8 space-y-6">
-            <div className="space-y-2">
-              <p className="text-xs font-bold uppercase tracking-widest text-primary/60">Your Public URL</p>
-              <div className="flex items-center gap-2 bg-muted p-3 rounded-xl border border-border/50">
-                <code className="flex-1 text-sm font-medium break-all text-primary/80">
-                  {getPublicUrl()}
-                </code>
-                <button
-                  onClick={copyUrl}
-                  className="p-2 hover:bg-white rounded-lg transition-all shadow-sm active:scale-95"
-                  title="Copy Link"
-                >
-                  <Copy className="w-4 h-4 text-primary" />
-                </button>
-              </div>
-            </div>
-
-            {/* <div className="pt-2">
-              <QRCodeCard profile={profile} />
-            </div> */}
-          </div>
-
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <Button
-              onClick={() => navigate('/dashboard')}
-              className="w-full sm:w-auto gap-2 px-8 py-6 rounded-xl font-bold text-sm uppercase tracking-widest shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all"
-            >
-              <LayoutDashboard className="w-4 h-4" />
-              Go to Dashboard
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => window.open(getPublicUrl(), '_blank')}
-              className="w-full sm:w-auto gap-2 px-8 py-6 rounded-xl font-bold text-sm uppercase tracking-widest border-2 hover:bg-muted transition-all"
-            >
-              <ExternalLink className="w-4 h-4" />
-              View Website
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   if (isPreviewMode) {
     return (
@@ -213,10 +148,20 @@ export default function ProfileBuilder() {
             </div>
             <Button
               onClick={handlePublish}
+              disabled={isPublishing}
               className="gap-2 font-bold text-xs uppercase tracking-widest px-6 shadow-lg shadow-primary/20"
             >
-              <Check className="w-4 h-4" />
-              Publish Now
+              {isPublishing ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Publishing...
+                </>
+              ) : (
+                <>
+                  <Check className="w-4 h-4" />
+                  Publish Now
+                </>
+              )}
             </Button>
           </div>
         </div>

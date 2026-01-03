@@ -37,6 +37,10 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { profile as profileApi } from '@/lib/api';
 
+import { toast as sonnerToast } from "sonner";
+import { InfoModal } from '@/components/InfoModal';
+import { useLocation } from 'react-router-dom';
+
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 export default function Dashboard() {
@@ -44,29 +48,147 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [cardLayout, setCardLayout] = useState<CardLayout>('classic');
   const [cardColor, setCardColor] = useState<CardColor>('slate');
+
+  const [showInfoModal, setShowInfoModal] = useState(false);
+  const [modalContent, setModalContent] = useState({
+    title: '',
+    description: '',
+    type: 'info' as 'info' | 'success' | 'error',
+  });
+
   const { analytics } = useAnalytics(profile);
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   const componentRef = useRef<HTMLDivElement>(null);
   const handlePrint = useReactToPrint({
     contentRef: componentRef,
   });
 
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const data = await profileApi.get();
-        if (data && data.id) {
-          setProfile(data);
-        }
-      } catch (error) {
-        console.error("Failed to fetch profile:", error);
-        // Error handling if needed
-      } finally {
-        setLoading(false);
+  const fetchProfile = async () => {
+    try {
+      const data = await profileApi.get();
+      if (data && data.id) {
+        setProfile(data);
       }
-    };
+    } catch (error) {
+      console.error("Failed to fetch profile:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
+    // Check for navigation state
+    if (location.state?.showInfoModal) {
+      setShowInfoModal(true);
+      setModalContent({
+        title: location.state.modalTitle || 'Info',
+        description: location.state.modalDescription || '',
+        type: location.state.modalType || 'info',
+      });
+      window.history.replaceState({}, document.title);
+    }
+  }, [location]);
+
+  // Handle Deployment Stream
+  useEffect(() => {
+    if (location.state?.deploying) {
+      // Clear flag
+      window.history.replaceState({}, document.title);
+
+      const token = localStorage.getItem('token');
+      const streamUrl = `${import.meta.env.VITE_API_BASE_URL}/sites/deploy/stream`;
+      const abortController = new AbortController();
+      let toastId: string | number | undefined;
+
+      const startStream = async () => {
+        // Initial toast
+        toastId = sonnerToast.loading("Initializing deployment...", {
+          description: "Your site is being prepared for publication."
+        });
+
+        try {
+          const response = await fetch(streamUrl, {
+            headers: { 'Authorization': `Bearer ${token}` },
+            signal: abortController.signal,
+          });
+
+          const reader = response.body?.getReader();
+          const decoder = new TextDecoder();
+          if (!reader) return;
+
+          let buffer = '';
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            const chunk = decoder.decode(value, { stream: true });
+            buffer += chunk;
+
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || '';
+
+            for (const line of lines) {
+              if (line.trim().startsWith('data: ')) {
+                try {
+                  const jsonStr = line.trim().substring(6);
+                  const data = JSON.parse(jsonStr);
+                  console.log("Stream data:", data);
+
+                  if (data.type === 'status') {
+                    sonnerToast.loading(data.message || data.status, {
+                      id: toastId,
+                    });
+                  } else if (data.type === 'done') {
+                    if (data.status === 'success') {
+                      sonnerToast.success("Profile Published Successfully!", {
+                        id: toastId,
+                        description: "Your professional profile is now live.",
+                        duration: 5000,
+                      });
+
+                      // Show the successful info modal too if desired, or just rely on toast
+                      setShowInfoModal(true);
+                      setModalContent({
+                        title: 'Profile Published!',
+                        description: 'Your professional profile is now live. You can share your link to start attracting clients.',
+                        type: 'success',
+                      });
+
+                      // Refresh profile to update button states (e.g. view site)
+                      await fetchProfile();
+
+                    } else {
+                      sonnerToast.error(data.message || "Deployment failed", {
+                        id: toastId,
+                      });
+                    }
+                    return;
+                  }
+                } catch (e) {
+                  console.error("Parse error", e);
+                }
+              }
+            }
+          }
+        } catch (err: any) {
+          if (err.name !== 'AbortError') {
+            console.error("Stream error", err);
+            sonnerToast.error("Connection lost", { id: toastId, description: "Could not track deployment progress." });
+          }
+        }
+      };
+
+      startStream();
+
+      return () => {
+        abortController.abort();
+      };
+    }
+  }, [location]);
+
+  useEffect(() => {
     fetchProfile();
   }, []);
 
@@ -503,6 +625,14 @@ export default function Dashboard() {
           )}
         </div>
       </main>
+      <InfoModal
+        isOpen={showInfoModal}
+        onClose={() => setShowInfoModal(false)}
+        title={modalContent.title}
+        description={modalContent.description}
+        type={modalContent.type}
+        actionLabel="Got it"
+      />
     </div>
   );
 }

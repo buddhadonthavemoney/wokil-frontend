@@ -1,17 +1,39 @@
 import { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useLocation } from 'react-router-dom';
 import { LawyerProfile } from '@/types/lawyer';
 import { ProfilePreview } from '@/components/preview/ProfilePreview';
 import { QRCodeCard } from '@/components/preview/QRCodeCard';
 import { Button } from '@/components/ui/button';
 import { Scale, Home } from 'lucide-react';
+import { InfoModal } from '@/components/InfoModal';
 import { profile as profileApi } from '@/lib/api';
 
 export default function PublicProfile() {
   const { slug } = useParams<{ slug: string }>();
+  const location = useLocation();
   const [profile, setProfile] = useState<LawyerProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [showInfoModal, setShowInfoModal] = useState(false);
+  const [modalContent, setModalContent] = useState({
+    title: '',
+    description: '',
+    type: 'info' as 'info' | 'success' | 'error',
+  });
+
+  useEffect(() => {
+    // Check for navigation state to show modal
+    if (location.state?.showInfoModal) {
+      setShowInfoModal(true);
+      setModalContent({
+        title: location.state.modalTitle || 'Info',
+        description: location.state.modalDescription || '',
+        type: location.state.modalType || 'info',
+      });
+      // Clear the state so it doesn't persist on reload (conceptually, though react router state persists)
+      window.history.replaceState({}, document.title);
+    }
+  }, [location]);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -68,10 +90,20 @@ export default function PublicProfile() {
   return (
     <>
       <ProfilePreview profile={profile} />
+
       {/* QR Code Overlay */}
       <div className="fixed bottom-6 right-6 z-40">
         <QRCodeCard profile={profile} />
       </div>
+
+      <InfoModal
+        isOpen={showInfoModal}
+        onClose={() => setShowInfoModal(false)}
+        title={modalContent.title}
+        description={modalContent.description}
+        type={modalContent.type}
+        actionLabel="View Profile"
+      />
     </>
   );
 }
