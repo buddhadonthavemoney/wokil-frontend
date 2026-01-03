@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LawyerProfile } from '@/types/lawyer';
 import { useAnalytics } from '@/hooks/useAnalytics';
@@ -6,6 +6,16 @@ import { Button } from '@/components/ui/button';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { useReactToPrint } from 'react-to-print';
+import { BusinessCard, CardTheme } from '@/components/BusinessCard';
 import QRCode from "react-qr-code";
 import {
   Scale,
@@ -20,7 +30,9 @@ import {
   Calendar,
   Globe,
   Plus,
-  Shield
+  Shield,
+  IdCard,
+  Printer
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { profile as profileApi } from '@/lib/api';
@@ -30,9 +42,14 @@ const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 export default function Dashboard() {
   const [profile, setProfile] = useState<LawyerProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [cardTheme, setCardTheme] = useState<CardTheme>('classic');
   const { analytics } = useAnalytics(profile);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const componentRef = useRef<HTMLDivElement>(null);
+  const handlePrint = useReactToPrint({
+    contentRef: componentRef,
+  });
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -153,6 +170,54 @@ export default function Dashboard() {
                   <Edit className="w-4 h-4" />
                   Edit Profile
                 </Button>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-2 rounded-lg font-medium shadow-sm hover:shadow-md transition-all"
+                    >
+                      <IdCard className="w-4 h-4" />
+                      Contact Card
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                      <DialogTitle>Professional Business Card</DialogTitle>
+                      <DialogDescription>
+                        Preview your professional business card. You can print this card to share your contact details.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="flex flex-col gap-4">
+                      <div className="flex items-center justify-center gap-2 mb-2">
+                        {(['classic', 'modern', 'executive', 'nature', 'cobalt'] as CardTheme[]).map((theme) => (
+                          <button
+                            key={theme}
+                            onClick={() => setCardTheme(theme)}
+                            className={`w-8 h-8 rounded-full border-2 transition-all ${cardTheme === theme ? 'border-primary ring-2 ring-primary/20 scale-110' : 'border-transparent opacity-70 hover:opacity-100 hover:scale-105'}`}
+                            style={{
+                              background: theme === 'classic' ? '#0f172a' :
+                                theme === 'modern' ? '#2563eb' :
+                                  theme === 'executive' ? '#1c1917' :
+                                    theme === 'nature' ? '#065f46' :
+                                      '#312e81'
+                            }}
+                            title={theme.charAt(0).toUpperCase() + theme.slice(1)}
+                          />
+                        ))}
+                      </div>
+                      <div className="flex items-center justify-center p-8 bg-slate-50/50 rounded-xl border border-border/50">
+                        <BusinessCard ref={componentRef} profile={profile} publicUrl={getPublicUrl()} theme={cardTheme} />
+                      </div>
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <Button onClick={() => handlePrint()} className="gap-2">
+                        <Printer className="w-4 h-4" />
+                        Print Card
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
                 <Button
                   onClick={() => window.open(getPublicUrl(), '_blank')}
                   size="sm"
