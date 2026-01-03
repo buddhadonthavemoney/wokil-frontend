@@ -373,8 +373,8 @@ export default function Dashboard() {
                         </div>
                       </div>
 
-                      <div className="w-full overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-muted-foreground/20">
-                        <div className="flex items-center justify-center min-w-max md:min-w-0 p-4 md:p-8 bg-slate-50/50 rounded-xl border border-border/50">
+                      <div className="w-full overflow-hidden pb-4">
+                        <div className="flex items-center justify-center p-2 sm:p-4 md:p-8 bg-slate-50/50 rounded-xl border border-border/50">
                           <BusinessCard ref={componentRef} profile={profile} publicUrl={getPublicUrl()} layout={cardLayout} colorTheme={cardColor} />
                         </div>
                       </div>

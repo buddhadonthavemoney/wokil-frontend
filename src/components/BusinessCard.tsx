@@ -98,196 +98,207 @@ export const BusinessCard = React.forwardRef<HTMLDivElement, BusinessCardProps>(
     }, [profile]);
 
     return (
-        <div ref={ref} className="flex flex-col md:flex-row items-center justify-center gap-8 print:block print:gap-4 bg-slate-100 p-8 print:bg-white print:p-0">
-            {/* FRONT CARD */}
-            <div className={`w-[3.5in] h-[2in] ${colors.frontBg} ${colors.frontText} border border-slate-200 shadow-sm relative overflow-hidden flex print:shadow-none print:border print:border-slate-100 mx-auto break-inside-avoid page-break-after-always`}>
+        <div ref={ref} className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-8 print:block print:gap-4 bg-slate-100 p-4 sm:p-8 print:bg-white print:p-0 w-full overflow-hidden">
+            {/* FRONT CARD CONTAINER */}
+            <div className="relative w-full max-w-[3.5in] aspect-[3.5/2] sm:aspect-auto sm:h-[1.5in] md:h-auto md:aspect-[3.5/2] print:w-[3.5in] print:h-[2in] print:mx-0 print:mb-4">
+                {/* Responsive Scale Wrapper */}
+                <div className="relative md:absolute md:inset-0 origin-center scale-[0.6] sm:scale-75 md:scale-100 flex items-center justify-center print:static print:scale-100 h-[2in] md:h-full">
+                    <div className={`w-[3.5in] h-[2in] ${colors.frontBg} ${colors.frontText} border border-slate-200 shadow-sm relative overflow-hidden flex print:shadow-none print:border print:border-slate-100 mx-auto break-inside-avoid page-break-after-always shrink-0`}>
 
-                {/* CLASSIC LAYOUT */}
-                {layout === 'classic' && (
-                    <>
-                        <div className={`w-1/3 ${colors.frontSidebarBg} h-full p-4 flex flex-col items-center justify-center ${colors.frontSidebarText} relative`}>
-                            <div className="absolute top-0 right-0 w-16 h-16 bg-white/10 rounded-bl-full"></div>
+                        {/* CLASSIC LAYOUT */}
+                        {layout === 'classic' && (
+                            <>
+                                <div className={`w-1/3 ${colors.frontSidebarBg} h-full p-4 flex flex-col items-center justify-center ${colors.frontSidebarText} relative`}>
+                                    <div className="absolute top-0 right-0 w-16 h-16 bg-white/10 rounded-bl-full"></div>
 
-                            <div className="z-10 relative">
-                                <div className="flex flex-col items-center gap-2">
-                                    <span className="text-[10px] font-bold tracking-widest uppercase opacity-70">Scan QR</span>
-                                    {/* vCard QR Code */}
-                                    <div className="p-1.5 bg-white rounded-lg inline-block w-full max-w-[80px] shadow-lg">
+                                    <div className="z-10 relative">
+                                        <div className="flex flex-col items-center gap-2">
+                                            <span className="text-[10px] font-bold tracking-widest uppercase opacity-70">Scan QR</span>
+                                            {/* vCard QR Code */}
+                                            <div className="p-1.5 bg-white rounded-lg inline-block w-full max-w-[80px] shadow-lg">
+                                                <QRCode
+                                                    value={vCardData}
+                                                    size={256}
+                                                    style={{ height: "auto", maxWidth: "100%", width: "100%" }}
+                                                    viewBox={`0 0 256 256`}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="w-2/3 p-5 flex flex-col justify-center gap-4">
+                                    <div>
+                                        <h2 className={`text-lg font-bold leading-tight mb-1`}>{basicInformation.fullName}</h2>
+
+                                        {basicInformation.lawFirmName && (
+                                            <p className={`text-xs font-semibold uppercase tracking-wide opacity-70`}>{basicInformation.lawFirmName}</p>
+                                        )}
+                                        <p className={`text-[10px] font-medium mt-0.5 opacity-60`}>{basicInformation.professionalTitle}</p>
+                                    </div>
+
+                                    <div className="space-y-2 text-[10px]">
+                                        {contactInformation.phoneNumber && (
+                                            <div className={`flex items-center gap-2 ${colors.frontText} opacity-80`}>
+                                                <Phone className={`w-3 h-3 ${colors.iconColor} shrink-0`} />
+                                                <span className="font-medium">{contactInformation.phoneNumber}</span>
+                                            </div>
+                                        )}
+                                        {contactInformation.email && (
+                                            <div className={`flex items-center gap-2 ${colors.frontText} opacity-80`}>
+                                                <Mail className={`w-3 h-3 ${colors.iconColor} shrink-0`} />
+                                                <span className="font-medium truncate">{contactInformation.email}</span>
+                                            </div>
+                                        )}
+                                        {publicUrl && (
+                                            <div className={`flex items-center gap-2 ${colors.frontText} opacity-80`}>
+                                                <Globe className={`w-3 h-3 ${colors.iconColor} shrink-0`} />
+                                                <span className="font-medium truncate">{publicUrl.replace(/^https?:\/\//, '')}</span>
+                                            </div>
+                                        )}
+                                        {contactInformation.officeAddress && (
+                                            <div className={`flex items-start gap-2 ${colors.frontText} opacity-80`}>
+                                                <MapPin className={`w-3 h-3 ${colors.iconColor} shrink-0 mt-0.5`} />
+                                                <span className="font-medium leading-tight">{contactInformation.officeAddress}</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </>
+                        )}
+
+                        {/* MINIMAL LAYOUT */}
+                        {layout === 'minimal' && (
+                            <div className="w-full h-full p-6 flex flex-col items-center justify-center text-center relative">
+                                <div className={`absolute left-0 top-0 bottom-0 w-1 ${colors.frontSidebarBg}`}></div>
+                                <div className="mb-4">
+                                    <h2 className={`text-xl font-bold tracking-tight mb-0.5`}>{basicInformation.fullName}</h2>
+                                    <p className="text-[10px] font-medium opacity-60 uppercase tracking-widest">{basicInformation.professionalTitle}</p>
+                                    {basicInformation.lawFirmName && (
+                                        <p className={`text-[10px] font-semibold opacity-50 mt-1`}>{basicInformation.lawFirmName}</p>
+                                    )}
+                                </div>
+
+                                <div className="w-full flex items-center justify-between gap-4 mt-2">
+                                    <div className="text-left space-y-1.5 text-[9px] opacity-80 flex-1">
+                                        {contactInformation.phoneNumber && (
+                                            <div className="flex items-center gap-1.5">
+                                                <Phone className={`w-2.5 h-2.5 ${colors.iconColor}`} />
+                                                <span>{contactInformation.phoneNumber}</span>
+                                            </div>
+                                        )}
+                                        {contactInformation.email && (
+                                            <div className="flex items-center gap-1.5">
+                                                <Mail className={`w-2.5 h-2.5 ${colors.iconColor}`} />
+                                                <span className="truncate">{contactInformation.email}</span>
+                                            </div>
+                                        )}
+                                        {publicUrl && (
+                                            <div className="flex items-center gap-1.5">
+                                                <Globe className={`w-2.5 h-2.5 ${colors.iconColor}`} />
+                                                <span className="truncate">{publicUrl.replace(/^https?:\/\//, '')}</span>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="p-1 bg-white border border-slate-100 rounded shadow-sm">
                                         <QRCode
                                             value={vCardData}
                                             size={256}
-                                            style={{ height: "auto", maxWidth: "100%", width: "100%" }}
+                                            style={{ height: "auto", width: "56px" }}
                                             viewBox={`0 0 256 256`}
                                         />
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        )}
 
-                        <div className="w-2/3 p-5 flex flex-col justify-center gap-4">
-                            <div>
-                                <h2 className={`text-lg font-bold leading-tight mb-1`}>{basicInformation.fullName}</h2>
+                        {/* MODERN LAYOUT */}
+                        {layout === 'modern' && (
+                            <div className="w-full h-full flex flex-col relative">
+                                {/* Top Band */}
+                                <div className={`h-16 w-full ${colors.frontSidebarBg} flex items-center justify-between px-6 ${colors.frontSidebarText}`}>
+                                    <div>
+                                        <h2 className="text-lg font-bold leading-none">{basicInformation.fullName}</h2>
+                                        <p className="text-[9px] opacity-80 font-medium uppercase tracking-wide mt-1">{basicInformation.professionalTitle}</p>
+                                    </div>
+                                    {basicInformation.lawFirmName && (
+                                        <div className="text-[10px] font-bold opacity-60 bg-white/10 px-2 py-0.5 rounded">
+                                            {basicInformation.lawFirmName}
+                                        </div>
+                                    )}
+                                </div>
 
-                                {basicInformation.lawFirmName && (
-                                    <p className={`text-xs font-semibold uppercase tracking-wide opacity-70`}>{basicInformation.lawFirmName}</p>
-                                )}
-                                <p className={`text-[10px] font-medium mt-0.5 opacity-60`}>{basicInformation.professionalTitle}</p>
+                                {/* Bottom Content */}
+                                <div className="flex-1 p-6 flex items-start justify-between">
+                                    <div className="space-y-2 text-[10px] opacity-80">
+                                        {contactInformation.phoneNumber && (
+                                            <div className={`flex items-center gap-2 ${colors.frontText}`}>
+                                                <Phone className={`w-3 h-3 ${colors.iconColor}`} />
+                                                <span className="font-semibold">{contactInformation.phoneNumber}</span>
+                                            </div>
+                                        )}
+                                        {contactInformation.email && (
+                                            <div className={`flex items-center gap-2 ${colors.frontText}`}>
+                                                <Mail className={`w-3 h-3 ${colors.iconColor} shrink-0`} />
+                                                <span className="font-semibold">{contactInformation.email}</span>
+                                            </div>
+                                        )}
+                                        {contactInformation.officeAddress && (
+                                            <div className={`flex items-center gap-2 ${colors.frontText}`}>
+                                                <MapPin className={`w-3 h-3 ${colors.iconColor} shrink-0`} />
+                                                <span className="font-semibold leading-tight max-w-[180px]">{contactInformation.officeAddress}</span>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="flex flex-col items-center gap-1">
+                                        <div className="p-1 border border-slate-100 rounded">
+                                            <QRCode
+                                                value={vCardData}
+                                                size={256}
+                                                style={{ height: "auto", width: "64px" }}
+                                                viewBox={`0 0 256 256`}
+                                            />
+                                        </div>
+                                        <span className="text-[7px] font-bold uppercase tracking-wider opacity-50">Contact</span>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            {/* BACK CARD CONTAINER */}
+            <div className="relative w-full max-w-[3.5in] aspect-[3.5/2] sm:aspect-auto sm:h-[1.5in] md:h-auto md:aspect-[3.5/2] print:w-[3.5in] print:h-[2in] print:mx-0">
+                {/* Responsive Scale Wrapper */}
+                <div className="relative md:absolute md:inset-0 origin-center scale-[0.6] sm:scale-75 md:scale-100 flex items-center justify-center print:static print:scale-100 h-[2in] md:h-full">
+                    <div className={`w-[3.5in] h-[2in] ${colors.backBg} ${colors.backText} border border-slate-200 shadow-sm relative overflow-hidden flex flex-col items-center justify-center print:shadow-none print:border print:border-slate-100 mx-auto break-inside-avoid shrink-0`}>
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-bl-full"></div>
+                        <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-tr-full"></div>
+
+                        <div className="z-10 flex flex-col items-center gap-3">
+                            <div className="flex items-center gap-2 mb-1">
+                                <Globe className={`w-4 h-4 opacity-70`} />
+                                <span className={`text-sm font-semibold tracking-widest uppercase opacity-80`}>Online Presence</span>
                             </div>
 
-                            <div className="space-y-2 text-[10px]">
-                                {contactInformation.phoneNumber && (
-                                    <div className={`flex items-center gap-2 ${colors.frontText} opacity-80`}>
-                                        <Phone className={`w-3 h-3 ${colors.iconColor} shrink-0`} />
-                                        <span className="font-medium">{contactInformation.phoneNumber}</span>
-                                    </div>
-                                )}
-                                {contactInformation.email && (
-                                    <div className={`flex items-center gap-2 ${colors.frontText} opacity-80`}>
-                                        <Mail className={`w-3 h-3 ${colors.iconColor} shrink-0`} />
-                                        <span className="font-medium truncate">{contactInformation.email}</span>
-                                    </div>
-                                )}
-                                {publicUrl && (
-                                    <div className={`flex items-center gap-2 ${colors.frontText} opacity-80`}>
-                                        <Globe className={`w-3 h-3 ${colors.iconColor} shrink-0`} />
-                                        <span className="font-medium truncate">{publicUrl.replace(/^https?:\/\//, '')}</span>
-                                    </div>
-                                )}
-                                {contactInformation.officeAddress && (
-                                    <div className={`flex items-start gap-2 ${colors.frontText} opacity-80`}>
-                                        <MapPin className={`w-3 h-3 ${colors.iconColor} shrink-0 mt-0.5`} />
-                                        <span className="font-medium leading-tight">{contactInformation.officeAddress}</span>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </>
-                )}
-
-                {/* MINIMAL LAYOUT */}
-                {layout === 'minimal' && (
-                    <div className="w-full h-full p-6 flex flex-col items-center justify-center text-center relative">
-                        <div className={`absolute left-0 top-0 bottom-0 w-1 ${colors.frontSidebarBg}`}></div>
-                        <div className="mb-4">
-                            <h2 className={`text-xl font-bold tracking-tight mb-0.5`}>{basicInformation.fullName}</h2>
-                            <p className="text-[10px] font-medium opacity-60 uppercase tracking-widest">{basicInformation.professionalTitle}</p>
-                            {basicInformation.lawFirmName && (
-                                <p className={`text-[10px] font-semibold opacity-50 mt-1`}>{basicInformation.lawFirmName}</p>
-                            )}
-                        </div>
-
-                        <div className="w-full flex items-center justify-between gap-4 mt-2">
-                            <div className="text-left space-y-1.5 text-[9px] opacity-80 flex-1">
-                                {contactInformation.phoneNumber && (
-                                    <div className="flex items-center gap-1.5">
-                                        <Phone className={`w-2.5 h-2.5 ${colors.iconColor}`} />
-                                        <span>{contactInformation.phoneNumber}</span>
-                                    </div>
-                                )}
-                                {contactInformation.email && (
-                                    <div className="flex items-center gap-1.5">
-                                        <Mail className={`w-2.5 h-2.5 ${colors.iconColor}`} />
-                                        <span className="truncate">{contactInformation.email}</span>
-                                    </div>
-                                )}
-                                {publicUrl && (
-                                    <div className="flex items-center gap-1.5">
-                                        <Globe className={`w-2.5 h-2.5 ${colors.iconColor}`} />
-                                        <span className="truncate">{publicUrl.replace(/^https?:\/\//, '')}</span>
-                                    </div>
-                                )}
-                            </div>
-
-                            <div className="p-1 bg-white border border-slate-100 rounded shadow-sm">
+                            <div className="p-2 bg-white rounded-xl shadow-lg">
                                 <QRCode
-                                    value={vCardData}
-                                    size={256}
-                                    style={{ height: "auto", width: "56px" }}
+                                    value={publicUrl}
+                                    size={80}
+                                    style={{ height: "auto", maxWidth: "100%", width: "100%" }}
                                     viewBox={`0 0 256 256`}
                                 />
                             </div>
                         </div>
                     </div>
-                )}
-
-                {/* MODERN LAYOUT */}
-                {layout === 'modern' && (
-                    <div className="w-full h-full flex flex-col relative">
-                        {/* Top Band */}
-                        <div className={`h-16 w-full ${colors.frontSidebarBg} flex items-center justify-between px-6 ${colors.frontSidebarText}`}>
-                            <div>
-                                <h2 className="text-lg font-bold leading-none">{basicInformation.fullName}</h2>
-                                <p className="text-[9px] opacity-80 font-medium uppercase tracking-wide mt-1">{basicInformation.professionalTitle}</p>
-                            </div>
-                            {basicInformation.lawFirmName && (
-                                <div className="text-[10px] font-bold opacity-60 bg-white/10 px-2 py-0.5 rounded">
-                                    {basicInformation.lawFirmName}
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Bottom Content */}
-                        <div className="flex-1 p-6 flex items-start justify-between">
-                            <div className="space-y-2 text-[10px] opacity-80">
-                                {contactInformation.phoneNumber && (
-                                    <div className={`flex items-center gap-2 ${colors.frontText}`}>
-                                        <Phone className={`w-3 h-3 ${colors.iconColor}`} />
-                                        <span className="font-semibold">{contactInformation.phoneNumber}</span>
-                                    </div>
-                                )}
-                                {contactInformation.email && (
-                                    <div className={`flex items-center gap-2 ${colors.frontText}`}>
-                                        <Mail className={`w-3 h-3 ${colors.iconColor}`} />
-                                        <span className="font-semibold">{contactInformation.email}</span>
-                                    </div>
-                                )}
-                                {contactInformation.officeAddress && (
-                                    <div className={`flex items-center gap-2 ${colors.frontText}`}>
-                                        <MapPin className={`w-3 h-3 ${colors.iconColor}`} />
-                                        <span className="font-semibold leading-tight max-w-[180px]">{contactInformation.officeAddress}</span>
-                                    </div>
-                                )}
-                            </div>
-
-                            <div className="flex flex-col items-center gap-1">
-                                <div className="p-1 border border-slate-100 rounded">
-                                    <QRCode
-                                        value={vCardData}
-                                        size={256}
-                                        style={{ height: "auto", width: "64px" }}
-                                        viewBox={`0 0 256 256`}
-                                    />
-                                </div>
-                                <span className="text-[7px] font-bold uppercase tracking-wider opacity-50">Contact</span>
-                            </div>
-                        </div>
-                    </div>
-                )}
-            </div>
-
-            {/* BACK CARD */}
-            <div className={`w-[3.5in] h-[2in] ${colors.backBg} ${colors.backText} border border-slate-200 shadow-sm relative overflow-hidden flex flex-col items-center justify-center print:shadow-none print:border print:border-slate-100 mx-auto break-inside-avoid`}>
-                <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-bl-full"></div>
-                <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-tr-full"></div>
-
-                <div className="z-10 flex flex-col items-center gap-3">
-                    <div className="flex items-center gap-2 mb-1">
-                        <Globe className={`w-4 h-4 opacity-70`} />
-                        <span className={`text-sm font-semibold tracking-widest uppercase opacity-80`}>Online Presence</span>
-                    </div>
-
-                    <div className="p-2 bg-white rounded-xl shadow-lg">
-                        <QRCode
-                            value={publicUrl}
-                            size={80}
-                            style={{ height: "auto", maxWidth: "100%", width: "100%" }}
-                            viewBox={`0 0 256 256`}
-                        />
-                    </div>
                 </div>
             </div>
         </div>
     );
+
 });
 
 BusinessCard.displayName = 'BusinessCard';
