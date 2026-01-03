@@ -93,48 +93,54 @@ export default function Login() {
                         </div>
 
                         {/* Hero Illustration / Mockup */}
-                        <div className="flex-1 relative w-full max-w-[600px] aspect-square lg:aspect-auto h-auto">
-                            <div className="absolute inset-0 bg-gradient-to-tr from-primary/20 to-transparent rounded-3xl blur-3xl -z-10" />
-                            <div className="bg-card border border-border rounded-2xl shadow-2xl p-6 relative overflow-hidden group">
-                                <div className="absolute top-0 left-0 w-full h-1 bg-primary" />
-                                <div className="flex items-center gap-4 mb-8">
-                                    <div className="w-16 h-16 rounded-full bg-muted animate-pulse" />
-                                    <div className="space-y-2 flex-1">
-                                        <div className="h-4 w-1/3 bg-muted rounded animate-pulse" />
-                                        <div className="h-3 w-1/4 bg-muted/60 rounded animate-pulse" />
-                                    </div>
-                                </div>
-                                <div className="space-y-4 mb-8">
-                                    <div className="h-3 w-5/6 bg-muted rounded animate-pulse" />
-                                    <div className="h-3 w-full bg-muted rounded animate-pulse" />
-                                    <div className="h-3 w-4/6 bg-muted rounded animate-pulse" />
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="h-10 bg-primary/5 border border-primary/10 rounded-lg flex items-center justify-center">
-                                        <div className="h-2 w-12 bg-primary/20 rounded" />
-                                    </div>
-                                    <div className="h-10 bg-primary/5 border border-primary/10 rounded-lg flex items-center justify-center">
-                                        <div className="h-2 w-12 bg-primary/20 rounded" />
-                                    </div>
-                                </div>
+                        <div className="flex-1 relative w-full max-w-[500px] mx-auto lg:mx-0">
+                            <div className="relative group p-6 sm:p-10">
+                                <div className="absolute inset-6 sm:inset-10 bg-gradient-to-tr from-primary/20 to-transparent rounded-3xl blur-3xl -z-10" />
 
-                                {/* Overlay "Live" Badge */}
-                                <div className="absolute top-4 right-4 flex items-center gap-1.5 px-2 py-1 rounded bg-green-500/10 border border-green-500/20 text-green-600 text-[10px] font-bold uppercase tracking-wider">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-green-600 animate-pulse" />
-                                    Digital Profile Live
-                                </div>
-                            </div>
+                                <div className="relative">
+                                    {/* Main Mockup Card */}
+                                    <div className="bg-card border border-border rounded-2xl shadow-2xl p-6 relative overflow-hidden z-10">
+                                        <div className="absolute top-0 left-0 w-full h-1 bg-primary" />
+                                        <div className="flex items-center gap-4 mb-8">
+                                            <div className="w-16 h-16 rounded-full bg-muted animate-pulse" />
+                                            <div className="space-y-2 flex-1">
+                                                <div className="h-4 w-1/3 bg-muted rounded animate-pulse" />
+                                                <div className="h-3 w-1/4 bg-muted/60 rounded animate-pulse" />
+                                            </div>
+                                        </div>
+                                        <div className="space-y-4 mb-8">
+                                            <div className="h-3 w-5/6 bg-muted rounded animate-pulse" />
+                                            <div className="h-3 w-full bg-muted rounded animate-pulse" />
+                                            <div className="h-3 w-4/6 bg-muted rounded animate-pulse" />
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="h-10 bg-primary/5 border border-primary/10 rounded-lg flex items-center justify-center">
+                                                <div className="h-2 w-12 bg-primary/20 rounded" />
+                                            </div>
+                                            <div className="h-10 bg-primary/5 border border-primary/10 rounded-lg flex items-center justify-center">
+                                                <div className="h-2 w-12 bg-primary/20 rounded" />
+                                            </div>
+                                        </div>
+                                    </div>
 
-                            {/* Floating Analytics Card */}
-                            <div className="absolute -bottom-6 -left-6 bg-card border border-border p-4 rounded-xl shadow-xl hidden sm:block max-w-[200px]">
-                                <div className="flex items-center gap-2 mb-3">
-                                    <BarChart3 className="w-4 h-4 text-primary" />
-                                    <span className="text-xs font-semibold">Growth</span>
-                                </div>
-                                <div className="space-y-1">
-                                    <div className="text-lg font-bold">12,402</div>
-                                    <div className="text-[10px] text-green-600 flex items-center gap-0.5 font-medium">
-                                        +24% this month
+                                    {/* Overlay "Live" Badge - Tied to card mockup bounds */}
+                                    <div className="absolute -top-3 -right-3 z-20 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-green-500/20 text-green-600 text-[10px] font-bold uppercase tracking-wider shadow-lg">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-green-600 animate-pulse" />
+                                        Digital Profile Live
+                                    </div>
+
+                                    {/* Floating Analytics Card - Tied to card mockup bounds */}
+                                    <div className="absolute -bottom-6 -left-6 z-20 bg-card border border-border p-4 rounded-xl shadow-xl max-w-[160px] sm:max-w-[200px] animate-in slide-in-from-bottom-5 duration-700">
+                                        <div className="flex items-center gap-2 mb-3">
+                                            <BarChart3 className="w-4 h-4 text-primary" />
+                                            <span className="text-xs font-semibold">Growth</span>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <div className="text-lg font-bold">12,402</div>
+                                            <div className="text-[10px] text-green-600 flex items-center gap-0.5 font-medium">
+                                                +24% this month
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -151,7 +157,7 @@ export default function Login() {
                         <p className="text-muted-foreground">Focus on your practice, we'll handle your online presence.</p>
                     </div>
 
-                    <div className="grid md:grid-cols-3 gap-8">
+                    <div className="grid md:grid-cols-4 gap-8">
                         {[{
                             icon: <Globe className="w-6 h-6" />,
                             title: "Instant Public URL",
@@ -162,7 +168,11 @@ export default function Login() {
                             desc: "Our step-by-step assistant guides you through creating the perfect profile in minutes."
                         }, {
                             icon: <BarChart3 className="w-6 h-6" />,
-                            title: "Smart Analytics",
+                            title: "Customizable Business Card",
+                            desc: "Get your customizable business card with your contact and website QRs."
+                        }, {
+                            icon: <BarChart3 className="w-6 h-6" />,
+                            title: "Smart Analytics(Coming Soon)",
                             desc: "Track profile views, QR scans, and contact button clicks to measure your impact."
                         }].map((feature, i) => (
                             <div key={i} className="bg-card border border-border p-8 rounded-2xl text-left hover:border-primary/40 transition-colors group">
