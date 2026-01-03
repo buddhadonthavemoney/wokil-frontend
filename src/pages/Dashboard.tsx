@@ -73,7 +73,8 @@ export default function Dashboard() {
   const fetchProfile = async () => {
     try {
       const data = await profileApi.get();
-      if (data && data.id) {
+      // Relaxed check: if data exists and has basic info, we treat it as valid.
+      if (data && (data.id || data.basicInformation)) {
         setProfile(data);
       }
     } catch (error) {
@@ -384,23 +385,17 @@ export default function Dashboard() {
                     </div>
                   </DialogContent>
                 </Dialog>
-                <Button
-                  onClick={() => window.open(getPublicUrl(), '_blank')}
-                  size="sm"
-                  className="gap-2 rounded-lg font-medium shadow-lg shadow-primary/10 hover:shadow-primary/20 transition-all"
-                  disabled={(!profile.slug && !profile.id) || !profile.isPublished}
-                >
-                  <ExternalLink className="w-4 h-4" />
-                  View Site
-                </Button>
                 <HoverCard openDelay={0} closeDelay={0}>
                   <HoverCardTrigger asChild>
                     <Button
-                      variant="outline"
+                      onClick={() => window.open(getPublicUrl(), '_blank')}
                       size="sm"
-                      className="gap-2 rounded-lg font-medium shadow-sm hover:shadow-md transition-all px-2.5"
+                      className="gap-2 rounded-lg font-medium shadow-lg shadow-primary/10 hover:shadow-primary/20 transition-all"
+                      disabled={(!profile.slug && !profile.id) || !profile.isPublished}
                     >
-                      <QrCode className="w-4 h-4" />
+                      <ExternalLink className="w-4 h-4" />
+                      View Site
+                      <QrCode className="w-4 h-4 opacity-70" />
                     </Button>
                   </HoverCardTrigger>
                   <HoverCardContent className="w-auto p-4 bg-white">
