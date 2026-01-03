@@ -15,7 +15,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useReactToPrint } from 'react-to-print';
-import { BusinessCard, CardTheme } from '@/components/BusinessCard';
+import { BusinessCard, CardLayout, CardColor } from '@/components/BusinessCard';
 import QRCode from "react-qr-code";
 import {
   Scale,
@@ -42,7 +42,8 @@ const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 export default function Dashboard() {
   const [profile, setProfile] = useState<LawyerProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [cardTheme, setCardTheme] = useState<CardTheme>('classic');
+  const [cardLayout, setCardLayout] = useState<CardLayout>('classic');
+  const [cardColor, setCardColor] = useState<CardColor>('slate');
   const { analytics } = useAnalytics(profile);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -181,33 +182,56 @@ export default function Dashboard() {
                       Contact Card
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="max-w-2xl">
+                  <DialogContent className="max-w-5xl">
                     <DialogHeader>
                       <DialogTitle>Professional Business Card</DialogTitle>
                       <DialogDescription>
                         Preview your professional business card. You can print this card to share your contact details.
                       </DialogDescription>
                     </DialogHeader>
-                    <div className="flex flex-col gap-4">
-                      <div className="flex items-center justify-center gap-2 mb-2">
-                        {(['classic', 'modern', 'executive', 'nature', 'cobalt'] as CardTheme[]).map((theme) => (
-                          <button
-                            key={theme}
-                            onClick={() => setCardTheme(theme)}
-                            className={`w-8 h-8 rounded-full border-2 transition-all ${cardTheme === theme ? 'border-primary ring-2 ring-primary/20 scale-110' : 'border-transparent opacity-70 hover:opacity-100 hover:scale-105'}`}
-                            style={{
-                              background: theme === 'classic' ? '#0f172a' :
-                                theme === 'modern' ? '#2563eb' :
-                                  theme === 'executive' ? '#1c1917' :
-                                    theme === 'nature' ? '#065f46' :
-                                      '#312e81'
-                            }}
-                            title={theme.charAt(0).toUpperCase() + theme.slice(1)}
-                          />
-                        ))}
+                    <div className="flex flex-col gap-6">
+                      <div className="flex flex-col sm:flex-row gap-8 justify-center items-center">
+                        {/* Layout Selector */}
+                        <div className="flex flex-col gap-2">
+                          <label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider text-center">Layout</label>
+                          <div className="flex items-center justify-center gap-2">
+                            {(['classic', 'minimal', 'modern'] as CardLayout[]).map((layout) => (
+                              <button
+                                key={layout}
+                                onClick={() => setCardLayout(layout)}
+                                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${cardLayout === layout ? 'bg-primary text-primary-foreground shadow-md' : 'bg-muted text-muted-foreground hover:bg-muted/80'}`}
+                              >
+                                {layout.charAt(0).toUpperCase() + layout.slice(1)}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Color Selector */}
+                        <div className="flex flex-col gap-2">
+                          <label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider text-center">Color Theme</label>
+                          <div className="flex items-center justify-center gap-2">
+                            {(['slate', 'blue', 'emerald', 'indigo', 'amber'] as CardColor[]).map((color) => (
+                              <button
+                                key={color}
+                                onClick={() => setCardColor(color)}
+                                className={`w-8 h-8 rounded-full border-2 transition-all ${cardColor === color ? 'border-primary ring-2 ring-primary/20 scale-110' : 'border-transparent opacity-70 hover:opacity-100 hover:scale-105'}`}
+                                style={{
+                                  background: color === 'slate' ? '#0f172a' :
+                                    color === 'blue' ? '#2563eb' :
+                                      color === 'amber' ? '#d97706' :
+                                        color === 'emerald' ? '#059669' :
+                                          '#4338ca'
+                                }}
+                                title={color.charAt(0).toUpperCase() + color.slice(1)}
+                              />
+                            ))}
+                          </div>
+                        </div>
                       </div>
+
                       <div className="flex items-center justify-center p-8 bg-slate-50/50 rounded-xl border border-border/50">
-                        <BusinessCard ref={componentRef} profile={profile} publicUrl={getPublicUrl()} theme={cardTheme} />
+                        <BusinessCard ref={componentRef} profile={profile} publicUrl={getPublicUrl()} layout={cardLayout} colorTheme={cardColor} />
                       </div>
                     </div>
                     <div className="flex justify-end gap-2">
