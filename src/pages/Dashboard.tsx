@@ -297,9 +297,9 @@ export default function Dashboard() {
         <div className="flex flex-col gap-10">
           {/* Profile Section */}
           <section>
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
               <h2 className="font-heading text-2xl font-bold tracking-tight text-foreground">Your Profile</h2>
-              <div className="flex gap-3">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                 <Button
                   variant="outline"
                   size="sm"
@@ -373,8 +373,10 @@ export default function Dashboard() {
                         </div>
                       </div>
 
-                      <div className="flex items-center justify-center p-8 bg-slate-50/50 rounded-xl border border-border/50">
-                        <BusinessCard ref={componentRef} profile={profile} publicUrl={getPublicUrl()} layout={cardLayout} colorTheme={cardColor} />
+                      <div className="w-full overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-muted-foreground/20">
+                        <div className="flex items-center justify-center min-w-max md:min-w-0 p-4 md:p-8 bg-slate-50/50 rounded-xl border border-border/50">
+                          <BusinessCard ref={componentRef} profile={profile} publicUrl={getPublicUrl()} layout={cardLayout} colorTheme={cardColor} />
+                        </div>
                       </div>
                     </div>
                     <div className="flex justify-end gap-2">
@@ -417,10 +419,10 @@ export default function Dashboard() {
 
             <Card className="border-none shadow-premium bg-white overflow-hidden">
               <CardContent className="p-8">
-                <div className="flex flex-col md:flex-row gap-8 items-start">
+                <div className="flex flex-col md:flex-row gap-8 items-center md:items-start text-center md:text-left">
                   {/* Avatar */}
-                  <div className="relative group">
-                    <div className="w-24 h-24 rounded-2xl bg-primary/5 flex items-center justify-center p-1 border-2 border-primary/10 transition-colors group-hover:border-primary/20">
+                  <div className="relative group shrink-0">
+                    <div className="w-24 h-24 md:w-28 md:h-28 rounded-2xl bg-primary/5 flex items-center justify-center p-1 border-2 border-primary/10 transition-colors group-hover:border-primary/20 shadow-inner">
                       {profile.professionalProfile.profilePhoto ? (
                         <img
                           src={profile.professionalProfile.profilePhoto}
@@ -454,10 +456,10 @@ export default function Dashboard() {
                       </p>
                     </div>
 
-                    <div className="flex flex-wrap gap-4 pt-2">
-                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/50 border border-border/50 text-sm font-medium">
-                        <Globe className="w-4 h-4 text-primary" />
-                        <code className="text-foreground/80">{getPublicUrl()}</code>
+                    <div className="flex flex-col md:flex-row flex-wrap gap-3 md:gap-4 pt-2 items-center md:items-start w-full">
+                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/50 border border-border/50 text-sm font-medium max-w-full">
+                        <Globe className="w-4 h-4 text-primary shrink-0" />
+                        <code className="text-foreground/80 truncate max-w-[200px] sm:max-w-xs md:max-w-md">{getPublicUrl().replace(/^https?:\/\//, '')}</code>
                         <button
                           onClick={copyUrl}
                           className="ml-1 p-1 hover:bg-primary/10 rounded transition-colors"
@@ -643,18 +645,18 @@ export default function Dashboard() {
             })()}
           </section>   {/* Footer Metadata */}
           {profile.publishedAt && (
-            <footer className="pt-6 border-t border-border/50 flex items-center gap-4 text-xs text-muted-foreground font-medium uppercase tracking-widest">
+            <footer className="pt-8 border-t border-border/50 flex flex-col sm:flex-row items-center gap-4 sm:gap-6 text-[10px] text-muted-foreground font-bold uppercase tracking-widest">
               <div className="flex items-center gap-2">
-                <Calendar className="w-3.5 h-3.5" />
+                <Calendar className="w-3.5 h-3.5 text-primary/60" />
                 <span>Established {new Date(profile.publishedAt).toLocaleDateString('en-US', {
                   month: 'short',
                   day: 'numeric',
                   year: 'numeric'
                 })}</span>
               </div>
-              <div className="w-1 h-1 rounded-full bg-muted-foreground/30" />
+              <div className="hidden sm:block w-1 h-1 rounded-full bg-muted-foreground/30" />
               <div className="flex items-center gap-2">
-                <Shield className="w-3.5 h-3.5" />
+                <Shield className="w-3.5 h-3.5 text-primary/60" />
                 <span>Verified Professional</span>
               </div>
             </footer>
