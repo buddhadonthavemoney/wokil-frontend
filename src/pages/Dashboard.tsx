@@ -32,7 +32,12 @@ import {
   Plus,
   Shield,
   IdCard,
-  Printer
+  Printer,
+  Rocket,
+  Sparkles,
+  Loader2,
+  CheckCircle2,
+  XCircle
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { profile as profileApi } from '@/lib/api';
@@ -100,13 +105,39 @@ export default function Dashboard() {
       const token = localStorage.getItem('token');
       const streamUrl = `${import.meta.env.VITE_API_BASE_URL}/sites/deploy/stream`;
       const abortController = new AbortController();
-      let toastId: string | number | undefined;
+      let toastId: string | number = "deploy-toast";
+
+      const showToast = (status: 'loading' | 'success' | 'error', message: string, detail?: string) => {
+        sonnerToast.custom((t) => (
+          <div className="w-[356px] bg-white rounded-2xl shadow-2xl border-2 border-primary/20 p-4 flex items-start gap-4 animate-in slide-in-from-bottom-5 fade-in duration-300">
+            <div className={`
+              mt-1 w-10 h-10 rounded-full flex items-center justify-center shrink-0 shadow-lg
+              ${status === 'loading' ? 'bg-primary/10 text-primary' : ''}
+              ${status === 'success' ? 'bg-green-100 text-green-600' : ''}
+              ${status === 'error' ? 'bg-red-100 text-red-600' : ''}
+            `}>
+              {status === 'loading' && <Loader2 className="w-5 h-5 animate-spin" />}
+              {status === 'success' && <Sparkles className="w-5 h-5" />}
+              {status === 'error' && <XCircle className="w-5 h-5" />}
+            </div>
+            <div className="flex-1 space-y-1">
+              <h3 className="font-heading font-bold text-sm text-foreground">
+                {status === 'loading' && 'Deploying Profile'}
+                {status === 'success' && 'Deployment Complete'}
+                {status === 'error' && 'Deployment Failed'}
+              </h3>
+              <p className="text-xs font-medium text-muted-foreground leading-relaxed">
+                {message}
+              </p>
+              {detail && <p className="text-[10px] text-muted-foreground/70 uppercase tracking-widest">{detail}</p>}
+            </div>
+          </div>
+        ), { id: toastId, duration: status === 'loading' ? Infinity : 5000 });
+      };
 
       const startStream = async () => {
         // Initial toast
-        toastId = sonnerToast.loading("Initializing deployment...", {
-          description: "Your site is being prepared for publication."
-        });
+        showToast('loading', 'Initializing deployment...', 'Preparing assets');
 
         try {
           const response = await fetch(streamUrl, {
@@ -137,18 +168,11 @@ export default function Dashboard() {
                   console.log("Stream data:", data);
 
                   if (data.type === 'status') {
-                    sonnerToast.loading(data.message || data.status, {
-                      id: toastId,
-                    });
+                    showToast('loading', data.message || data.status, 'Processing');
                   } else if (data.type === 'done') {
                     if (data.status === 'success') {
-                      sonnerToast.success("Profile Published Successfully!", {
-                        id: toastId,
-                        description: "Your professional profile is now live.",
-                        duration: 5000,
-                      });
+                      showToast('success', "Your professional profile is now live.", "Success");
 
-                      // Show the successful info modal too if desired, or just rely on toast
                       setShowInfoModal(true);
                       setModalContent({
                         title: 'Profile Published!',
@@ -156,13 +180,9 @@ export default function Dashboard() {
                         type: 'success',
                       });
 
-                      // Refresh profile to update button states (e.g. view site)
                       await fetchProfile();
-
                     } else {
-                      sonnerToast.error(data.message || "Deployment failed", {
-                        id: toastId,
-                      });
+                      showToast('error', data.message || "Deployment failed", "Error");
                     }
                     return;
                   }
@@ -175,7 +195,7 @@ export default function Dashboard() {
         } catch (err: any) {
           if (err.name !== 'AbortError') {
             console.error("Stream error", err);
-            sonnerToast.error("Connection lost", { id: toastId, description: "Could not track deployment progress." });
+            showToast('error', "Connection lost", "Network Error");
           }
         }
       };
