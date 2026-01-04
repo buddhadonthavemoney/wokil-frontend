@@ -192,6 +192,7 @@ export default function Dashboard() {
 
                   case 'done':
                     if (event.status === 'success') {
+                      showToast('success', event.message, "LIVE");
                       setShowInfoModal(true);
                       setModalContent({
                         title: 'Website is Live!',
@@ -201,6 +202,7 @@ export default function Dashboard() {
 
                       await fetchProfile();
                     } else {
+                      showToast('error', event.message, "FAILED");
                       setModalContent({
                         title: 'Deployment Failed',
                         description: event.message || 'An error occurred during the deployment process.',
