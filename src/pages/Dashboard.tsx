@@ -108,24 +108,34 @@ export default function Dashboard() {
       const abortController = new AbortController();
       let toastId: string | number = "deploy-toast";
 
-      const showToast = (status: 'loading' | 'success' | 'error', message: string, detail?: string) => {
+      type DeployStatus = 'queued' | 'starting' | 'deploying' | 'success' | 'failed';
+
+      interface DeployEvent {
+        type: 'status' | 'log' | 'done';
+        status?: DeployStatus;
+        message?: string;
+        progress?: number;
+        timestamp: string;
+      }
+
+      const showToast = (variant: 'loading' | 'success' | 'error', message: string, detail?: string) => {
         sonnerToast.custom((t) => (
           <div className="w-[356px] bg-white rounded-2xl shadow-2xl border-2 border-primary/20 p-4 flex items-start gap-4 animate-in slide-in-from-bottom-5 fade-in duration-300">
             <div className={`
               mt-1 w-10 h-10 rounded-full flex items-center justify-center shrink-0 shadow-lg
-              ${status === 'loading' ? 'bg-primary/10 text-primary' : ''}
-              ${status === 'success' ? 'bg-green-100 text-green-600' : ''}
-              ${status === 'error' ? 'bg-red-100 text-red-600' : ''}
+              ${variant === 'loading' ? 'bg-primary/10 text-primary' : ''}
+              ${variant === 'success' ? 'bg-green-100 text-green-600' : ''}
+              ${variant === 'error' ? 'bg-red-100 text-red-600' : ''}
             `}>
-              {status === 'loading' && <Loader2 className="w-5 h-5 animate-spin" />}
-              {status === 'success' && <Sparkles className="w-5 h-5" />}
-              {status === 'error' && <XCircle className="w-5 h-5" />}
+              {variant === 'loading' && <Loader2 className="w-5 h-5 animate-spin" />}
+              {variant === 'success' && <Sparkles className="w-5 h-5" />}
+              {variant === 'error' && <XCircle className="w-5 h-5" />}
             </div>
             <div className="flex-1 space-y-1">
               <h3 className="font-heading font-bold text-sm text-foreground">
-                {status === 'loading' && 'Deploying website'}
-                {status === 'success' && 'Deployment Complete'}
-                {status === 'error' && 'Deployment Failed'}
+                {variant === 'loading' && 'Deploying Website'}
+                {variant === 'success' && 'Deployment Complete'}
+                {variant === 'error' && 'Deployment Failed'}
               </h3>
               <p className="text-xs font-medium text-muted-foreground leading-relaxed">
                 {message}
@@ -133,11 +143,10 @@ export default function Dashboard() {
               {detail && <p className="text-[10px] text-muted-foreground/70 uppercase tracking-widest">{detail}</p>}
             </div>
           </div>
-        ), { id: toastId, duration: status === 'loading' ? Infinity : 5000 });
+        ), { id: toastId, duration: variant === 'loading' ? Infinity : 5000 });
       };
 
       const startStream = async () => {
-        // Initial toast
         showToast('loading', 'Initializing deployment...', 'Preparing assets');
 
         try {
@@ -162,41 +171,54 @@ export default function Dashboard() {
             buffer = lines.pop() || '';
 
             for (const line of lines) {
-              if (line.trim().startsWith('data: ')) {
-                try {
-                  const jsonStr = line.trim().substring(6);
-                  const data = JSON.parse(jsonStr);
-                  console.log("Stream data:", data);
+              const trimmed = line.trim();
+              if (!trimmed || !trimmed.startsWith('data: ')) continue;
 
-                  if (data.type === 'status') {
-                    showToast('loading', data.message || data.status, 'Processing');
-                  } else if (data.type === 'done') {
-                    if (data.status === 'success') {
-                      showToast('success', "Deployment successful", "Success");
+              try {
+                const event: DeployEvent = JSON.parse(trimmed.substring(6));
+                console.log("Deployment Event:", event);
 
+                switch (event.type) {
+                  case 'status':
+                    const statusMsg = event.progress !== undefined ? `${event.message} (${event.progress}%)` : event.message;
+                    showToast('loading', statusMsg || 'Processing...', event.status?.toUpperCase() || 'DEPLOYING');
+                    break;
+
+                  case 'log':
+                    if (event.message) {
+                      console.log(`[DEPLOY LOG] ${event.message}`);
+                    }
+                    break;
+
+                  case 'done':
+                    if (event.status === 'success') {
                       setShowInfoModal(true);
                       setModalContent({
-                        title: 'Profile Published!',
-                        description: data.message,
+                        title: 'Website is Live!',
+                        description: event.message || 'Your professional profile has been successfully published.',
                         type: 'success',
                       });
 
                       await fetchProfile();
                     } else {
-                      showToast('error', data.message || "Deployment failed", "Error");
+                      setModalContent({
+                        title: 'Deployment Failed',
+                        description: event.message || 'An error occurred during the deployment process.',
+                        type: 'error',
+                      });
+                      setShowInfoModal(true);
                     }
-                    return;
-                  }
-                } catch (e) {
-                  console.error("Parse error", e);
+                    return; // Stop processing stream on 'done'
                 }
+              } catch (e) {
+                console.error("Failed to parse SSE event:", e);
               }
             }
           }
         } catch (err: any) {
           if (err.name !== 'AbortError') {
-            console.error("Stream error", err);
-            showToast('error', "Connection lost", "Network Error");
+            console.error("Deployment stream error:", err);
+            showToast('error', "The connection to the deployment server was lost.", "CONNECTION LOST");
           }
         }
       };
