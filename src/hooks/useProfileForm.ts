@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { LawyerProfile } from '@/types/lawyer';
 import { profile as profileApi, site as siteApi } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
@@ -42,11 +42,14 @@ const initialProfile: Omit<LawyerProfile, 'id' | 'slug'> = {
   themeSelection: {
     theme: 'classic',
   },
+  subdomainSelection: {
+    subdomain: '',
+  },
   isPublished: false,
 };
 
 export function useProfileForm() {
-  const totalSteps = 6;
+  const totalSteps = 7;
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
 
@@ -60,8 +63,27 @@ export function useProfileForm() {
   });
 
   const [currentStep, setCurrentStep] = useState(1);
+  const lastSavedProfile = useRef(JSON.stringify(profile));
 
-  // Fetch profile on mount
+  // Initialize lastSavedProfile when data is fetched
+  useEffect(() => {
+    if (loading === false) {
+      lastSavedProfile.current = JSON.stringify(profile);
+    }
+  }, [loading]); // Only reset when loading state changes (i.e. after initial fetch)
+
+  // Handle manual saves
+  const saveProfileData = useCallback(async () => {
+    const currentProfileJson = JSON.stringify(profile);
+    if (currentProfileJson === lastSavedProfile.current) return;
+
+    try {
+      await profileApi.save(profile);
+      lastSavedProfile.current = currentProfileJson;
+    } catch (error) {
+      console.error("Failed to auto-save profile:", error);
+    }
+  }, [profile]);
   useEffect(() => {
     const fetchProfile = async () => {
       const token = localStorage.getItem('token');
@@ -85,6 +107,7 @@ export function useProfileForm() {
           professionalProfile: { ...prev.professionalProfile, ...data.professionalProfile },
           onlinePresence: { ...prev.onlinePresence, ...data.onlinePresence },
           themeSelection: { ...prev.themeSelection, ...data.themeSelection },
+          subdomainSelection: { ...prev.subdomainSelection, ...data.subdomainSelection },
         }));
         if (data.slug) {
           setCurrentStep(totalSteps);
@@ -116,25 +139,10 @@ export function useProfileForm() {
     }));
   }, []);
 
-  // Better approach for auto-save:
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) return;
-
-    const timer = setTimeout(async () => {
-      try {
-        await profileApi.save(profile);
-      } catch (error) {
-        console.error("Failed to save profile", error);
-      }
-    }, 1000); // 1s debounce
-
-    return () => clearTimeout(timer);
-  }, [profile]); // Triggers on every profile change
-
-  const nextStep = useCallback(() => {
+  const nextStep = useCallback(async () => {
+    await saveProfileData();
     setCurrentStep(prev => Math.min(prev + 1, totalSteps));
-  }, [totalSteps]);
+  }, [totalSteps, saveProfileData]);
 
   const prevStep = useCallback(() => {
     setCurrentStep(prev => Math.max(prev - 1, 1));
@@ -145,11 +153,16 @@ export function useProfileForm() {
   }, [totalSteps]);
 
   const publishProfile = useCallback(async () => {
-    // If editing an existing profile, keep the same slug
-    const slug = profile.slug || generateSlug(profile.basicInformation.fullName);
+    // Priority: Nested subdomain > existing slug > generated slug
+    const finalSlug = profile.subdomainSelection?.subdomain || profile.slug || generateSlug(profile.basicInformation.fullName);
+
     let updatedProfile: LawyerProfile = {
       ...profile,
-      slug,
+      slug: finalSlug,
+      subdomainSelection: {
+        ...profile.subdomainSelection,
+        subdomain: finalSlug
+      },
       isPublished: true,
       publishedAt: profile.publishedAt || new Date().toISOString(),
     };
@@ -158,7 +171,7 @@ export function useProfileForm() {
 
     try {
       await profileApi.save(updatedProfile);
-      const { url } = await siteApi.deploy({ slug });
+      const { url } = await siteApi.deploy({ slug: finalSlug });
 
       if (url) {
         updatedProfile = { ...updatedProfile, siteUrl: url };
@@ -166,14 +179,14 @@ export function useProfileForm() {
         // Also save again with the siteUrl
         await profileApi.save(updatedProfile);
       }
-      return updatedProfile.siteUrl || slug;
+      return updatedProfile.siteUrl || finalSlug;
     } catch (err) {
       toast({
         title: "Error",
         description: "Failed to publish profile.",
         variant: "destructive"
       });
-      return slug;
+      return finalSlug;
     }
   }, [profile, toast]);
 
@@ -198,5 +211,6 @@ export function useProfileForm() {
     goToStep,
     publishProfile,
     fetchPreview,
+    saveProfileData,
   };
 }

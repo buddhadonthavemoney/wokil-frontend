@@ -123,7 +123,7 @@ export default function Dashboard() {
             </div>
             <div className="flex-1 space-y-1">
               <h3 className="font-heading font-bold text-sm text-foreground">
-                {status === 'loading' && 'Deploying Profile'}
+                {status === 'loading' && 'Deploying website'}
                 {status === 'success' && 'Deployment Complete'}
                 {status === 'error' && 'Deployment Failed'}
               </h3>
@@ -172,12 +172,12 @@ export default function Dashboard() {
                     showToast('loading', data.message || data.status, 'Processing');
                   } else if (data.type === 'done') {
                     if (data.status === 'success') {
-                      showToast('success', "Your professional profile is now live.", "Success");
+                      showToast('success', "Deployment successful", "Success");
 
                       setShowInfoModal(true);
                       setModalContent({
                         title: 'Profile Published!',
-                        description: 'Your professional profile is now live. You can share your link to start attracting clients.',
+                        description: data.message,
                         type: 'success',
                       });
 
@@ -214,11 +214,12 @@ export default function Dashboard() {
   }, []);
 
   const getPublicUrl = () => {
-    if (!profile) return '';
-    if (profile.siteUrl) return profile.siteUrl;
-    const identifier = profile.slug || profile.id;
-    if (!identifier) return 'Profile identifier not set';
-    return `${window.location.origin}/p/${identifier}`;
+    if (!profile || !profile.siteUrl) return '';
+    const url = profile.siteUrl;
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+    return `https://${url}`;
   };
 
   const copyUrl = () => {

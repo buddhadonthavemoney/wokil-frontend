@@ -37,6 +37,7 @@ export enum ApiEndpoints {
     PROFILE = '/profile',
     SITES_DEPLOY = '/sites/deploy',
     SITES_PREVIEW = '/sites/preview',
+    SITES_CHECK = '/sites/check',
 }
 
 export const site = {
@@ -47,6 +48,12 @@ export const site = {
     getPreview: async () => {
         const response = await api.get<string>(ApiEndpoints.SITES_PREVIEW, {
             headers: { 'Accept': 'text/html' }
+        });
+        return response.data;
+    },
+    checkSlug: async (slug: string) => {
+        const response = await api.post<{ available: boolean }>(ApiEndpoints.SITES_CHECK, {
+            subdomain: slug
         });
         return response.data;
     }

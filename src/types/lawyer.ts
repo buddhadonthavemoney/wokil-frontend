@@ -28,6 +28,9 @@ export interface LawyerProfile {
   themeSelection: {
     theme: 'classic' | 'modern' | 'minimal' | 'executive' | 'legal-craft';
   };
+  subdomainSelection: {
+    subdomain: string;
+  };
   isPublished: boolean;
   publishedAt?: string;
   slug: string;

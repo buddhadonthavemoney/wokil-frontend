@@ -8,6 +8,7 @@ import { ContactInfoStep } from '@/components/form/steps/ContactInfoStep';
 import { ProfessionalProfileStep } from '@/components/form/steps/ProfessionalProfileStep';
 import { OnlinePresenceStep } from '@/components/form/steps/OnlinePresenceStep';
 import { ThemeSelectionStep } from '@/components/form/steps/ThemeSelectionStep';
+import { SubdomainSelectionStep } from '@/components/form/steps/SubdomainSelectionStep';
 import { ProfilePreview } from '@/components/preview/ProfilePreview';
 import { QRCodeCard } from '@/components/preview/QRCodeCard';
 import { Button } from '@/components/ui/button';
@@ -22,6 +23,7 @@ const STEP_NAMES = [
   'Profile',
   'Online',
   'Theme',
+  'Subdomain',
 ];
 
 export default function ProfileBuilder() {
@@ -35,6 +37,7 @@ export default function ProfileBuilder() {
     prevStep,
     publishProfile,
     fetchPreview,
+    saveProfileData,
   } = useProfileForm();
 
   const [isPreviewMode, setIsPreviewMode] = useState(false);
@@ -114,16 +117,19 @@ export default function ProfileBuilder() {
         return <OnlinePresenceStep profile={profile} onUpdate={(fields) => updateNestedProfile('onlinePresence', fields)} />;
       case 6:
         return <ThemeSelectionStep profile={profile} onUpdate={(fields) => updateNestedProfile('themeSelection', fields)} />;
+      case 7:
+        return <SubdomainSelectionStep profile={profile} onUpdate={(fields) => updateNestedProfile('subdomainSelection', fields)} />;
       default:
         return null;
     }
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (currentStep === totalSteps) {
+      await saveProfileData();
       setIsPreviewMode(true);
     } else {
-      nextStep();
+      await nextStep();
     }
   };
 
