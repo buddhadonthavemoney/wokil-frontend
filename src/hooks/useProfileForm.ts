@@ -78,7 +78,13 @@ export function useProfileForm() {
     if (currentProfileJson === lastSavedProfile.current) return;
 
     try {
-      await profileApi.save(profile);
+      // If already deployed, don't send subdomainSelection as it causes 400 errors
+      const dataToSave = { ...profile };
+      if (profile.professionalProfile?.deploymentURL) {
+        delete (dataToSave as any).subdomainSelection;
+      }
+
+      await profileApi.save(dataToSave as LawyerProfile);
       lastSavedProfile.current = currentProfileJson;
     } catch (error) {
       console.error("Failed to auto-save profile:", error);
@@ -170,14 +176,23 @@ export function useProfileForm() {
     setProfile(updatedProfile);
 
     try {
-      await profileApi.save(updatedProfile);
+      const dataToSave = { ...updatedProfile };
+      if (profile.professionalProfile?.deploymentURL) {
+        delete (dataToSave as any).subdomainSelection;
+      }
+      await profileApi.save(dataToSave as LawyerProfile);
+
       const { url } = await siteApi.deploy({ slug: finalSlug });
 
       if (url) {
-        updatedProfile = { ...updatedProfile, siteUrl: url };
-        setProfile(updatedProfile);
+        const finalProfile = { ...updatedProfile, siteUrl: url };
+        setProfile(finalProfile);
         // Also save again with the siteUrl
-        await profileApi.save(updatedProfile);
+        const finalDataToSave = { ...finalProfile };
+        if (profile.professionalProfile?.deploymentURL || finalProfile.professionalProfile?.deploymentURL) {
+          delete (finalDataToSave as any).subdomainSelection;
+        }
+        await profileApi.save(finalDataToSave as LawyerProfile);
       }
       return updatedProfile.siteUrl || finalSlug;
     } catch (err) {
