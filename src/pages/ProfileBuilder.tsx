@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useProfileForm } from '@/hooks/useProfileForm';
+import { profile as profileApi } from '@/lib/api';
+import { LawyerProfile } from '@/types/lawyer';
+import { cn } from '@/lib/utils';
 import { ProgressIndicator } from '@/components/form/ProgressIndicator';
 import { FormNavigation } from '@/components/form/FormNavigation';
 import { BasicInfoStep } from '@/components/form/steps/BasicInfoStep';
@@ -102,28 +105,69 @@ export default function ProfileBuilder() {
     }
   }, [navigate]);
 
-  useEffect(() => {
-    let isMounted = true;
-    if (isPreviewMode) {
-      const loadPreview = async () => {
-        setLoadingPreview(true);
-        try {
-          const html = await fetchPreview();
-          if (isMounted) {
-            setPreviewHtml(html);
-          }
-        } catch (err) {
-          console.error("Failed to load preview", err);
-        } finally {
-          if (isMounted) {
-            setLoadingPreview(false);
-          }
-        }
-      };
-      loadPreview();
+  const loadPreviewData = async () => {
+    setLoadingPreview(true);
+    try {
+      const html = await fetchPreview();
+      setPreviewHtml(html);
+    } catch (err) {
+      console.error("Failed to load preview", err);
+    } finally {
+      setLoadingPreview(false);
     }
-    return () => { isMounted = false; };
+  };
+
+  useEffect(() => {
+    if (isPreviewMode) {
+      loadPreviewData();
+    }
   }, [isPreviewMode, fetchPreview]);
+
+  const handleThemeChange = async (newTheme: LawyerProfile['themeSelection']['theme']) => {
+    // Construct the updated profile immediately to avoid state closure issues
+    const updatedProfile: LawyerProfile = {
+      ...profile,
+      themeSelection: { theme: newTheme }
+    };
+
+    // 1. Optimistically update local state
+    setProfile(updatedProfile);
+    
+    setLoadingPreview(true);
+    try {
+      // 2. Persist to backend immediately
+      await profileApi.save(updatedProfile);
+      
+      // 3. Add a small artificial delay so the transition doesn't feel jittery
+      await new Promise(resolve => setTimeout(resolve, 400));
+
+      // 4. Fetch new preview HTML
+      const html = await fetchPreview();
+      setPreviewHtml(html);
+
+      toast({
+        title: "Theme Updated",
+        description: `Switched to ${newTheme.charAt(0).toUpperCase() + newTheme.slice(1)} theme.`,
+      });
+    } catch (err) {
+      console.error("Theme switch failed:", err);
+      toast({
+        title: "Update Failed",
+        description: "Could not switch theme. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoadingPreview(false);
+    }
+  };
+
+  const THEMES = [
+    { id: 'classic', name: 'Classic' },
+    { id: 'modern', name: 'Modern' },
+    { id: 'minimal', name: 'Minimal' },
+    { id: 'executive', name: 'Executive' },
+    { id: 'legal-craft', name: 'Legal Craft' },
+  ] as const;
 
   const handlePublish = async () => {
     setIsPublishing(true);
@@ -148,8 +192,6 @@ export default function ProfileBuilder() {
       setIsPublishing(false);
     }
   };
-
-
 
   const renderCurrentStep = () => {
     switch (currentStep) {
@@ -200,12 +242,10 @@ export default function ProfileBuilder() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleNext, isPreviewMode]);
 
-
-
   if (isPreviewMode) {
     return (
-      <div className="fixed inset-0 z-[100] bg-background overflow-auto">
-        <div className="fixed top-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-md border-b border-border shadow-sm">
+      <div className="fixed inset-0 z-[100] bg-background overflow-hidden">
+        <div className="fixed top-0 left-0 right-0 z-[60] bg-background/90 backdrop-blur-md border-b border-border shadow-sm">
           <div className="container mx-auto px-6 py-4 flex items-center justify-between">
             <Button
               variant="ghost"
@@ -239,7 +279,7 @@ export default function ProfileBuilder() {
           </div>
         </div>
 
-        <div className="pt-20">
+        <div className="pt-[73px] h-full">
           {loadingPreview ? (
             <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
               <Scale className="w-12 h-12 text-primary animate-pulse" />
@@ -250,9 +290,27 @@ export default function ProfileBuilder() {
           )}
         </div>
 
-        {/* <div className="fixed bottom-6 right-6 z-40 scale-90 origin-bottom-right hover:scale-100 transition-transform">
-          <QRCodeCard profile={profile} />
-        </div> */}
+        {/* Theme Switcher Overlay */}
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[70]">
+          <div className="bg-white/80 backdrop-blur-xl border border-white/20 shadow-2xl rounded-2xl p-2 flex items-center gap-1 shadow-primary/10">
+            {THEMES.map((t) => (
+              <button
+                key={t.id}
+                onClick={() => handleThemeChange(t.id as any)}
+                disabled={loadingPreview}
+                className={cn(
+                  "px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all duration-300",
+                  loadingPreview && "opacity-50 cursor-not-allowed",
+                  profile.themeSelection?.theme === t.id 
+                    ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" 
+                    : "text-muted-foreground hover:bg-black/5 hover:text-foreground"
+                )}
+              >
+                {t.name}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
     );
   }

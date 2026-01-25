@@ -12,7 +12,17 @@ interface ProfilePreviewProps {
 
 export function ProfilePreview({ profile, html }: ProfilePreviewProps) {
   if (html) {
-    return <div dangerouslySetInnerHTML={{ __html: html }} />;
+    return (
+      <div className="w-full h-full animate-fade-in">
+        <iframe 
+          key={html.length} // Force re-mount/re-animate when content changes significantly
+          srcDoc={html}
+          title="Profile Preview"
+          className="w-full h-full border-none bg-white"
+          style={{ display: 'block' }}
+        />
+      </div>
+    );
   }
 
 }
