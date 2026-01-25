@@ -12,6 +12,7 @@ import ProtectedRoute from "./components/auth/ProtectedRoute";
 import MainLayout from "./components/layout/MainLayout";
 import Sites from "./pages/Sites";
 import Settings from "./pages/Settings";
+import BusinessCardPage from "./pages/BusinessCardPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -33,6 +34,7 @@ const App = () => (
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/profile-builder" element={<ProfileBuilder />} />
               <Route path="/sites" element={<Sites />} />
+              <Route path="/cards" element={<BusinessCardPage />} />
               <Route path="/settings" element={<Settings />} />
             </Route>
           </Route>

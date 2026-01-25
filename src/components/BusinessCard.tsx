@@ -1,15 +1,21 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef, useState, useEffect } from 'react';
 import { LawyerProfile } from '@/types/lawyer';
 import QRCode from "react-qr-code";
-import { Phone, Mail, MapPin, Globe } from 'lucide-react';
+import { Phone, Mail, MapPin, Globe, User } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export type CardLayout = 'classic' | 'minimal' | 'modern';
 export type CardColor = 'slate' | 'blue' | 'emerald' | 'indigo' | 'amber';
 
+// Standard Business Card Size (3.5in x 2in)
+// Using a smaller multiplier for better screen display
+const BASE_WIDTH = 420;  // Reduced from 672
+const BASE_HEIGHT = 240; // Reduced from 384
+
 const CARD_COLORS: Record<CardColor, {
     frontBg: string;
     frontText: string;
-    frontSidebarBg: string; // The left column (for classic layout)
+    frontSidebarBg: string;
     frontSidebarText: string;
     backBg: string;
     backText: string;
@@ -75,6 +81,40 @@ interface BusinessCardProps {
     colorTheme?: CardColor;
 }
 
+const ScalableCardContainer = ({ children }: { children: React.ReactNode }) => {
+    const containerRef = useRef<HTMLDivElement>(null);
+    const [scale, setScale] = useState(1);
+
+    useEffect(() => {
+        const updateScale = () => {
+            if (containerRef.current) {
+                const parentWidth = containerRef.current.offsetWidth;
+                const newScale = parentWidth / BASE_WIDTH;
+                setScale(Math.min(newScale, 1)); // Cap at 1 to prevent upscaling
+            }
+        };
+
+        updateScale();
+        window.addEventListener('resize', updateScale);
+        return () => window.removeEventListener('resize', updateScale);
+    }, []);
+
+    return (
+        <div ref={containerRef} className="w-full relative" style={{ paddingBottom: `${(BASE_HEIGHT / BASE_WIDTH) * 100}%` }}>
+            <div
+                className="absolute top-0 left-0 origin-top-left print:static print:transform-none"
+                style={{
+                    width: `${BASE_WIDTH}px`,
+                    height: `${BASE_HEIGHT}px`,
+                    transform: `scale(${scale})`,
+                }}
+            >
+                {children}
+            </div>
+        </div>
+    );
+};
+
 export const BusinessCard = React.forwardRef<HTMLDivElement, BusinessCardProps>(({ profile, publicUrl, layout = 'classic', colorTheme = 'slate' }, ref) => {
     const { basicInformation, contactInformation, onlinePresence, practiceDetails } = profile;
     const colors = CARD_COLORS[colorTheme];
@@ -98,68 +138,65 @@ export const BusinessCard = React.forwardRef<HTMLDivElement, BusinessCardProps>(
     }, [profile]);
 
     return (
-        <div ref={ref} className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-8 print:block print:gap-4 bg-slate-100 p-4 sm:p-8 print:bg-white print:p-0 w-full overflow-hidden">
-            {/* FRONT CARD CONTAINER */}
-            <div className="relative w-full max-w-[3.5in] aspect-[3.5/2] sm:aspect-auto sm:h-[1.5in] md:h-auto md:aspect-[3.5/2] print:w-[3.5in] print:h-[2in] print:mx-0 print:mb-4">
-                {/* Responsive Scale Wrapper */}
-                <div className="relative md:absolute md:inset-0 origin-center scale-[0.6] sm:scale-75 md:scale-100 flex items-center justify-center print:static print:scale-100 h-[2in] md:h-full">
-                    <div className={`w-[3.5in] h-[2in] ${colors.frontBg} ${colors.frontText} border border-slate-200 shadow-sm relative overflow-hidden flex print:shadow-none print:border print:border-slate-100 mx-auto break-inside-avoid page-break-after-always shrink-0`}>
-
+        <div ref={ref} className="flex flex-col md:flex-row gap-4 md:gap-6 print:flex-row print:gap-4 bg-transparent p-0 w-full">
+            
+            {/* FRONT CARD */}
+            <div className="w-full md:flex-1 print:w-[3.5in] print:h-[2in]">
+                <ScalableCardContainer>
+                    <div className={cn(
+                        "w-full h-full border border-slate-200 shadow-sm overflow-hidden flex",
+                        "print:w-[3.5in] print:h-[2in] print:shadow-none print:border-slate-100",
+                        colors.frontBg,
+                        colors.frontText
+                    )}>
                         {/* CLASSIC LAYOUT */}
                         {layout === 'classic' && (
                             <>
-                                <div className={`w-1/3 ${colors.frontSidebarBg} h-full p-4 flex flex-col items-center justify-center ${colors.frontSidebarText} relative`}>
+                                <div className={`w-[35%] ${colors.frontSidebarBg} h-full p-4 flex flex-col items-center justify-center ${colors.frontSidebarText} relative`}>
                                     <div className="absolute top-0 right-0 w-16 h-16 bg-white/10 rounded-bl-full"></div>
-
-                                    <div className="z-10 relative">
-                                        <div className="flex flex-col items-center gap-2">
-                                            <span className="text-[10px] font-bold tracking-widest uppercase opacity-70">Scan QR</span>
-                                            {/* vCard QR Code */}
-                                            <div className="p-1.5 bg-white rounded-lg inline-block w-full max-w-[80px] shadow-lg">
-                                                <QRCode
-                                                    value={vCardData}
-                                                    size={256}
-                                                    style={{ height: "auto", maxWidth: "100%", width: "100%" }}
-                                                    viewBox={`0 0 256 256`}
-                                                />
-                                            </div>
+                                    <div className="z-10 relative flex flex-col items-center gap-2">
+                                        <span className="text-[8px] font-bold tracking-[0.2em] uppercase opacity-70">Visit Website</span>
+                                        <div className="p-1.5 bg-white rounded-lg shadow-lg w-[70px] h-[70px] flex items-center justify-center">
+                                            <QRCode
+                                                value={publicUrl}
+                                                size={256}
+                                                style={{ height: "auto", maxWidth: "100%", width: "100%" }}
+                                                viewBox={`0 0 256 256`}
+                                            />
                                         </div>
                                     </div>
                                 </div>
-
-                                <div className="w-2/3 p-5 flex flex-col justify-center gap-4">
+                                <div className="w-[65%] p-5 flex flex-col justify-center gap-3">
                                     <div>
-                                        <h2 className={`text-lg font-bold leading-tight mb-1`}>{basicInformation.fullName}</h2>
-
+                                        <h2 className="text-lg font-bold leading-tight mb-1 tracking-tight">{basicInformation.fullName}</h2>
                                         {basicInformation.lawFirmName && (
-                                            <p className={`text-xs font-semibold uppercase tracking-wide opacity-70`}>{basicInformation.lawFirmName}</p>
+                                            <p className="text-[9px] font-bold uppercase tracking-wider opacity-60 mb-0.5">{basicInformation.lawFirmName}</p>
                                         )}
-                                        <p className={`text-[10px] font-medium mt-0.5 opacity-60`}>{basicInformation.professionalTitle}</p>
+                                        <p className="text-xs font-medium opacity-60">{basicInformation.professionalTitle}</p>
                                     </div>
-
-                                    <div className="space-y-2 text-[10px]">
+                                    <div className="space-y-1.5 text-[9px]">
                                         {contactInformation.phoneNumber && (
                                             <div className={`flex items-center gap-2 ${colors.frontText} opacity-80`}>
-                                                <Phone className={`w-3 h-3 ${colors.iconColor} shrink-0`} />
-                                                <span className="font-medium">{contactInformation.phoneNumber}</span>
+                                                <Phone className={`w-2.5 h-2.5 ${colors.iconColor} shrink-0`} />
+                                                <span className="font-medium tracking-wide">{contactInformation.phoneNumber}</span>
                                             </div>
                                         )}
                                         {contactInformation.email && (
                                             <div className={`flex items-center gap-2 ${colors.frontText} opacity-80`}>
-                                                <Mail className={`w-3 h-3 ${colors.iconColor} shrink-0`} />
-                                                <span className="font-medium truncate">{contactInformation.email}</span>
+                                                <Mail className={`w-2.5 h-2.5 ${colors.iconColor} shrink-0`} />
+                                                <span className="font-medium tracking-wide truncate">{contactInformation.email}</span>
                                             </div>
                                         )}
                                         {publicUrl && (
                                             <div className={`flex items-center gap-2 ${colors.frontText} opacity-80`}>
-                                                <Globe className={`w-3 h-3 ${colors.iconColor} shrink-0`} />
-                                                <span className="font-medium truncate">{publicUrl.replace(/^https?:\/\//, '')}</span>
+                                                <Globe className={`w-2.5 h-2.5 ${colors.iconColor} shrink-0`} />
+                                                <span className="font-medium tracking-wide truncate">{publicUrl.replace(/^https?:\/\//, '')}</span>
                                             </div>
                                         )}
                                         {contactInformation.officeAddress && (
                                             <div className={`flex items-start gap-2 ${colors.frontText} opacity-80`}>
-                                                <MapPin className={`w-3 h-3 ${colors.iconColor} shrink-0 mt-0.5`} />
-                                                <span className="font-medium leading-tight">{contactInformation.officeAddress}</span>
+                                                <MapPin className={`w-2.5 h-2.5 ${colors.iconColor} shrink-0 mt-0.5`} />
+                                                <span className="font-medium tracking-wide leading-snug text-[8px]">{contactInformation.officeAddress}</span>
                                             </div>
                                         )}
                                     </div>
@@ -170,17 +207,17 @@ export const BusinessCard = React.forwardRef<HTMLDivElement, BusinessCardProps>(
                         {/* MINIMAL LAYOUT */}
                         {layout === 'minimal' && (
                             <div className="w-full h-full p-6 flex flex-col items-center justify-center text-center relative">
-                                <div className={`absolute left-0 top-0 bottom-0 w-1 ${colors.frontSidebarBg}`}></div>
-                                <div className="mb-4">
-                                    <h2 className={`text-xl font-bold tracking-tight mb-0.5`}>{basicInformation.fullName}</h2>
-                                    <p className="text-[10px] font-medium opacity-60 uppercase tracking-widest">{basicInformation.professionalTitle}</p>
+                                <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${colors.frontSidebarBg}`}></div>
+                                <div className="mb-4 w-full">
+                                    <h2 className="text-2xl font-bold tracking-tight mb-1">{basicInformation.fullName}</h2>
+                                    <p className="text-[9px] font-semibold opacity-60 uppercase tracking-[0.2em]">{basicInformation.professionalTitle}</p>
                                     {basicInformation.lawFirmName && (
-                                        <p className={`text-[10px] font-semibold opacity-50 mt-1`}>{basicInformation.lawFirmName}</p>
+                                        <p className="text-[9px] font-medium opacity-50 mt-1">{basicInformation.lawFirmName}</p>
                                     )}
                                 </div>
 
-                                <div className="w-full flex items-center justify-between gap-4 mt-2">
-                                    <div className="text-left space-y-1.5 text-[9px] opacity-80 flex-1">
+                                <div className="w-full grid grid-cols-2 gap-4 mt-2 border-t border-current/10 pt-3">
+                                    <div className="text-left space-y-1.5 text-[8px] opacity-80 flex flex-col justify-center">
                                         {contactInformation.phoneNumber && (
                                             <div className="flex items-center gap-1.5">
                                                 <Phone className={`w-2.5 h-2.5 ${colors.iconColor}`} />
@@ -201,13 +238,16 @@ export const BusinessCard = React.forwardRef<HTMLDivElement, BusinessCardProps>(
                                         )}
                                     </div>
 
-                                    <div className="p-1 bg-white border border-slate-100 rounded shadow-sm">
-                                        <QRCode
-                                            value={vCardData}
-                                            size={256}
-                                            style={{ height: "auto", width: "56px" }}
-                                            viewBox={`0 0 256 256`}
-                                        />
+                                    <div className="flex justify-end items-center flex-col gap-1">
+                                        <div className="p-1 bg-white border border-slate-100 rounded shadow-sm">
+                                            <QRCode
+                                                value={publicUrl}
+                                                size={256}
+                                                style={{ height: "auto", width: "50px" }}
+                                                viewBox={`0 0 256 256`}
+                                            />
+                                        </div>
+                                        <span className="text-[6px] font-bold uppercase tracking-wider opacity-50">Website</span>
                                     </div>
                                 </div>
                             </div>
@@ -215,90 +255,91 @@ export const BusinessCard = React.forwardRef<HTMLDivElement, BusinessCardProps>(
 
                         {/* MODERN LAYOUT */}
                         {layout === 'modern' && (
-                            <div className="w-full h-full flex flex-col relative">
-                                {/* Top Band */}
+                            <div className="w-full h-full flex flex-col relative bg-slate-50">
                                 <div className={`h-16 w-full ${colors.frontSidebarBg} flex items-center justify-between px-6 ${colors.frontSidebarText}`}>
                                     <div>
-                                        <h2 className="text-lg font-bold leading-none">{basicInformation.fullName}</h2>
-                                        <p className="text-[9px] opacity-80 font-medium uppercase tracking-wide mt-1">{basicInformation.professionalTitle}</p>
+                                        <h2 className="text-lg font-bold leading-none tracking-tight">{basicInformation.fullName}</h2>
+                                        <p className="text-[8px] opacity-80 font-bold uppercase tracking-[0.15em] mt-1">{basicInformation.professionalTitle}</p>
                                     </div>
                                     {basicInformation.lawFirmName && (
-                                        <div className="text-[10px] font-bold opacity-60 bg-white/10 px-2 py-0.5 rounded">
+                                        <div className="text-[8px] font-bold opacity-80 bg-white/10 px-2 py-1 rounded-full border border-white/10">
                                             {basicInformation.lawFirmName}
                                         </div>
                                     )}
                                 </div>
 
-                                {/* Bottom Content */}
-                                <div className="flex-1 p-6 flex items-start justify-between">
-                                    <div className="space-y-2 text-[10px] opacity-80">
+                                <div className={cn("flex-1 p-6 flex items-start justify-between", colors.frontBg, colors.frontText)}>
+                                    <div className="space-y-2 text-[9px] opacity-90">
                                         {contactInformation.phoneNumber && (
-                                            <div className={`flex items-center gap-2 ${colors.frontText}`}>
-                                                <Phone className={`w-3 h-3 ${colors.iconColor}`} />
+                                            <div className="flex items-center gap-2">
+                                                <Phone className={`w-2.5 h-2.5 ${colors.iconColor}`} />
                                                 <span className="font-semibold">{contactInformation.phoneNumber}</span>
                                             </div>
                                         )}
                                         {contactInformation.email && (
-                                            <div className={`flex items-center gap-2 ${colors.frontText}`}>
-                                                <Mail className={`w-3 h-3 ${colors.iconColor} shrink-0`} />
+                                            <div className="flex items-center gap-2">
+                                                <Mail className={`w-2.5 h-2.5 ${colors.iconColor} shrink-0`} />
                                                 <span className="font-semibold">{contactInformation.email}</span>
                                             </div>
                                         )}
                                         {contactInformation.officeAddress && (
-                                            <div className={`flex items-center gap-2 ${colors.frontText}`}>
-                                                <MapPin className={`w-3 h-3 ${colors.iconColor} shrink-0`} />
-                                                <span className="font-semibold leading-tight max-w-[180px]">{contactInformation.officeAddress}</span>
+                                            <div className="flex items-center gap-2">
+                                                <MapPin className={`w-2.5 h-2.5 ${colors.iconColor} shrink-0`} />
+                                                <span className="font-semibold leading-tight max-w-[150px] text-[8px]">{contactInformation.officeAddress}</span>
                                             </div>
                                         )}
                                     </div>
 
                                     <div className="flex flex-col items-center gap-1">
-                                        <div className="p-1 border border-slate-100 rounded">
+                                        <div className="p-1 bg-white border border-slate-100 rounded shadow-sm">
                                             <QRCode
-                                                value={vCardData}
+                                                value={publicUrl}
                                                 size={256}
-                                                style={{ height: "auto", width: "64px" }}
+                                                style={{ height: "auto", width: "55px" }}
                                                 viewBox={`0 0 256 256`}
                                             />
                                         </div>
-                                        <span className="text-[7px] font-bold uppercase tracking-wider opacity-50">Contact</span>
+                                        <span className="text-[7px] font-bold uppercase tracking-wider opacity-50">Website</span>
                                     </div>
                                 </div>
                             </div>
                         )}
                     </div>
-                </div>
+                </ScalableCardContainer>
             </div>
 
-            {/* BACK CARD CONTAINER */}
-            <div className="relative w-full max-w-[3.5in] aspect-[3.5/2] sm:aspect-auto sm:h-[1.5in] md:h-auto md:aspect-[3.5/2] print:w-[3.5in] print:h-[2in] print:mx-0">
-                {/* Responsive Scale Wrapper */}
-                <div className="relative md:absolute md:inset-0 origin-center scale-[0.6] sm:scale-75 md:scale-100 flex items-center justify-center print:static print:scale-100 h-[2in] md:h-full">
-                    <div className={`w-[3.5in] h-[2in] ${colors.backBg} ${colors.backText} border border-slate-200 shadow-sm relative overflow-hidden flex flex-col items-center justify-center print:shadow-none print:border print:border-slate-100 mx-auto break-inside-avoid shrink-0`}>
+            {/* BACK CARD */}
+            <div className="w-full md:flex-1 print:w-[3.5in] print:h-[2in]">
+                <ScalableCardContainer>
+                    <div className={cn(
+                        "w-full h-full border border-slate-200 shadow-sm relative overflow-hidden flex flex-col items-center justify-center",
+                        "print:w-[3.5in] print:h-[2in] print:shadow-none print:border-slate-100",
+                        colors.backBg,
+                        colors.backText
+                    )}>
                         <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-bl-full"></div>
-                        <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-tr-full"></div>
+                        <div className="absolute bottom-0 left-0 w-20 h-20 bg-white/5 rounded-tr-full"></div>
 
                         <div className="z-10 flex flex-col items-center gap-3">
                             <div className="flex items-center gap-2 mb-1">
-                                <Globe className={`w-4 h-4 opacity-70`} />
-                                <span className={`text-sm font-semibold tracking-widest uppercase opacity-80`}>Online Presence</span>
+                                <User className="w-4 h-4 opacity-70" />
+                                <span className="text-sm font-bold tracking-[0.2em] uppercase opacity-90">Save Contact</span>
                             </div>
 
-                            <div className="p-2 bg-white rounded-xl shadow-lg">
+                            <div className="p-2 bg-white rounded-xl shadow-xl">
                                 <QRCode
-                                    value={publicUrl}
-                                    size={80}
-                                    style={{ height: "auto", maxWidth: "100%", width: "100%" }}
+                                    value={vCardData}
+                                    size={128}
+                                    style={{ height: "auto", width: "80px" }}
                                     viewBox={`0 0 256 256`}
                                 />
                             </div>
                         </div>
                     </div>
-                </div>
+                </ScalableCardContainer>
             </div>
         </div>
     );
-
 });
 
 BusinessCard.displayName = 'BusinessCard';

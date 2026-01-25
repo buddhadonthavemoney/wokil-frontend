@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Scale, LayoutDashboard, User, Globe, Settings, LogOut } from 'lucide-react';
+import { Scale, LayoutDashboard, User, Globe, Settings, LogOut, IdCard, Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface NavLinkProps {
@@ -34,11 +35,13 @@ function NavLink({ icon, label, isActive, onClick }: NavLinkProps) {
 export default function Sidebar() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const navItems = [
     { icon: <LayoutDashboard className="w-5 h-5" />, label: 'Dashboard', path: '/dashboard' },
     { icon: <User className="w-5 h-5" />, label: 'Profile', path: '/profile-builder' },
     { icon: <Globe className="w-5 h-5" />, label: 'Sites', path: '/sites' },
+    { icon: <IdCard className="w-5 h-5" />, label: 'Business Cards', path: '/cards' },
     { icon: <Settings className="w-5 h-5" />, label: 'Settings', path: '/settings' },
   ];
 
@@ -47,75 +50,100 @@ export default function Sidebar() {
     navigate('/');
   };
 
+  const handleNavClick = (path: string) => {
+    navigate(path);
+    setIsMobileMenuOpen(false);
+  };
+
   return (
-    <aside className="w-64 h-screen bg-white border-r border-border flex flex-col sticky top-0">
-      {/* Logo Section */}
-      <div className="p-6 border-b border-border">
+    <>
+      {/* Mobile Header */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white border-b border-border px-4 py-3 flex items-center justify-between">
         <div 
-          className="flex items-center gap-3 cursor-pointer group"
+          className="flex items-center gap-3 cursor-pointer"
           onClick={() => navigate('/dashboard')}
         >
-          <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20 group-hover:scale-105 transition-transform">
-            <Scale className="w-5 h-5 text-primary-foreground" />
+          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
+            <Scale className="w-4 h-4 text-primary-foreground" />
           </div>
-          <div>
-            <h1 className="font-heading font-bold text-lg leading-tight text-foreground group-hover:text-primary transition-colors">
-              Wokil
-            </h1>
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
-              Professional
-            </p>
-          </div>
+          <h1 className="font-heading font-bold text-base leading-tight text-foreground">
+            Wokil
+          </h1>
         </div>
-      </div>
-
-      {/* Navigation */}
-      <nav className="flex-1 p-4 space-y-1">
-        <div className="mb-4">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-4 mb-2">
-            Navigation
-          </p>
-          {navItems.slice(0, 2).map((item) => (
-            <NavLink
-              key={item.path}
-              icon={item.icon}
-              label={item.label}
-              path={item.path}
-              isActive={location.pathname === item.path}
-              onClick={() => navigate(item.path)}
-            />
-          ))}
-        </div>
-
-        <div className="mb-4">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-4 mb-2">
-            Management
-          </p>
-          {navItems.slice(2).map((item) => (
-            <NavLink
-              key={item.path}
-              icon={item.icon}
-              label={item.label}
-              path={item.path}
-              isActive={location.pathname === item.path}
-              onClick={() => navigate(item.path)}
-            />
-          ))}
-        </div>
-      </nav>
-
-      {/* Logout Button */}
-      <div className="p-4 border-t border-border">
         <Button
           variant="ghost"
           size="sm"
-          onClick={handleLogout}
-          className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground hover:bg-muted font-medium"
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          className="p-2"
         >
-          <LogOut className="w-5 h-5" />
-          Log Out
+          {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </Button>
       </div>
-    </aside>
+
+      {/* Mobile Menu Overlay */}
+      {isMobileMenuOpen && (
+        <div 
+          className="lg:hidden fixed inset-0 bg-black/50 z-40 mt-[57px]"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside className={`
+        fixed lg:sticky top-0 left-0 z-40
+        w-64 bg-white border-r border-border flex flex-col
+        transition-transform duration-300 ease-in-out
+        ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+        h-[calc(100vh-57px)] lg:h-screen
+        lg:mt-0 mt-[57px]
+      `}>
+        {/* Logo Section - Hidden on mobile, shown on desktop */}
+        <div className="hidden lg:block p-6 border-b border-border">
+          <div 
+            className="flex items-center gap-3 cursor-pointer group"
+            onClick={() => navigate('/dashboard')}
+          >
+            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20 group-hover:scale-105 transition-transform">
+              <Scale className="w-5 h-5 text-primary-foreground" />
+            </div>
+            <div>
+              <h1 className="font-heading font-bold text-lg leading-tight text-foreground group-hover:text-primary transition-colors">
+                Wokil
+              </h1>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
+                Professional
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Navigation */}
+        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+          {navItems.map((item) => (
+            <NavLink
+              key={item.path}
+              icon={item.icon}
+              label={item.label}
+              path={item.path}
+              isActive={location.pathname === item.path}
+              onClick={() => handleNavClick(item.path)}
+            />
+          ))}
+        </nav>
+
+        {/* Logout Button */}
+        <div className="p-4 border-t border-border">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleLogout}
+            className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground hover:bg-muted font-medium"
+          >
+            <LogOut className="w-5 h-5" />
+            Log Out
+          </Button>
+        </div>
+      </aside>
+    </>
   );
 }

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LawyerProfile } from '@/types/lawyer';
 import { Button } from '@/components/ui/button';
-
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import {
@@ -13,11 +13,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { useReactToPrint } from 'react-to-print';
-import { BusinessCard, CardLayout, CardColor } from '@/components/BusinessCard';
 import QRCode from "react-qr-code";
 import {
   Scale,
+  User,
   Eye,
   Users,
   QrCode,
@@ -30,8 +29,6 @@ import {
   Globe,
   Plus,
   Shield,
-  IdCard,
-  Printer,
   Rocket,
   Sparkles,
   Loader2,
@@ -58,15 +55,14 @@ import {
   Cell
 } from 'recharts';
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
+const COLORS = ['#0f172a', '#d97706', '#2563eb', '#059669', '#4338ca']; // Navy, Amber, Blue, Emerald, Indigo
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 export default function Dashboard() {
   const [profile, setProfile] = useState<LawyerProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [cardLayout, setCardLayout] = useState<CardLayout>('classic');
-  const [cardColor, setCardColor] = useState<CardColor>('slate');
+
 
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [modalContent, setModalContent] = useState({
@@ -88,10 +84,6 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
-  const componentRef = useRef<HTMLDivElement>(null);
-  const handlePrint = useReactToPrint({
-    contentRef: componentRef,
-  });
 
   const fetchProfile = async () => {
     try {
@@ -314,125 +306,56 @@ export default function Dashboard() {
         <div className="flex flex-col gap-10">
           {/* Profile Section */}
           <section>
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-              <h2 className="font-heading text-2xl font-bold tracking-tight text-foreground">Your Profile</h2>
-              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    if (profile?.slug) {
-                      sessionStorage.setItem('editingProfileSlug', profile.slug);
-                    }
-                    navigate('/profile-builder');
-                  }}
-                  className="gap-2 rounded-lg font-medium shadow-sm hover:shadow-md transition-all"
-                >
-                  <Edit className="w-4 h-4" />
-                  Edit Profile
-                </Button>
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="gap-2 rounded-lg font-medium shadow-sm hover:shadow-md transition-all"
-                    >
-                      <IdCard className="w-4 h-4" />
-                      Contact Card
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-5xl">
-                    <DialogHeader>
-                      <DialogTitle>Professional Business Card</DialogTitle>
-                      <DialogDescription>
-                        Preview your professional business card. You can print this card to share your contact details.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="flex flex-col gap-6">
-                      <div className="flex flex-col sm:flex-row gap-8 justify-center items-center">
-                        {/* Layout Selector */}
-                        <div className="flex flex-col gap-2">
-                          <label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider text-center">Layout</label>
-                          <div className="flex items-center justify-center gap-2">
-                            {(['classic', 'minimal', 'modern'] as CardLayout[]).map((layout) => (
-                              <button
-                                key={layout}
-                                onClick={() => setCardLayout(layout)}
-                                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${cardLayout === layout ? 'bg-primary text-primary-foreground shadow-md' : 'bg-muted text-muted-foreground hover:bg-muted/80'}`}
-                              >
-                                {layout.charAt(0).toUpperCase() + layout.slice(1)}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Color Selector */}
-                        <div className="flex flex-col gap-2">
-                          <label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider text-center">Color Theme</label>
-                          <div className="flex items-center justify-center gap-2">
-                            {(['slate', 'blue', 'emerald', 'indigo', 'amber'] as CardColor[]).map((color) => (
-                              <button
-                                key={color}
-                                onClick={() => setCardColor(color)}
-                                className={`w-8 h-8 rounded-full border-2 transition-all ${cardColor === color ? 'border-primary ring-2 ring-primary/20 scale-110' : 'border-transparent opacity-70 hover:opacity-100 hover:scale-105'}`}
-                                style={{
-                                  background: color === 'slate' ? '#0f172a' :
-                                    color === 'blue' ? '#2563eb' :
-                                      color === 'amber' ? '#d97706' :
-                                        color === 'emerald' ? '#059669' :
-                                          '#4338ca'
-                                }}
-                                title={color.charAt(0).toUpperCase() + color.slice(1)}
-                              />
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="w-full overflow-hidden pb-4">
-                        <div className="flex items-center justify-center p-2 sm:p-4 md:p-8 bg-slate-50/50 rounded-xl border border-border/50">
-                          <BusinessCard ref={componentRef} profile={profile} publicUrl={getPublicUrl()} layout={cardLayout} colorTheme={cardColor} />
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex justify-end gap-2">
-                      <Button onClick={() => handlePrint()} className="gap-2">
-                        <Printer className="w-4 h-4" />
-                        Print Card
+            <PageHeader 
+              icon={<User />}
+              title="Your Profile"
+              description="Manage your professional presence and public details."
+              actions={
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      if (profile?.slug) {
+                        sessionStorage.setItem('editingProfileSlug', profile.slug);
+                      }
+                      navigate('/profile-builder');
+                    }}
+                    className="gap-2 rounded-lg font-medium shadow-sm hover:shadow-md transition-all"
+                  >
+                    <Edit className="w-4 h-4" />
+                    Edit Profile
+                  </Button>
+                  <HoverCard openDelay={0} closeDelay={0}>
+                    <HoverCardTrigger asChild>
+                      <Button
+                        onClick={() => window.open(getPublicUrl(), '_blank')}
+                        size="sm"
+                        className="gap-2 rounded-lg font-medium shadow-lg shadow-primary/10 hover:shadow-primary/20 transition-all text-primary-foreground bg-primary hover:bg-primary/90 border-none"
+                        disabled={(!profile.slug && !profile.id) || !profile.isPublished}
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                        View Site
+                        <QrCode className="w-4 h-4 opacity-70" />
                       </Button>
-                    </div>
-                  </DialogContent>
-                </Dialog>
-                <HoverCard openDelay={0} closeDelay={0}>
-                  <HoverCardTrigger asChild>
-                    <Button
-                      onClick={() => window.open(getPublicUrl(), '_blank')}
-                      size="sm"
-                      className="gap-2 rounded-lg font-medium shadow-lg shadow-primary/10 hover:shadow-primary/20 transition-all"
-                      disabled={(!profile.slug && !profile.id) || !profile.isPublished}
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                      View Site
-                      <QrCode className="w-4 h-4 opacity-70" />
-                    </Button>
-                  </HoverCardTrigger>
-                  <HoverCardContent className="w-auto p-4 bg-white">
-                    <div className="flex flex-col items-center gap-2">
-                      <div className="p-2 bg-white rounded-lg">
-                        <QRCode
-                          value={getPublicUrl()}
-                          size={128}
-                          style={{ height: "auto", maxWidth: "100%", width: "100%" }}
-                          viewBox={`0 0 256 256`}
-                        />
+                    </HoverCardTrigger>
+                    <HoverCardContent className="w-auto p-4 bg-white" align="end">
+                      <div className="flex flex-col items-center gap-2">
+                        <div className="p-2 bg-white rounded-lg border border-border">
+                          <QRCode
+                            value={getPublicUrl()}
+                            size={128}
+                            style={{ height: "auto", maxWidth: "100%", width: "100%" }}
+                            viewBox={`0 0 256 256`}
+                          />
+                        </div>
+                        <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest text-center mt-1">Scan to Visit</p>
                       </div>
-                      <p className="text-xs text-muted-foreground font-medium">Scan to visit website</p>
-                    </div>
-                  </HoverCardContent>
-                </HoverCard>
-              </div>
-            </div>
+                    </HoverCardContent>
+                  </HoverCard>
+                </>
+              }
+            />
 
             <Card className="border-none shadow-premium bg-white overflow-hidden">
               <CardContent className="p-8">
@@ -588,7 +511,7 @@ export default function Dashboard() {
                                              stroke="#0f172a" 
                                              strokeWidth={3} 
                                              dot={false}
-                                             activeDot={{r: 6}}
+                                             activeDot={{r: 6, fill: '#0f172a', strokeWidth: 0}}
                                          />
                                     </LineChart>
                                 </ResponsiveContainer>

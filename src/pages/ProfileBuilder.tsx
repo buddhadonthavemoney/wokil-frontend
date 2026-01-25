@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Scale, Eye, ArrowLeft, Check, ExternalLink, Copy, LayoutDashboard, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import { PageHeader } from '@/components/layout/PageHeader';
 
 const STEP_NAMES = [
   'Basic Info',
@@ -192,46 +193,23 @@ export default function ProfileBuilder() {
 
   return (
     <div className="min-h-screen bg-[hsl(210,20%,98%)]/50 pb-20">
-      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border shadow-sm">
-        <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-          <div
-            className="flex items-center gap-3 cursor-pointer group"
-            onClick={() => navigate('/dashboard')}
-          >
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shadow-md shadow-primary/20 group-hover:scale-105 transition-transform">
-              <Scale className="w-4 h-4 text-primary-foreground" />
-            </div>
-            <div>
-              <h1 className="font-heading font-bold text-lg leading-tight text-foreground group-hover:text-primary transition-colors">Wokil</h1>
-              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Profile Architect</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-4">
+      <main className="container mx-auto px-6 py-12 max-w-2xl">
+        <PageHeader 
+          icon={<Scale />}
+          title="Profile Architect"
+          description="Craft your professional online presence step by step."
+          actions={
             <Button
               variant="ghost"
               size="sm"
               onClick={() => navigate('/dashboard')}
-              className="text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground gap-2"
+              className="gap-2 text-muted-foreground hover:text-foreground"
             >
-              <LayoutDashboard className="w-4 h-4" />
-              Dashboard
+              <ArrowLeft className="w-4 h-4" />
+              Exit to Dashboard
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                localStorage.removeItem('token');
-                navigate('/');
-              }}
-              className="text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground"
-            >
-              Sign Out
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      <main className="container mx-auto px-6 py-12 max-w-2xl">
+          }
+        />
         <div className="space-y-8">
           <ProgressIndicator
             currentStep={currentStep}

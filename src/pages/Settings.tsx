@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { profile as profileApi, site as siteApi } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
+import { PageHeader } from '@/components/layout/PageHeader';
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -49,36 +50,26 @@ export default function Settings() {
 
   return (
     <div className="min-h-screen bg-[hsl(210,20%,98%)]/50 pb-20">
-      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border shadow-sm">
-        <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate('/dashboard')}
-            className="gap-2 text-muted-foreground hover:text-foreground"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Dashboard
-          </Button>
-           <h1 className="font-heading font-bold text-lg leading-tight text-foreground">Settings</h1>
-           <div className="w-10" /> {/* Spacer */}
-        </div>
-      </header>
-
       <main className="container mx-auto px-6 py-10 max-w-6xl">
+        <PageHeader 
+          icon={<SettingsIcon />}
+          title="Settings"
+          description="Manage your account preferences and site configuration."
+          actions={
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/dashboard')}
+              className="gap-2 text-muted-foreground hover:text-foreground"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back to Dashboard
+            </Button>
+          }
+        />
         
         {/* Analytics Section */}
-        <section className="space-y-6">
-            <div className="flex items-center gap-3">
-                <div className="p-2 bg-primary/10 rounded-lg">
-                    <BarChart3 className="w-6 h-6 text-primary" />
-                </div>
-                <div>
-                   <h2 className="text-2xl font-bold text-foreground">Analytics</h2>
-                   <p className="text-muted-foreground text-sm">Monitor your site's performance and visitor stats.</p>
-                </div>
-            </div>
-
+        <section className="space-y-6 pt-4">
             {!profile?.googleAnalyticsId ? (
                 <div className="bg-white border border-border rounded-xl p-8 md:p-12 text-center shadow-sm">
                     <div className="w-16 h-16 bg-primary/5 rounded-full flex items-center justify-center mx-auto mb-6">
