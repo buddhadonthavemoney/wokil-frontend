@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LawyerProfile } from '@/types/lawyer';
-import { useAnalytics } from '@/hooks/useAnalytics';
 import { Button } from '@/components/ui/button';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -40,11 +39,26 @@ import {
   XCircle
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { profile as profileApi } from '@/lib/api';
 
 import { toast as sonnerToast } from "sonner";
 import { InfoModal } from '@/components/InfoModal';
-import { useLocation } from 'react-router-dom';
+import { useLocation, Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { profile as profileApi, site as siteApi } from '@/lib/api';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell
+} from 'recharts';
+
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -61,7 +75,16 @@ export default function Dashboard() {
     type: 'info' as 'info' | 'success' | 'error',
   });
 
-  const { analytics } = useAnalytics(profile);
+
+  
+  // Fetch Analytics Data (only if GA ID exists)
+  const { data: analytics } = useQuery({
+    queryKey: ['analytics'],
+    queryFn: siteApi.getAnalytics,
+    enabled: !!profile?.googleAnalyticsId,
+    refetchInterval: 30000, // Refresh every 30s
+  });
+
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
@@ -282,7 +305,7 @@ export default function Dashboard() {
     );
   }
 
-  const maxViews = analytics ? Math.max(...analytics.viewsThisWeek) : 1;
+
 
   return (
     <div className="min-h-screen">
@@ -470,173 +493,149 @@ export default function Dashboard() {
           </section>
 
           {/* Analytics Overview */}
-          {/* Analytics Overview */}
           <section className="space-y-6 relative">
-            <div className="absolute inset-0 z-50 flex items-center justify-center pointer-events-none">
-              <div className="bg-white/90 backdrop-blur-md border border-primary/20 px-8 py-4 rounded-3xl shadow-premium animate-in fade-in zoom-in duration-500 hover:scale-105 transition-transform pointer-events-auto cursor-default">
-                <p className="text-base font-bold uppercase tracking-widest text-primary flex items-center gap-2">
-                  <Sparkles className="w-5 h-5" />
-                  Coming Soon
-                </p>
-              </div>
-            </div>
-
-            {(() => {
-              const displayAnalytics = analytics || {
-                totalViews: 0,
-                uniqueVisitors: 0,
-                qrScans: 0,
-                contactClicks: 0,
-                viewsThisWeek: [0, 0, 0, 0, 0, 0, 0],
-                topReferrers: []
-              };
-              const displayMaxViews = Math.max(...displayAnalytics.viewsThisWeek, 1);
-
-              return (
-                <div className="opacity-75 pointer-events-none space-y-6 select-none">
-                  <div className="flex items-center justify-between">
-                    <h2 className="font-heading text-2xl font-bold tracking-tight text-foreground">Insights</h2>
-                    <div className="text-xs text-muted-foreground font-medium uppercase tracking-widest flex items-center gap-2">
-                      <TrendingUp className="w-3.5 h-3.5 text-green-600" />
-                      Live Activity
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                    <Card className="border-none shadow-premium bg-white group transition-all">
-                      <CardContent className="p-6">
-                        <div className="flex items-center gap-3 mb-4">
-                          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center transition-colors">
-                            <Eye className="w-5 h-5 text-primary" />
-                          </div>
-                        </div>
-                        <p className="text-3xl font-heading font-bold text-foreground mb-1 tracking-tight">
-                          {displayAnalytics.totalViews.toLocaleString()}
-                        </p>
-                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Total Views</p>
-                      </CardContent>
-                    </Card>
-
-                    <Card className="border-none shadow-premium bg-white group transition-all">
-                      <CardContent className="p-6">
-                        <div className="flex items-center gap-3 mb-4">
-                          <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center transition-colors">
-                            <Users className="w-5 h-5 text-accent" />
-                          </div>
-                        </div>
-                        <p className="text-3xl font-heading font-bold text-foreground mb-1 tracking-tight">
-                          {displayAnalytics.uniqueVisitors.toLocaleString()}
-                        </p>
-                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Visitors</p>
-                      </CardContent>
-                    </Card>
-
-                    <Card className="border-none shadow-premium bg-white group transition-all">
-                      <CardContent className="p-6">
-                        <div className="flex items-center gap-3 mb-4">
-                          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center transition-colors">
-                            <QrCode className="w-5 h-5 text-emerald-600" />
-                          </div>
-                        </div>
-                        <p className="text-3xl font-heading font-bold text-foreground mb-1 tracking-tight">
-                          {displayAnalytics.qrScans}
-                        </p>
-                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">QR Scans</p>
-                      </CardContent>
-                    </Card>
-
-                    <Card className="border-none shadow-premium bg-white group transition-all">
-                      <CardContent className="p-6">
-                        <div className="flex items-center gap-3 mb-4">
-                          <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center transition-colors">
-                            <Phone className="w-5 h-5 text-amber-600" />
-                          </div>
-                        </div>
-                        <p className="text-3xl font-heading font-bold text-foreground mb-1 tracking-tight">
-                          {displayAnalytics.contactClicks}
-                        </p>
-                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Leads</p>
-                      </CardContent>
-                    </Card>
-                  </div>
-
-                  <div className="grid lg:grid-cols-2 gap-8">
-                    <Card className="border-none shadow-premium bg-white overflow-hidden">
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-lg font-heading font-bold flex items-center gap-2">
-                          <TrendingUp className="w-4 h-4 text-primary" />
-                          Profile Engagement
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="flex items-end justify-between gap-3 h-48 pt-6">
-                          {displayAnalytics.viewsThisWeek.map((views, index) => (
-                            <div key={index} className="flex-1 flex flex-col items-center gap-3 group">
-                              <div
-                                className="w-full bg-primary/5 rounded-lg transition-all relative overflow-hidden"
-                                style={{
-                                  height: `${Math.max((views / displayMaxViews) * 100, 5)}%`,
-                                }}
-                              >
-                                <div
-                                  className="absolute bottom-0 left-0 w-full bg-primary/80 rounded-t-lg transition-all"
-                                  style={{ height: '100%', opacity: 0.4 + (views / displayMaxViews) * 0.6 }}
-                                />
-                              </div>
-                              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                                {DAYS[(new Date().getDay() - 6 + index + 7) % 7]}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    <Card className="border-none shadow-premium bg-white overflow-hidden">
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-lg font-heading font-bold flex items-center gap-2">
-                          <Globe className="w-4 h-4 text-primary" />
-                          Traffic Origins
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-6 pt-4">
-                          {(() => {
-                            let totalVisits = 0;
-                            displayAnalytics.topReferrers.forEach(r => { totalVisits += r.visits; });
-
-                            return displayAnalytics.topReferrers.map((referrer, index) => {
-                              const percentage = totalVisits > 0 ? Math.round((referrer.visits / totalVisits) * 100) : 0;
-
-                              return (
-                                <div key={index} className="space-y-2">
-                                  <div className="flex items-center justify-between">
-                                    <span className="text-sm font-bold text-foreground/80">{referrer.source}</span>
-                                    <span className="text-xs font-bold text-primary">{percentage}%</span>
-                                  </div>
-                                  <div className="h-2 bg-muted rounded-full overflow-hidden">
-                                    <div
-                                      className="h-full bg-primary rounded-full"
-                                      style={{ width: `${percentage}%` }}
-                                    />
-                                  </div>
-                                </div>
-                              );
-                            })
-                          })()}
-                          {displayAnalytics.topReferrers.length === 0 && (
-                            <div className="flex flex-col items-center justify-center h-full py-10 opacity-40">
-                              <Globe className="w-8 h-8 mb-2" />
-                              <p className="text-xs font-bold uppercase tracking-widest">No traffic data yet</p>
-                            </div>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
+             <div className="flex items-center justify-between">
+                <h2 className="font-heading text-2xl font-bold tracking-tight text-foreground">Insights</h2>
+                <div className="text-xs text-muted-foreground font-medium uppercase tracking-widest flex items-center gap-2">
+                  <TrendingUp className="w-3.5 h-3.5 text-green-600" />
+                  Live Activity
                 </div>
-              );
-            })()}
+              </div>
+
+            {!analytics && !profile?.googleAnalyticsId ? (
+                <div className="bg-white border border-border rounded-xl p-8 md:p-12 text-center shadow-sm">
+                    <div className="w-16 h-16 bg-primary/5 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <TrendingUp className="w-8 h-8 text-primary" />
+                    </div>
+                    <h3 className="text-xl font-bold mb-3">Enable Site Analytics</h3>
+                    <p className="text-muted-foreground max-w-md mx-auto mb-8">
+                        Get detailed insights about your visitors, page views, and traffic sources by enabling Google Analytics integration in Settings.
+                    </p>
+                    <Button 
+                        size="lg" 
+                        onClick={() => navigate('/settings')}
+                        className="px-8"
+                    >
+                        Go to Settings
+                    </Button>
+                </div>
+            ) : (
+                <div className="space-y-6 animate-fade-in">
+                    {/* Stats Cards */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div className="bg-white border border-border rounded-xl p-6 shadow-sm">
+                            <div className="flex items-center justify-between mb-4">
+                                <span className="text-sm font-medium text-muted-foreground">Total Views</span>
+                                <EyeIcon className="w-4 h-4 text-blue-500" />
+                            </div>
+                            <div className="text-3xl font-bold">{analytics?.totalViews || 0}</div>
+                        </div>
+                         <div className="bg-white border border-border rounded-xl p-6 shadow-sm">
+                            <div className="flex items-center justify-between mb-4">
+                                <span className="text-sm font-medium text-muted-foreground">Unique Visitors</span>
+                                <Users className="w-4 h-4 text-green-500" />
+                            </div>
+                            <div className="text-3xl font-bold">{analytics?.visitors || 0}</div>
+                        </div>
+                        {/* Placeholders for future stats */}
+                        <div className="bg-white border border-border rounded-xl p-6 shadow-sm opacity-60">
+                            <div className="flex items-center justify-between mb-4">
+                                <span className="text-sm font-medium text-muted-foreground">QR Scans</span>
+                                <QrCodeIcon className="w-4 h-4 text-purple-500" />
+                            </div>
+                            <div className="text-3xl font-bold">-</div>
+                            <p className="text-xs text-muted-foreground mt-2">Coming Soon</p>
+                        </div>
+                        <div className="bg-white border border-border rounded-xl p-6 shadow-sm opacity-60">
+                            <div className="flex items-center justify-between mb-4">
+                                <span className="text-sm font-medium text-muted-foreground">Avg. Time</span>
+                                <ClockIcon className="w-4 h-4 text-orange-500" />
+                            </div>
+                            <div className="text-3xl font-bold">-</div>
+                            <p className="text-xs text-muted-foreground mt-2">Coming Soon</p>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        {/* Views Chart */}
+                        <div className="lg:col-span-2 bg-white border border-border rounded-xl p-6 shadow-sm">
+                            <h3 className="font-bold mb-6 flex items-center gap-2">
+                                <TrendingUp className="w-4 h-4 text-primary" />
+                                Traffic History
+                            </h3>
+                            <div className="h-[300px] w-full">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <LineChart data={analytics?.history || []}>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                                        <XAxis 
+                                             dataKey="date" 
+                                             axisLine={false} 
+                                             tickLine={false} 
+                                             tick={{fill: '#888', fontSize: 12}}
+                                             dy={10}
+                                        />
+                                        <YAxis 
+                                             axisLine={false} 
+                                             tickLine={false} 
+                                             tick={{fill: '#888', fontSize: 12}}
+                                        />
+                                        <Tooltip 
+                                             contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
+                                        />
+                                        <Line 
+                                             type="monotone" 
+                                             dataKey="views" 
+                                             stroke="#0f172a" 
+                                             strokeWidth={3} 
+                                             dot={false}
+                                             activeDot={{r: 6}}
+                                         />
+                                    </LineChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+
+                        {/* Sources Chart */}
+                        <div className="bg-white border border-border rounded-xl p-6 shadow-sm">
+                            <h3 className="font-bold mb-6 flex items-center gap-2">
+                                <Globe className="w-4 h-4 text-primary" />
+                                Traffic Sources
+                            </h3>
+                            <div className="h-[300px] w-full">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <PieChart>
+                                        <Pie
+                                            data={Object.entries(analytics?.sources || {}).map(([name, value]) => ({ name, value }))}
+                                            cx="50%"
+                                            cy="50%"
+                                            innerRadius={60}
+                                            outerRadius={80}
+                                            paddingAngle={5}
+                                            dataKey="value"
+                                        >
+                                            {Object.entries(analytics?.sources || {}).map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                            ))}
+                                        </Pie>
+                                        <Tooltip />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                            </div>
+                            <div className="mt-4 space-y-2">
+                                    {Object.entries(analytics?.sources || {}).slice(0, 5).map(([name, value], index) => (
+                                        <div key={name} className="flex items-center justify-between text-sm">
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-3 h-3 rounded-full" style={{backgroundColor: COLORS[index % COLORS.length]}} />
+                                                <span className="text-muted-foreground truncate max-w-[120px]" title={name}>{name}</span>
+                                            </div>
+                                            <span className="font-medium">{value}</span>
+                                        </div>
+                                    ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
           </section>   {/* Footer Metadata */}
           {profile.publishedAt && (
             <footer className="pt-8 border-t border-border/50 flex flex-col sm:flex-row items-center gap-4 sm:gap-6 text-[10px] text-muted-foreground font-bold uppercase tracking-widest">
@@ -667,4 +666,75 @@ export default function Dashboard() {
       />
     </div>
   );
+}
+
+// Helper Icons
+function EyeIcon(props: any) {
+    return (
+        <svg
+            {...props}
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        >
+            <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+            <circle cx="12" cy="12" r="3" />
+        </svg>
+    )
+}
+
+function ClockIcon(props: any) {
+    return (
+        <svg
+            {...props}
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        >
+            <circle cx="12" cy="12" r="10" />
+            <polyline points="12 6 12 12 16 14" />
+        </svg>
+    )
+}
+
+function QrCodeIcon(props: any) {
+    return (
+        <svg
+            {...props}
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        >
+            <rect width="5" height="5" x="3" y="3" rx="1" />
+            <rect width="5" height="5" x="16" y="3" rx="1" />
+            <rect width="5" height="5" x="3" y="16" rx="1" />
+            <path d="M21 16h-3a2 2 0 0 0-2 2v3" />
+            <path d="M21 21v.01" />
+            <path d="M12 7v3a2 2 0 0 1-2 2H7" />
+            <path d="M3 12h.01" />
+            <path d="M12 3h.01" />
+            <path d="M12 16v.01" />
+            <path d="M16 12h1" />
+            <path d="M21 12v.01" />
+            <path d="M12 21v-1" />
+        </svg>
+    )
 }

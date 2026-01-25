@@ -38,6 +38,8 @@ export enum ApiEndpoints {
     SITES_DEPLOY = '/sites/deploy',
     SITES_PREVIEW = '/sites/preview',
     SITES_CHECK = '/sites/check',
+    SITES_ANALYTICS = '/sites/analytics',
+    SITES_GA = '/sites/ga',
 }
 
 export const site = {
@@ -56,8 +58,23 @@ export const site = {
             subdomain: slug
         });
         return response.data;
+    },
+    getAnalytics: async () => {
+        const response = await api.get<AnalyticsData>(ApiEndpoints.SITES_ANALYTICS);
+        return response.data;
+    },
+    enableAnalytics: async () => {
+        const response = await api.post(ApiEndpoints.SITES_GA);
+        return response.data;
     }
 };
+
+export interface AnalyticsData {
+    history: { date: string; views: number }[];
+    sources: Record<string, number>;
+    totalViews: number;
+    visitors: number;
+}
 
 export const auth = {
     getLoginUrl: async () => {

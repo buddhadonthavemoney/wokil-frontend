@@ -35,6 +35,7 @@ export interface LawyerProfile {
   publishedAt?: string;
   slug: string;
   siteUrl?: string;
+  googleAnalyticsId?: string;
 }
 
 export const PRACTICE_AREAS = [
