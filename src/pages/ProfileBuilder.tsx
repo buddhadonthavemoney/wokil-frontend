@@ -137,7 +137,7 @@ export default function ProfileBuilder() {
 
   if (isPreviewMode) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="fixed inset-0 z-[100] bg-background overflow-auto">
         <div className="fixed top-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-md border-b border-border shadow-sm">
           <div className="container mx-auto px-6 py-4 flex items-center justify-between">
             <Button

@@ -9,6 +9,9 @@ import Dashboard from "./pages/Dashboard";
 import GoogleCallback from "./pages/auth/GoogleCallback";
 import Login from "./pages/Login";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
+import MainLayout from "./components/layout/MainLayout";
+import Sites from "./pages/Sites";
+import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,8 +29,12 @@ const App = () => (
 
           {/* Protected Routes */}
           <Route element={<ProtectedRoute />}>
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/profile-builder" element={<ProfileBuilder />} />
+            <Route element={<MainLayout />}>
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/profile-builder" element={<ProfileBuilder />} />
+              <Route path="/sites" element={<Sites />} />
+              <Route path="/settings" element={<Settings />} />
+            </Route>
           </Route>
 
           <Route path="*" element={<NotFound />} />

@@ -285,38 +285,7 @@ export default function Dashboard() {
   const maxViews = analytics ? Math.max(...analytics.viewsThisWeek) : 1;
 
   return (
-    <div className="min-h-screen bg-[hsl(210,20%,98%)]/50">
-      {/* Header */}
-      <header className="sticky top-0 z-10 border-b border-border bg-background/80 backdrop-blur-md">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div
-              className="flex items-center gap-3 cursor-pointer group"
-              onClick={() => navigate('/dashboard')}
-            >
-              <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20 group-hover:scale-105 transition-transform">
-                <Scale className="w-5 h-5 text-primary-foreground" />
-              </div>
-              <div>
-                <h1 className="font-heading font-bold text-xl leading-tight text-foreground group-hover:text-primary transition-colors">Wokil</h1>
-                <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Professional Dashboard</p>
-              </div>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                localStorage.removeItem('token');
-                navigate('/');
-              }}
-              className="text-muted-foreground hover:text-foreground hover:bg-muted font-medium"
-            >
-              Log Out
-            </Button>
-          </div>
-        </div>
-      </header>
-
+    <div className="min-h-screen">
       {/* Main Content */}
       <main className="container mx-auto px-6 py-10 max-w-6xl">
         <div className="flex flex-col gap-10">
