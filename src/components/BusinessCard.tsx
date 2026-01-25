@@ -329,8 +329,7 @@ export const BusinessCard = React.forwardRef<HTMLDivElement, BusinessCardProps>(
                             <div className="p-2 bg-white rounded-xl shadow-xl">
                                 <QRCode
                                     value={vCardData}
-                                    size={128}
-                                    style={{ height: "auto", width: "80px" }}
+                                    style={{ height: "auto", width: "110px" }}
                                     viewBox={`0 0 256 256`}
                                 />
                             </div>
