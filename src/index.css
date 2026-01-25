@@ -87,20 +87,42 @@
 
   @keyframes highlight-glow {
     0% {
-      box-shadow: 0 0 0 0 hsl(var(--primary) / 0.4);
+      box-shadow: 0 0 0 0 hsl(142 70% 45% / 0.4);
       transform: scale(1);
     }
     50% {
-      box-shadow: 0 0 0 15px hsl(var(--primary) / 0);
+      box-shadow: 0 0 0 15px hsl(142 70% 45% / 0);
       transform: scale(1.05);
     }
     100% {
-      box-shadow: 0 0 0 0 hsl(var(--primary) / 0);
+      box-shadow: 0 0 0 0 hsl(142 70% 45% / 0);
       transform: scale(1);
     }
   }
 
+  @keyframes bounce-horizontal {
+    0%, 100% {
+      transform: translateX(0) translateY(-50%);
+    }
+    50% {
+      transform: translateX(-10px) translateY(-50%);
+    }
+  }
+
+  .animate-bounce-horizontal {
+    animation: bounce-horizontal 1s ease-in-out infinite;
+  }
+
   .animate-highlight-glow {
     animation: highlight-glow 2s ease-in-out infinite;
+  }
+
+  /* Utility to hide scrollbars while keeping functionality */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
   }
 }

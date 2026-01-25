@@ -34,7 +34,8 @@ import {
   Sparkles,
   Loader2,
   CheckCircle2,
-  XCircle
+  XCircle,
+  ArrowLeft
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -64,6 +65,7 @@ export default function Dashboard() {
   const [profile, setProfile] = useState<LawyerProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [highlightViewSite, setHighlightViewSite] = useState(false);
+  const [showGuideArrow, setShowGuideArrow] = useState(false);
 
 
   const [showInfoModal, setShowInfoModal] = useState(false);
@@ -225,9 +227,16 @@ export default function Dashboard() {
                   case 'done':
                     if (event.status === 'success') {
                       showToast('success', event.message, "LIVE");
-                      setHighlightViewSite(true);
-                      // Turn off highlight after 10 seconds
-                      setTimeout(() => setHighlightViewSite(false), 10000);
+                      
+                      // Sequential animation: Arrow first, then Glow
+                      setShowGuideArrow(true);
+                      setTimeout(() => {
+                        setShowGuideArrow(false);
+                        setHighlightViewSite(true);
+                        // Turn off highlight after 10 seconds
+                        setTimeout(() => setHighlightViewSite(false), 10000);
+                      }, 4000);
+
                       await fetchProfile();
                     } else {
                       showToast('error', event.message, "FAILED");
@@ -341,19 +350,26 @@ export default function Dashboard() {
                   </Button>
                   <HoverCard openDelay={0} closeDelay={0}>
                     <HoverCardTrigger asChild>
-                      <Button
-                        onClick={() => window.open(getPublicUrl(), '_blank')}
-                        size="sm"
-                        className={cn(
-                          "gap-2 rounded-lg font-medium shadow-lg shadow-primary/10 hover:shadow-primary/20 transition-all text-primary-foreground bg-primary hover:bg-primary/90 border-none",
-                          highlightViewSite && "animate-highlight-glow ring-2 ring-primary ring-offset-2 ring-offset-background"
+                      <div className="relative">
+                        {showGuideArrow && (
+                          <div className="absolute -right-12 top-1/2 -translate-y-1/2 animate-bounce-horizontal text-emerald-600 z-10">
+                            <ArrowLeft className="w-8 h-8 fill-emerald-600/10" />
+                          </div>
                         )}
-                        disabled={(!profile.slug && !profile.id) || !profile.isPublished}
-                      >
-                        <ExternalLink className="w-4 h-4" />
-                        View Site
-                        <QrCode className="w-4 h-4 opacity-70" />
-                      </Button>
+                        <Button
+                          onClick={() => window.open(getPublicUrl(), '_blank')}
+                          size="sm"
+                          className={cn(
+                            "gap-2 rounded-lg font-medium shadow-lg shadow-primary/10 hover:shadow-primary/20 transition-all text-primary-foreground bg-primary hover:bg-primary/90 border-none relative overflow-visible",
+                            highlightViewSite && "animate-highlight-glow ring-2 ring-emerald-500 ring-offset-2 ring-offset-background"
+                          )}
+                          disabled={(!profile.slug && !profile.id) || !profile.isPublished}
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                          View Site
+                          <QrCode className="w-4 h-4 opacity-70" />
+                        </Button>
+                      </div>
                     </HoverCardTrigger>
                     <HoverCardContent className="w-auto p-4 bg-white" align="end">
                       <div className="flex flex-col items-center gap-2">

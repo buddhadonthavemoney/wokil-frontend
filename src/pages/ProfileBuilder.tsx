@@ -245,10 +245,10 @@ export default function ProfileBuilder() {
             <Button
               variant="ghost"
               onClick={() => setIsPreviewMode(false)}
-              className="gap-2 font-bold text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground"
+              className="gap-2 font-bold text-[10px] sm:text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground"
             >
               <ArrowLeft className="w-4 h-4" />
-              Back to Editor
+              <span className="hidden sm:inline">Back to Editor</span>
             </Button>
             <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary">
               <Eye className="w-3.5 h-3.5" />
@@ -257,17 +257,18 @@ export default function ProfileBuilder() {
             <Button
               onClick={handlePublish}
               disabled={isPublishing}
-              className="gap-2 font-bold text-xs uppercase tracking-widest px-6 shadow-lg shadow-primary/20"
+              className="gap-2 font-bold text-[10px] sm:text-xs uppercase tracking-widest px-4 sm:px-6 shadow-lg shadow-primary/20"
             >
               {isPublishing ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Publishing...
+                  <span className="hidden sm:inline">Publishing...</span>
                 </>
               ) : (
                 <>
                   <Check className="w-4 h-4" />
-                  Publish Now
+                  <span className="hidden sm:inline">Publish Now</span>
+                  <span className="sm:hidden">Publish</span>
                 </>
               )}
             </Button>
@@ -286,15 +287,15 @@ export default function ProfileBuilder() {
         </div>
 
         {/* Theme Switcher Overlay */}
-        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[70]">
-          <div className="bg-white/80 backdrop-blur-xl border border-white/20 shadow-2xl rounded-2xl p-2 flex items-center gap-1 shadow-primary/10">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] w-[90%] sm:w-auto overflow-hidden">
+          <div className="bg-white/80 backdrop-blur-xl border border-white/20 shadow-2xl rounded-2xl p-1.5 sm:p-2 flex items-center gap-1 shadow-primary/10 overflow-x-auto no-scrollbar scroll-smooth">
             {THEMES.map((t) => (
               <button
                 key={t.id}
                 onClick={() => handleThemeChange(t.id as any)}
                 disabled={loadingPreview}
                 className={cn(
-                  "px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all duration-300",
+                  "px-3 sm:px-4 py-2 rounded-xl text-[9px] sm:text-[10px] font-bold uppercase tracking-widest transition-all duration-300 whitespace-nowrap shrink-0",
                   loadingPreview && "opacity-50 cursor-not-allowed",
                   profile.themeSelection?.theme === t.id 
                     ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" 
