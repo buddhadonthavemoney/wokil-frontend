@@ -27,6 +27,37 @@ const STEP_NAMES = [
   'Subdomain',
 ];
 
+const SAUL_GOODMAN_DATA = {
+  basicInformation: {
+    fullName: "Saul Goodman",
+    professionalTitle: "Attorney at Law",
+    lawFirmName: "Goodman, Goodman & McGill",
+    yearsOfExperience: 15,
+  },
+  practiceDetails: {
+    areasOfPractice: ["Criminal Defense", "Personal Injury", "Bankruptcy"],
+    jurisdictions: ["New Mexico", "Federal Courts"],
+  },
+  contactInformation: {
+    phoneNumber: "(505) 503-4455",
+    email: "saul@bettercallsaul.com",
+    officeAddress: "160 San Juan Blvd, Albuquerque, NM 87102",
+  },
+  professionalProfile: {
+    bio: "Did you know that you have rights? The Constitution says you do, and so do I. I believe that until proven guilty, every man, woman, and child in this country is innocent. Better call Saul!",
+    officeHours: "9:00 AM - 5:00 PM",
+    profilePhoto: "https://cdn.buddhag.com.np/4b16b113-d16b-4f16-982e-4db745aecbcf.png",
+  },
+  onlinePresence: {
+    website: "https://bettercallsaul.com",
+    linkedIn: "https://linkedin.com/in/saulgoodman",
+  },
+  themeSelection: {
+    theme: "modern" as const,
+  },
+  isPublished: false,
+};
+
 export default function ProfileBuilder() {
   const {
     profile,
@@ -39,7 +70,23 @@ export default function ProfileBuilder() {
     publishProfile,
     fetchPreview,
     saveProfileData,
+    setProfile,
+    goToStep,
   } = useProfileForm();
+
+
+
+  const handleFillSample = () => {
+    setProfile(prev => ({
+      ...prev,
+      ...SAUL_GOODMAN_DATA,
+      id: prev.id, // Keep existing ID
+    }));
+    toast({
+      title: "Sample Data Loaded",
+      description: "Saul Goodman's profile has been loaded. Better call Saul!",
+    });
+  };
 
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [previewHtml, setPreviewHtml] = useState('');
@@ -107,7 +154,13 @@ export default function ProfileBuilder() {
   const renderCurrentStep = () => {
     switch (currentStep) {
       case 1:
-        return <BasicInfoStep profile={profile} onUpdate={(fields) => updateNestedProfile('basicInformation', fields)} />;
+        return (
+          <BasicInfoStep 
+            profile={profile} 
+            onUpdate={(fields) => updateNestedProfile('basicInformation', fields)} 
+            onFillSample={handleFillSample}
+          />
+        );
       case 2:
         return <PracticeDetailsStep profile={profile} onUpdate={(fields) => updateNestedProfile('practiceDetails', fields)} />;
       case 3:
@@ -133,6 +186,19 @@ export default function ProfileBuilder() {
       await nextStep();
     }
   };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Enter' && !isPreviewMode) {
+        const target = e.target as HTMLElement;
+        if (target.tagName === 'TEXTAREA') return;
+        handleNext();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleNext, isPreviewMode]);
 
 
 
@@ -198,23 +264,13 @@ export default function ProfileBuilder() {
           icon={<Scale />}
           title="Profile Architect"
           description="Craft your professional online presence step by step."
-          actions={
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate('/dashboard')}
-              className="gap-2 text-muted-foreground hover:text-foreground"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Exit to Dashboard
-            </Button>
-          }
         />
         <div className="space-y-8">
           <ProgressIndicator
             currentStep={currentStep}
             totalSteps={totalSteps}
             steps={STEP_NAMES}
+            onStepClick={goToStep}
           />
 
           <div className="bg-white border-none rounded-2xl p-8 md:p-10 shadow-premium animate-fade-in relative overflow-hidden">

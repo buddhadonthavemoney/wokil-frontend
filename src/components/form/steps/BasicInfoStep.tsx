@@ -1,21 +1,37 @@
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { Scale } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { LawyerProfile, PROFESSIONAL_TITLES } from '@/types/lawyer';
 
 interface BasicInfoStepProps {
   profile: LawyerProfile;
   onUpdate: (fields: Partial<LawyerProfile['basicInformation']>) => void;
+  onFillSample?: () => void;
 }
 
-export function BasicInfoStep({ profile, onUpdate }: BasicInfoStepProps) {
+export function BasicInfoStep({ profile, onUpdate, onFillSample }: BasicInfoStepProps) {
   const { basicInformation } = profile;
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="space-y-2">
-        <h2 className="heading-section text-foreground">Basic Information</h2>
-        <p className="text-muted-foreground">Let's start with your professional details.</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="space-y-2">
+          <h2 className="heading-section text-foreground">Basic Information</h2>
+          <p className="text-muted-foreground">Let's start with your professional details.</p>
+        </div>
+        {onFillSample && !basicInformation.fullName && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onFillSample}
+            className="gap-2 text-primary border-primary/20 hover:bg-primary/5 shadow-sm shrink-0 self-start sm:self-center"
+          >
+            <Scale className="w-4 h-4 opacity-70" />
+            Fill with Sample Data
+          </Button>
+        )}
       </div>
 
       <div className="grid gap-6">

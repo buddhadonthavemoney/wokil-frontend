@@ -5,9 +5,10 @@ interface ProgressIndicatorProps {
   currentStep: number;
   totalSteps: number;
   steps: string[];
+  onStepClick?: (step: number) => void;
 }
 
-export function ProgressIndicator({ currentStep, totalSteps, steps }: ProgressIndicatorProps) {
+export function ProgressIndicator({ currentStep, totalSteps, steps, onStepClick }: ProgressIndicatorProps) {
   return (
     <div className="w-full mb-12">
       <div className="flex items-center justify-between relative px-2">
@@ -24,13 +25,20 @@ export function ProgressIndicator({ currentStep, totalSteps, steps }: ProgressIn
           const isCurrent = stepNumber === currentStep;
 
           return (
-            <div key={step} className="flex flex-col items-center relative z-10 group">
+            <div 
+              key={step} 
+              className={cn(
+                "flex flex-col items-center relative z-10 group",
+                onStepClick && "cursor-pointer"
+              )}
+              onClick={() => onStepClick?.(stepNumber)}
+            >
               <div
                 className={cn(
                   "w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold transition-all duration-500 ease-out",
-                  isCompleted && "bg-primary text-primary-foreground shadow-lg shadow-primary/20 scale-100",
+                  isCompleted && "bg-primary text-primary-foreground shadow-lg shadow-primary/20 scale-100 group-hover:scale-110",
                   isCurrent && "bg-primary text-primary-foreground shadow-xl shadow-primary/30 ring-[6px] ring-primary/10 scale-110",
-                  !isCompleted && !isCurrent && "bg-white border border-border text-muted-foreground/60 shadow-sm"
+                  !isCompleted && !isCurrent && "bg-white border border-border text-muted-foreground/60 shadow-sm group-hover:border-primary/50 group-hover:text-primary group-hover:scale-110"
                 )}
                 style={{ fontFamily: 'Outfit, sans-serif' }}
               >
@@ -38,7 +46,7 @@ export function ProgressIndicator({ currentStep, totalSteps, steps }: ProgressIn
               </div>
               <span className={cn(
                 "mt-4 text-[10px] font-bold uppercase tracking-widest text-center transition-colors duration-300",
-                isCurrent ? "text-primary px-2 py-0.5 rounded bg-primary/5" : "text-muted-foreground/50",
+                isCurrent ? "text-primary px-2 py-0.5 rounded bg-primary/5" : "text-muted-foreground/50 group-hover:text-primary/70",
                 "hidden sm:block"
               )}>
                 {step}

@@ -141,7 +141,7 @@ export function useProfileForm() {
   ) => {
     setProfile(prev => ({
       ...prev,
-      [category]: { ...prev[category], ...fields }
+      [category]: { ...(prev[category] as object), ...fields }
     }));
   }, []);
 
@@ -227,5 +227,6 @@ export function useProfileForm() {
     publishProfile,
     fetchPreview,
     saveProfileData,
+    setProfile,
   };
 }
