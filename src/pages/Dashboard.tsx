@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
+import { cn } from '@/lib/utils'
 import {
   Dialog,
   DialogContent,
@@ -62,6 +63,7 @@ const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 export default function Dashboard() {
   const [profile, setProfile] = useState<LawyerProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [highlightViewSite, setHighlightViewSite] = useState(false);
 
 
   const [showInfoModal, setShowInfoModal] = useState(false);
@@ -135,27 +137,42 @@ export default function Dashboard() {
 
       const showToast = (variant: 'loading' | 'success' | 'error', message: string, detail?: string) => {
         sonnerToast.custom((t) => (
-          <div className="w-[356px] bg-white rounded-2xl shadow-2xl border-2 border-primary/20 p-4 flex items-start gap-4 animate-in slide-in-from-bottom-5 fade-in duration-300">
+          <div className="w-[380px] bg-white/80 backdrop-blur-xl rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-white/20 p-5 flex items-start gap-4 animate-in slide-in-from-bottom-5 fade-in duration-500 ring-1 ring-black/5">
             <div className={`
-              mt-1 w-10 h-10 rounded-full flex items-center justify-center shrink-0 shadow-lg
+              mt-0.5 w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-lg transition-transform duration-300 hover:scale-105
               ${variant === 'loading' ? 'bg-primary/10 text-primary' : ''}
-              ${variant === 'success' ? 'bg-green-100 text-green-600' : ''}
-              ${variant === 'error' ? 'bg-red-100 text-red-600' : ''}
+              ${variant === 'success' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : ''}
+              ${variant === 'error' ? 'bg-rose-50 text-rose-600 border border-rose-100' : ''}
             `}>
-              {variant === 'loading' && <Loader2 className="w-5 h-5 animate-spin" />}
-              {variant === 'success' && <Sparkles className="w-5 h-5" />}
-              {variant === 'error' && <XCircle className="w-5 h-5" />}
+              {variant === 'loading' && <Loader2 className="w-6 h-6 animate-spin" />}
+              {variant === 'success' && <Sparkles className="w-6 h-6 animate-bounce" />}
+              {variant === 'error' && <XCircle className="w-6 h-6" />}
             </div>
-            <div className="flex-1 space-y-1">
-              <h3 className="font-heading font-bold text-sm text-foreground">
-                {variant === 'loading' && 'Deploying Website'}
-                {variant === 'success' && 'Deployment Complete'}
-                {variant === 'error' && 'Deployment Failed'}
-              </h3>
-              <p className="text-xs font-medium text-muted-foreground leading-relaxed">
+            <div className="flex-1 space-y-1.5 pt-0.5">
+              <div className="flex items-center justify-between">
+                <h3 className="font-heading font-extrabold text-[15px] text-foreground tracking-tight leading-none">
+                  {variant === 'loading' && 'Deploying Website'}
+                  {variant === 'success' && 'Deployment Complete'}
+                  {variant === 'error' && 'Deployment Failed'}
+                </h3>
+                {variant === 'loading' && (
+                  <span className="flex h-2 w-2 rounded-full bg-primary animate-pulse" />
+                )}
+              </div>
+              <p className="text-sm font-medium text-muted-foreground/90 leading-relaxed font-body">
                 {message}
               </p>
-              {detail && <p className="text-[10px] text-muted-foreground/70 uppercase tracking-widest">{detail}</p>}
+              {detail && (
+                <div className="flex items-center gap-2 pt-1">
+                  <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-[0.2em] border ${
+                    variant === 'success' ? 'bg-emerald-100/50 text-emerald-700 border-emerald-200' : 
+                    variant === 'error' ? 'bg-rose-100/50 text-rose-700 border-rose-200' : 
+                    'bg-primary/5 text-primary/70 border-primary/10'
+                  }`}>
+                    {detail}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         ), { id: toastId, duration: variant === 'loading' ? Infinity : 5000 });
@@ -208,13 +225,9 @@ export default function Dashboard() {
                   case 'done':
                     if (event.status === 'success') {
                       showToast('success', event.message, "LIVE");
-                      setShowInfoModal(true);
-                      setModalContent({
-                        title: 'Website is Live!',
-                        description: event.message || 'Your professional profile has been successfully published.',
-                        type: 'success',
-                      });
-
+                      setHighlightViewSite(true);
+                      // Turn off highlight after 10 seconds
+                      setTimeout(() => setHighlightViewSite(false), 10000);
                       await fetchProfile();
                     } else {
                       showToast('error', event.message, "FAILED");
@@ -331,7 +344,10 @@ export default function Dashboard() {
                       <Button
                         onClick={() => window.open(getPublicUrl(), '_blank')}
                         size="sm"
-                        className="gap-2 rounded-lg font-medium shadow-lg shadow-primary/10 hover:shadow-primary/20 transition-all text-primary-foreground bg-primary hover:bg-primary/90 border-none"
+                        className={cn(
+                          "gap-2 rounded-lg font-medium shadow-lg shadow-primary/10 hover:shadow-primary/20 transition-all text-primary-foreground bg-primary hover:bg-primary/90 border-none",
+                          highlightViewSite && "animate-highlight-glow ring-2 ring-primary ring-offset-2 ring-offset-background"
+                        )}
                         disabled={(!profile.slug && !profile.id) || !profile.isPublished}
                       >
                         <ExternalLink className="w-4 h-4" />

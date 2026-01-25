@@ -144,11 +144,6 @@ export default function ProfileBuilder() {
       // 4. Fetch new preview HTML
       const html = await fetchPreview();
       setPreviewHtml(html);
-
-      toast({
-        title: "Theme Updated",
-        description: `Switched to ${newTheme.charAt(0).toUpperCase() + newTheme.slice(1)} theme.`,
-      });
     } catch (err) {
       console.error("Theme switch failed:", err);
       toast({
