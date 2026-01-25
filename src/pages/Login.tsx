@@ -172,8 +172,8 @@ export default function Login() {
                             desc: "Get your customizable business card with your contact and website QRs."
                         }, {
                             icon: <BarChart3 className="w-6 h-6" />,
-                            title: "Smart Analytics(Coming Soon)",
-                            desc: "Track profile views, QR scans, and contact button clicks to measure your impact."
+                            title: "Smart Analytics",
+                            desc: "Track profile views, analytics and view sources"
                         }].map((feature, i) => (
                             <div key={i} className="bg-card border border-border p-8 rounded-2xl text-left hover:border-primary/40 transition-colors group">
                                 <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary mb-6 group-hover:scale-110 transition-transform">
