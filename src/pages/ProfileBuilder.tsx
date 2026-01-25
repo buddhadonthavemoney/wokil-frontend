@@ -332,7 +332,6 @@ export default function ProfileBuilder() {
           />
 
           <div className="bg-white border-none rounded-2xl p-8 md:p-10 shadow-premium animate-fade-in relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-1 bg-primary/10" />
             <div className="relative">
               {renderCurrentStep()}
 

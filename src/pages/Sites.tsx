@@ -1,4 +1,4 @@
-import { Globe, ExternalLink, Edit, IdCard, Loader2, CheckCircle2, ShieldCheck } from 'lucide-react';
+import { Globe, ExternalLink, Edit, IdCard, Loader2, CheckCircle2, ShieldCheck, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -139,20 +139,38 @@ export default function Sites() {
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Add New Site Card (Coming Soon) */}
+              <Card className="border-2 border-dashed border-border/60 bg-muted/2 shadow-none overflow-hidden group hover:border-primary/30 transition-all flex flex-col items-center justify-center p-8 gap-6 min-h-[440px]">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-20 h-20 rounded-3xl bg-primary/5 flex items-center justify-center group-hover:bg-primary/10 transition-all duration-500 group-hover:scale-110">
+                        <Plus className="w-10 h-10 text-primary/30 group-hover:text-primary transition-colors" />
+                    </div>
+                    <Badge variant="outline" className="bg-primary/5 text-primary border-primary/10 text-[9px] font-bold uppercase tracking-[0.15em] px-3 py-1 rounded-full">
+                        Coming Soon
+                    </Badge>
+                </div>
+
+                <div className="text-center space-y-2">
+                    <h3 className="font-bold text-foreground">Add Custom Domain</h3>
+                    <p className="text-xs text-muted-foreground max-w-[200px] mx-auto leading-relaxed">
+                        Connect your own personal domain (e.g. www.yourname.com) to your professional site.
+                    </p>
+                </div>
+
+                <Button 
+                    variant="outline" 
+                    size="sm" 
+                    disabled 
+                    className="mt-2 rounded-lg text-[10px] font-bold uppercase tracking-widest bg-white/50 border-dashed"
+                >
+                    Add Custom Site
+                </Button>
+              </Card>
             </div>
           )}
 
-          <div className="mt-8 p-6 bg-accent/5 border border-accent/20 rounded-2xl flex items-center gap-5">
-             <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
-                <Globe className="w-6 h-6 text-accent" />
-             </div>
-             <div>
-                <h4 className="font-bold text-accent">Expand Your Presence</h4>
-                <p className="text-xs text-accent/70 mt-1 max-w-lg">
-                    Multi-site management is enabled for Premium users. Create dedicated landing pages for specific practice areas or law firm departments.
-                </p>
-             </div>
-          </div>
+
         </div>
       </main>
     </div>
