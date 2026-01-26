@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { LawyerProfile } from '@/types/lawyer';
+import { Site, CreateSiteRequest } from '@/types/site';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -40,6 +41,7 @@ export enum ApiEndpoints {
     SITES_CHECK = '/sites/check',
     SITES_ANALYTICS = '/sites/analytics',
     SITES_GA = '/sites/ga',
+    SITES_LIST = '/sites',
 }
 
 export const site = {
@@ -66,6 +68,17 @@ export const site = {
     enableAnalytics: async () => {
         const response = await api.post(ApiEndpoints.SITES_GA);
         return response.data;
+    },
+    list: async () => {
+        const response = await api.get<Site[]>(ApiEndpoints.SITES_LIST);
+        return response.data;
+    },
+    create: async (data: CreateSiteRequest) => {
+        const response = await api.post<Site>(ApiEndpoints.SITES_LIST, data);
+        return response.data;
+    },
+    delete: async (domain: string) => {
+        await api.delete(`${ApiEndpoints.SITES_LIST}/${domain}`);
     }
 };
 
