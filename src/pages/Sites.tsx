@@ -1,4 +1,4 @@
-import { Globe, ExternalLink, Edit, IdCard, Loader2, CheckCircle2, ShieldCheck, Plus, Clock, Link as LinkIcon, Trash2 } from 'lucide-react';
+import { Globe, ExternalLink, Edit, IdCard, Loader2, CheckCircle2, ShieldCheck, Plus, Clock, Link as LinkIcon, Trash2, Copy, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -31,7 +31,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { 
+  Alert, 
+  AlertDescription, 
+  AlertTitle 
+} from "@/components/ui/alert";
+import QRCode from "react-qr-code";
 import { toast } from "sonner";
+import { VerificationRecord } from '@/types/site';
 
 export default function Sites() {
   const navigate = useNavigate();
@@ -42,6 +49,9 @@ export default function Sites() {
     status: 'requested'
   });
   const [siteToDelete, setSiteToDelete] = useState<string | null>(null);
+  const [siteToVerify, setSiteToVerify] = useState<string | null>(null);
+  const [verificationRecords, setVerificationRecords] = useState<VerificationRecord[]>([]);
+  const [isLoadingRecords, setIsLoadingRecords] = useState(false);
 
   const { data: profile, isLoading: profileLoading } = useQuery({
     queryKey: ['profile'],
@@ -77,6 +87,49 @@ export default function Sites() {
       toast.error(error.response?.data?.message || "Failed to delete site");
     }
   });
+
+  const verifyMutation = useMutation({
+    mutationFn: siteApi.verify,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sites'] });
+      setSiteToVerify(null);
+      toast.success("Site verified and linked successfully!");
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Verification failed. Please check your DNS records.");
+    }
+  });
+
+  const handleFetchRecords = async (domain: string) => {
+    setIsLoadingRecords(true);
+    try {
+      const data = await siteApi.getVerificationRecords(domain);
+      // Map API response to UI record structure
+      const records: VerificationRecord[] = [
+        {
+          type: 'TXT',
+          name: '@ / ' + domain,
+          value: data.txt_record
+        },
+        {
+          type: 'CNAME',
+          name: data.cname_host,
+          value: data.cname_value
+        }
+      ];
+      setVerificationRecords(records);
+      setSiteToVerify(domain);
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to fetch verification records");
+    } finally {
+      setIsLoadingRecords(false);
+    }
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success("Copied to clipboard");
+  };
 
   const handleCreateSite = (e: React.FormEvent) => {
     e.preventDefault();
@@ -165,18 +218,12 @@ export default function Sites() {
                   <div className="aspect-video bg-muted relative overflow-hidden">
                     {/* Mock Site Preview Backdrop */}
                     <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-accent/5 flex items-center justify-center">
-                      <div className="p-6 bg-white/80 backdrop-blur-md rounded-2xl shadow-xl scale-75 border border-primary/10 transition-transform group-hover:scale-[0.8]">
-                          <div className="flex flex-col items-center gap-4 text-center">
-                              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                                  <span className="text-xl font-bold text-primary">
-                                      {profile?.basicInformation.fullName.split(' ').map(n => n[0]).join('') || '?'}
-                                  </span>
-                              </div>
-                              <div>
-                                  <h4 className="font-bold text-sm">{profile?.basicInformation.fullName || 'Professional'}</h4>
-                                  <p className="text-[10px] text-muted-foreground">{profile?.basicInformation.professionalTitle || 'Wokil Member'}</p>
-                              </div>
-                          </div>
+                      <div className="p-3 bg-white rounded-2xl shadow-xl transition-transform group-hover:scale-110 border border-primary/10">
+                          <QRCode 
+                            value={getPublicUrl(site.domain)} 
+                            size={100}
+                            className="w-24 h-24"
+                          />
                       </div>
                     </div>
                     
@@ -211,7 +258,7 @@ export default function Sites() {
                               >
                                   <ExternalLink className="w-3.5 h-3.5" />
                               </Button>
-                              {(site.type === 'external' && (site.status === 'link_pending' || site.status === 'requested')) && (
+                              {site.type === 'external' && (
                                 <Button 
                                     variant="ghost" 
                                     size="icon" 
@@ -225,18 +272,31 @@ export default function Sites() {
                       </div>
 
                       <div className="grid grid-cols-2 gap-3 pt-2">
-                          <Button 
-                              variant="outline" 
-                              size="sm" 
-                              className="gap-2 rounded-lg text-xs"
-                              onClick={() => {
-                                  sessionStorage.setItem('editingProfileSlug', profile?.slug || '');
-                                  navigate('/profile-builder');
-                              }}
-                          >
-                              <Edit className="w-3.5 h-3.5" />
-                              Edit Page
-                          </Button>
+                          {(site.status === 'link_pending' || site.status === 'requested') ? (
+                            <Button 
+                                variant="default" 
+                                size="sm" 
+                                className="gap-2 rounded-lg text-xs"
+                                onClick={() => handleFetchRecords(site.domain)}
+                                disabled={isLoadingRecords && siteToVerify === site.domain}
+                            >
+                                {isLoadingRecords && siteToVerify === site.domain ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ShieldCheck className="w-3.5 h-3.5" />}
+                                Verify Domain
+                            </Button>
+                          ) : (
+                            <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="gap-2 rounded-lg text-xs"
+                                onClick={() => {
+                                    sessionStorage.setItem('editingProfileSlug', profile?.slug || '');
+                                    navigate('/profile-builder');
+                                }}
+                            >
+                                <Edit className="w-3.5 h-3.5" />
+                                Edit Page
+                            </Button>
+                          )}
                           <Button 
                               variant="outline" 
                               size="sm" 
@@ -343,6 +403,74 @@ export default function Sites() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={siteToVerify !== null} onOpenChange={(open) => !open && setSiteToVerify(null)}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Verify Domain: {siteToVerify}</DialogTitle>
+            <DialogDescription>
+              Add the following DNS records to your domain provider (Cloudflare, Namecheap, etc.) to verify and link your site.
+            </DialogDescription>
+          </DialogHeader>
+
+          <Alert className="bg-primary/5 border-primary/20">
+            <AlertCircle className="h-4 w-4 text-primary" />
+            <AlertTitle className="text-sm font-bold">Important</AlertTitle>
+            <AlertDescription className="text-xs">
+              DNS changes can take up to 24 hours to propagate, but usually happen within minutes.
+            </AlertDescription>
+          </Alert>
+
+          <div className="space-y-4 py-4">
+            {verificationRecords?.map((record, index) => (
+              <div key={index} className="p-4 bg-muted/30 rounded-xl border border-border/50 space-y-3">
+                <div className="flex items-center justify-between">
+                  <Badge variant="outline" className="bg-white font-mono text-[10px] uppercase">{record.type}</Badge>
+                </div>
+                
+                <div className="grid gap-4">
+                  <div className="space-y-1">
+                    <Label className="text-[10px] uppercase text-muted-foreground font-bold">Host / Name</Label>
+                    <div className="flex items-center gap-2">
+                      <code className="flex-1 p-2 bg-white rounded-lg border border-border/50 text-[10px] font-mono break-all">
+                        {record.name}
+                      </code>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => copyToClipboard(record.name)}>
+                        <Copy className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <Label className="text-[10px] uppercase text-muted-foreground font-bold">Value / Points to</Label>
+                    <div className="flex items-center gap-2">
+                      <code className="flex-1 p-2 bg-white rounded-lg border border-border/50 text-[10px] font-mono break-all">
+                        {record.value}
+                      </code>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => copyToClipboard(record.value)}>
+                        <Copy className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSiteToVerify(null)}>
+              Configure Later
+            </Button>
+            <Button 
+                onClick={() => siteToVerify && verifyMutation.mutate(siteToVerify)}
+                disabled={verifyMutation.isPending}
+            >
+              {verifyMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Verify & Link Site
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

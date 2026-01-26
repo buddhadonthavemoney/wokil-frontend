@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { LawyerProfile } from '@/types/lawyer';
-import { Site, CreateSiteRequest } from '@/types/site';
+import { Site, CreateSiteRequest, VerificationResponse } from '@/types/site';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -79,6 +79,14 @@ export const site = {
     },
     delete: async (domain: string) => {
         await api.delete(`${ApiEndpoints.SITES_LIST}/${domain}`);
+    },
+    getVerificationRecords: async (domain: string) => {
+        const response = await api.get<VerificationResponse>(`${ApiEndpoints.SITES_LIST}/${domain}/verification`);
+        return response.data;
+    },
+    verify: async (domain: string) => {
+        const response = await api.post(`${ApiEndpoints.SITES_LIST}/${domain}/verify`);
+        return response.data;
     }
 };
 
