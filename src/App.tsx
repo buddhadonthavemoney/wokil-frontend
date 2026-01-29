@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import ProfileBuilder from "./pages/ProfileBuilder";
+import Preview from "./pages/Preview";
 import PublicProfile from "./pages/PublicProfile";
 import Dashboard from "./pages/Dashboard";
 import GoogleCallback from "./pages/auth/GoogleCallback";
@@ -35,6 +36,7 @@ const App = () => (
             <Route element={<MainLayout />}>
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/profile-builder" element={<ProfileBuilder />} />
+              <Route path="/preview" element={<Preview />} />
               <Route path="/sites" element={<Sites />} />
               <Route path="/cards" element={<BusinessCardPage />} />
               <Route path="/settings" element={<Settings />} />

@@ -21,17 +21,6 @@ export function BasicInfoStep({ profile, onUpdate, onFillSample }: BasicInfoStep
           <h2 className="heading-section text-foreground">Basic Information</h2>
           <p className="text-muted-foreground">Let's start with your professional details.</p>
         </div>
-        {onFillSample && !basicInformation.fullName && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onFillSample}
-            className="gap-2 text-primary border-primary/20 hover:bg-primary/5 shadow-sm shrink-0 self-start sm:self-center"
-          >
-            <Scale className="w-4 h-4 opacity-70" />
-            Fill with Sample Data
-          </Button>
-        )}
       </div>
 
       <div className="grid gap-6">

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useProfileForm } from '@/hooks/useProfileForm';
-import { profile as profileApi } from '@/lib/api';
+
 import { LawyerProfile } from '@/types/lawyer';
 import { cn } from '@/lib/utils';
 import { ProgressIndicator } from '@/components/form/ProgressIndicator';
@@ -10,12 +10,10 @@ import { PracticeDetailsStep } from '@/components/form/steps/PracticeDetailsStep
 import { ContactInfoStep } from '@/components/form/steps/ContactInfoStep';
 import { ProfessionalProfileStep } from '@/components/form/steps/ProfessionalProfileStep';
 import { OnlinePresenceStep } from '@/components/form/steps/OnlinePresenceStep';
-import { ThemeSelectionStep } from '@/components/form/steps/ThemeSelectionStep';
 import { SubdomainSelectionStep } from '@/components/form/steps/SubdomainSelectionStep';
-import { ProfilePreview } from '@/components/preview/ProfilePreview';
-import { QRCodeCard } from '@/components/preview/QRCodeCard';
+import { profile as profileApi, site as siteApi } from '@/lib/api';
 import { Button } from '@/components/ui/button';
-import { Scale, Eye, ArrowLeft, Check, ExternalLink, Copy, LayoutDashboard, Loader2 } from 'lucide-react';
+import { Scale, ArrowLeft, Trash2, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -26,7 +24,6 @@ const STEP_NAMES = [
   'Contact',
   'Profile',
   'Online',
-  'Theme',
   'Subdomain',
 ];
 
@@ -75,27 +72,38 @@ export default function ProfileBuilder() {
     saveProfileData,
     setProfile,
     goToStep,
+    resetProfile,
+    resetCurrentStep,
   } = useProfileForm();
 
 
 
   const handleFillSample = () => {
-    setProfile(prev => ({
-      ...prev,
-      ...SAUL_GOODMAN_DATA,
-      id: prev.id, // Keep existing ID
-    }));
-    toast({
-      title: "Sample Data Loaded",
-      description: "Saul Goodman's profile has been loaded. Better call Saul!",
-    });
+    const stepKeys: (keyof Omit<LawyerProfile, 'id' | 'slug' | 'isPublished' | 'publishedAt' | 'siteUrl'>)[] = [
+      'basicInformation',
+      'practiceDetails',
+      'contactInformation',
+      'professionalProfile',
+      'onlinePresence',
+      'subdomainSelection'
+    ];
+    
+    const key = stepKeys[currentStep - 1];
+    if (key) {
+      setProfile(prev => ({
+        ...prev,
+        [key]: SAUL_GOODMAN_DATA[key as keyof typeof SAUL_GOODMAN_DATA]
+      }));
+      
+      toast({
+        title: "Step Filled",
+        description: `Sample data for ${key.replace(/([A-Z])/g, ' $1').toLowerCase()} loaded.`,
+      });
+    }
   };
 
-  const [isPreviewMode, setIsPreviewMode] = useState(false);
-  const [previewHtml, setPreviewHtml] = useState('');
-  const [loadingPreview, setLoadingPreview] = useState(false);
-  const [isPublishing, setIsPublishing] = useState(false);
-  const [publishStatus, setPublishStatus] = useState("Initializing...");
+
+
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -105,89 +113,6 @@ export default function ProfileBuilder() {
     }
   }, [navigate]);
 
-  const loadPreviewData = async () => {
-    setLoadingPreview(true);
-    try {
-      const html = await fetchPreview();
-      setPreviewHtml(html);
-    } catch (err) {
-      console.error("Failed to load preview", err);
-    } finally {
-      setLoadingPreview(false);
-    }
-  };
-
-  useEffect(() => {
-    if (isPreviewMode) {
-      loadPreviewData();
-    }
-  }, [isPreviewMode, fetchPreview]);
-
-  const handleThemeChange = async (newTheme: LawyerProfile['themeSelection']['theme']) => {
-    // Construct the updated profile immediately to avoid state closure issues
-    const updatedProfile: LawyerProfile = {
-      ...profile,
-      themeSelection: { theme: newTheme }
-    };
-
-    // 1. Optimistically update local state
-    setProfile(updatedProfile);
-    
-    setLoadingPreview(true);
-    try {
-      // 2. Persist to backend immediately
-      await profileApi.save(updatedProfile);
-      
-      // 3. Add a small artificial delay so the transition doesn't feel jittery
-      await new Promise(resolve => setTimeout(resolve, 400));
-
-      // 4. Fetch new preview HTML
-      const html = await fetchPreview();
-      setPreviewHtml(html);
-    } catch (err) {
-      console.error("Theme switch failed:", err);
-      toast({
-        title: "Update Failed",
-        description: "Could not switch theme. Please try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setLoadingPreview(false);
-    }
-  };
-
-  const THEMES = [
-    { id: 'classic', name: 'Classic' },
-    { id: 'modern', name: 'Modern' },
-    { id: 'minimal', name: 'Minimal' },
-    { id: 'executive', name: 'Executive' },
-    { id: 'legal-craft', name: 'Legal Craft' },
-  ] as const;
-
-  const handlePublish = async () => {
-    setIsPublishing(true);
-    try {
-      // Trigger deployment initialization
-      await publishProfile();
-
-      // Navigate to dashboard immediately with deploying state
-      navigate('/dashboard', {
-        state: {
-          deploying: true, // Signal to start tracking deployment
-        }
-      });
-
-    } catch (err: any) {
-      console.error("Publish failed:", err);
-      toast({
-        title: "Publish Failed",
-        description: err.message || "There was an error initiating publication.",
-        variant: "destructive",
-      });
-      setIsPublishing(false);
-    }
-  };
-
   const renderCurrentStep = () => {
     switch (currentStep) {
       case 1:
@@ -195,7 +120,6 @@ export default function ProfileBuilder() {
           <BasicInfoStep 
             profile={profile} 
             onUpdate={(fields) => updateNestedProfile('basicInformation', fields)} 
-            onFillSample={handleFillSample}
           />
         );
       case 2:
@@ -207,8 +131,6 @@ export default function ProfileBuilder() {
       case 5:
         return <OnlinePresenceStep profile={profile} onUpdate={(fields) => updateNestedProfile('onlinePresence', fields)} />;
       case 6:
-        return <ThemeSelectionStep profile={profile} onUpdate={(fields) => updateNestedProfile('themeSelection', fields)} />;
-      case 7:
         return <SubdomainSelectionStep profile={profile} onUpdate={(fields) => updateNestedProfile('subdomainSelection', fields)} />;
       default:
         return null;
@@ -218,7 +140,7 @@ export default function ProfileBuilder() {
   const handleNext = async () => {
     if (currentStep === totalSteps) {
       await saveProfileData();
-      setIsPreviewMode(true);
+      navigate('/preview');
     } else {
       await nextStep();
     }
@@ -226,7 +148,7 @@ export default function ProfileBuilder() {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Enter' && !isPreviewMode) {
+      if (e.key === 'Enter') {
         const target = e.target as HTMLElement;
         if (target.tagName === 'TEXTAREA') return;
         handleNext();
@@ -235,81 +157,9 @@ export default function ProfileBuilder() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleNext, isPreviewMode]);
+  }, [handleNext]);
 
-  if (isPreviewMode) {
-    return (
-      <div className="fixed inset-0 z-[100] bg-background overflow-hidden">
-        <div className="fixed top-0 left-0 right-0 z-[60] bg-background/90 backdrop-blur-md border-b border-border shadow-sm">
-          <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-            <Button
-              variant="ghost"
-              onClick={() => setIsPreviewMode(false)}
-              className="gap-2 font-bold text-[10px] sm:text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span className="hidden sm:inline">Back to Editor</span>
-            </Button>
-            <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary">
-              <Eye className="w-3.5 h-3.5" />
-              <span className="text-[10px] font-bold uppercase tracking-widest">Live Preview</span>
-            </div>
-            <Button
-              onClick={handlePublish}
-              disabled={isPublishing}
-              className="gap-2 font-bold text-[10px] sm:text-xs uppercase tracking-widest px-4 sm:px-6 shadow-lg shadow-primary/20"
-            >
-              {isPublishing ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  <span className="hidden sm:inline">Publishing...</span>
-                </>
-              ) : (
-                <>
-                  <Check className="w-4 h-4" />
-                  <span className="hidden sm:inline">Publish Now</span>
-                  <span className="sm:hidden">Publish</span>
-                </>
-              )}
-            </Button>
-          </div>
-        </div>
 
-        <div className="pt-[73px] h-full">
-          {loadingPreview ? (
-            <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-              <Scale className="w-12 h-12 text-primary animate-pulse" />
-              <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground animate-pulse">Generating Professional Site...</p>
-            </div>
-          ) : (
-            <ProfilePreview profile={profile} html={previewHtml} />
-          )}
-        </div>
-
-        {/* Theme Switcher Overlay */}
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] w-[90%] sm:w-auto overflow-hidden">
-          <div className="bg-white/80 backdrop-blur-xl border border-white/20 shadow-2xl rounded-2xl p-1.5 sm:p-2 flex items-center gap-1 shadow-primary/10 overflow-x-auto no-scrollbar scroll-smooth">
-            {THEMES.map((t) => (
-              <button
-                key={t.id}
-                onClick={() => handleThemeChange(t.id as any)}
-                disabled={loadingPreview}
-                className={cn(
-                  "px-3 sm:px-4 py-2 rounded-xl text-[9px] sm:text-[10px] font-bold uppercase tracking-widest transition-all duration-300 whitespace-nowrap shrink-0",
-                  loadingPreview && "opacity-50 cursor-not-allowed",
-                  profile.themeSelection?.theme === t.id 
-                    ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" 
-                    : "text-muted-foreground hover:bg-black/5 hover:text-foreground"
-                )}
-              >
-                {t.name}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-[hsl(210,20%,98%)]/50 pb-20">
@@ -328,6 +178,28 @@ export default function ProfileBuilder() {
           />
 
           <div className="bg-white border-none rounded-2xl p-8 md:p-10 shadow-premium animate-fade-in relative overflow-hidden">
+            <div className="flex items-center justify-end gap-3 mb-6">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleFillSample}
+                disabled={currentStep === totalSteps}
+                className="h-8 text-[10px] font-bold uppercase tracking-widest text-primary hover:text-primary hover:bg-primary/5 gap-2"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                Fill Sample Data
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={resetCurrentStep}
+                disabled={currentStep === totalSteps}
+                className="h-8 text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-destructive hover:bg-destructive/5 gap-2"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                Clear
+              </Button>
+            </div>
             <div className="relative">
               {renderCurrentStep()}
 

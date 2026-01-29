@@ -49,7 +49,7 @@ const initialProfile: Omit<LawyerProfile, 'id' | 'slug'> = {
 };
 
 export function useProfileForm() {
-  const totalSteps = 7;
+  const totalSteps = 6;
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
 
@@ -214,6 +214,43 @@ export function useProfileForm() {
     }
   }, []);
 
+  const resetProfile = useCallback(() => {
+    setProfile({
+      id: profile.id, // Keep the same ID so we overwrite the same record if saved
+      slug: '',
+      ...initialProfile,
+    } as LawyerProfile);
+    
+    toast({
+      title: "Selection Cleared",
+      description: "All entered data has been removed.",
+    });
+  }, [profile.id, toast]);
+
+  const resetCurrentStep = useCallback(() => {
+    const stepKeys: (keyof Omit<LawyerProfile, 'id' | 'slug' | 'isPublished' | 'publishedAt' | 'siteUrl'>)[] = [
+      'basicInformation',
+      'practiceDetails',
+      'contactInformation',
+      'professionalProfile',
+      'onlinePresence',
+      'subdomainSelection'
+    ];
+    
+    const key = stepKeys[currentStep - 1];
+    if (key) {
+      setProfile(prev => ({
+        ...prev,
+        [key]: initialProfile[key]
+      }));
+      
+      toast({
+        title: "Step Cleared",
+        description: `Reset ${key.replace(/([A-Z])/g, ' $1').toLowerCase()} to initial state.`,
+      });
+    }
+  }, [currentStep, toast]);
+
   return {
     profile,
     currentStep,
@@ -228,5 +265,7 @@ export function useProfileForm() {
     fetchPreview,
     saveProfileData,
     setProfile,
+    resetProfile,
+    resetCurrentStep,
   };
 }

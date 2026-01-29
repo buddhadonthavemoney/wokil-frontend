@@ -44,6 +44,7 @@ export enum ApiEndpoints {
     SITES_LIST = '/sites',
     PROFILE_VISIBILITY = '/profile/visibility',
     PUBLIC_PEOPLE = '/public/people',
+    THEMES = '/themes',
 }
 
 export const site = {
@@ -88,6 +89,10 @@ export const site = {
     },
     verify: async (domain: string) => {
         const response = await api.post(`${ApiEndpoints.SITES_LIST}/${domain}/verify`);
+        return response.data;
+    },
+    getThemes: async () => {
+        const response = await api.get<string[]>(ApiEndpoints.THEMES);
         return response.data;
     }
 };
