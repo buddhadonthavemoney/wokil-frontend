@@ -42,6 +42,8 @@ export enum ApiEndpoints {
     SITES_ANALYTICS = '/sites/analytics',
     SITES_GA = '/sites/ga',
     SITES_LIST = '/sites',
+    PROFILE_VISIBILITY = '/profile/visibility',
+    PUBLIC_PEOPLE = '/public/people',
 }
 
 export const site = {
@@ -119,6 +121,24 @@ export const profile = {
     },
     getPublic: async (slug: string) => {
         const response = await api.get<LawyerProfile>(`/public/profile/${slug}`);
+        return response.data;
+    },
+    updateVisibility: async (data: Record<string, boolean>) => {
+        const response = await api.put<string>(ApiEndpoints.PROFILE_VISIBILITY, data);
+        return response.data;
+    },
+};
+
+export interface PublicProfileRow {
+    name: string;
+    professionalTitle: string;
+    picture?: string;
+    domains: string[];
+}
+
+export const publicPeople = {
+    list: async () => {
+        const response = await api.get<PublicProfileRow[]>(ApiEndpoints.PUBLIC_PEOPLE);
         return response.data;
     },
 };

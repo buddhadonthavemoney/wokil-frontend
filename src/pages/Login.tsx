@@ -7,12 +7,14 @@ import {
     BarChart3,
     Shield,
     ChevronRight,
-    ArrowRight
+    ArrowRight,
+    User
 } from 'lucide-react';
-import { auth } from '@/lib/api';
+import { auth, publicPeople } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 
 export default function Login() {
     const { toast } = useToast();
@@ -23,6 +25,13 @@ export default function Login() {
             navigate('/dashboard');
         }
     }, [navigate]);
+
+    const { data: professionals } = useQuery({
+        queryKey: ['public-people'],
+        queryFn: publicPeople.list,
+    });
+
+    const professionalsCount = professionals?.length || 0;
 
     const handleLogin = async () => {
         try {
@@ -75,20 +84,31 @@ export default function Login() {
                                     <LogIn className="w-4 h-4" />
                                     Get Started with Google
                                 </Button>
-                                <Button variant="outline" size="lg" className="w-full sm:w-auto gap-2 h-12 px-8 text-base group">
+                                <Button 
+                                    variant="outline" 
+                                    size="lg" 
+                                    className="w-full sm:w-auto gap-2 h-12 px-8 text-base group"
+                                    onClick={() => navigate('/professionals')}
+                                >
                                     View Examples
                                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                                 </Button>
                             </div>
                             <div className="flex items-center justify-center lg:justify-start gap-4 text-sm text-muted-foreground pt-4">
-                                <div className="flex -space-x-2">
-                                    {[1, 2, 3, 4].map(i => (
-                                        <div key={i} className="w-8 h-8 rounded-full border-2 border-background bg-muted flex items-center justify-center overflow-hidden">
-                                            <div className="w-full h-full bg-primary/20" />
+                                <div className="flex -space-x-3">
+                                    {(professionals?.filter(p => p.picture && p.picture.trim() !== '').slice(0, 5) || [1, 2, 3, 4]).map((p, i) => (
+                                        <div key={i} className="w-9 h-9 rounded-full border-2 border-background bg-muted flex items-center justify-center overflow-hidden shadow-sm">
+                                            {typeof p === 'object' && p.picture ? (
+                                                <img src={p.picture} alt={p.name} className="w-full h-full object-cover" />
+                                            ) : (
+                                                <div className="w-full h-full bg-primary/10 flex items-center justify-center">
+                                                    <User className="w-4 h-4 text-primary/30" />
+                                                </div>
+                                            )}
                                         </div>
                                     ))}
                                 </div>
-                                <p>Joined by <span className="text-foreground font-semibold">1,000+</span> professionals</p>
+                                <p>Joined by <span className="text-foreground font-semibold">{(professionalsCount).toLocaleString()}+</span> professionals</p>
                             </div>
                         </div>
 

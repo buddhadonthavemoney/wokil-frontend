@@ -36,6 +36,8 @@ export interface LawyerProfile {
   slug: string;
   siteUrl?: string;
   googleAnalyticsId?: string;
+  isPublic?: boolean;
+  showPicture?: boolean;
 }
 
 export const PRACTICE_AREAS = [

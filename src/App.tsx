@@ -12,6 +12,7 @@ import ProtectedRoute from "./components/auth/ProtectedRoute";
 import MainLayout from "./components/layout/MainLayout";
 import Sites from "./pages/Sites";
 import Settings from "./pages/Settings";
+import Professionals from "./pages/Professionals";
 import BusinessCardPage from "./pages/BusinessCardPage";
 import NotFound from "./pages/NotFound";
 
@@ -27,6 +28,7 @@ const App = () => (
           <Route path="/" element={<Login />} />
           <Route path="/auth/google/callback" element={<GoogleCallback />} />
           <Route path="/p/:slug" element={<PublicProfile />} />
+          <Route path="/professionals" element={<Professionals />} />
 
           {/* Protected Routes */}
           <Route element={<ProtectedRoute />}>

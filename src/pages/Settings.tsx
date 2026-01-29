@@ -1,10 +1,12 @@
-import { Settings as SettingsIcon, ArrowLeft, BarChart3, TrendingUp, CheckCircle2, Loader2 } from 'lucide-react';
+import { Settings as SettingsIcon, ArrowLeft, BarChart3, TrendingUp, CheckCircle2, Loader2, Eye, EyeOff, Image as ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { profile as profileApi, site as siteApi } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { Label } from '@/components/ui/label';
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -35,6 +37,40 @@ export default function Settings() {
       });
     },
   });
+
+  // Visibility Mutation
+  const updateVisibilityMutation = useMutation({
+    mutationFn: profileApi.updateVisibility,
+    onSuccess: () => {
+      toast({
+        title: "Visibility Updated",
+        description: "Your profile visibility settings have been updated.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || "Failed to update visibility.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleToggleVisibility = (key: string, value: boolean) => {
+    const isPublic = key === 'isPublic' ? value : (profile?.isPublic ?? false);
+    let showPicture = key === 'showPicture' ? value : (profile?.showPicture ?? true);
+
+    // Ensure if public is disabled, showPicture is also treated as disabled/false
+    if (!isPublic) {
+        showPicture = false;
+    }
+
+    updateVisibilityMutation.mutate({ 
+        isPublic, 
+        showPicture 
+    });
+  };
 
   const handleEnableAnalytics = () => {
     enableAnalyticsMutation.mutate();
@@ -70,7 +106,50 @@ export default function Settings() {
         
         {/* Analytics Section */}
         <section className="space-y-6 pt-4">
-            {!profile?.googleAnalyticsId ? (
+            <div className="grid gap-6">
+                {/* Visibility Settings */}
+                <div className="bg-white border border-border rounded-xl p-6 shadow-sm space-y-6">
+                    <div className="flex items-center gap-3 border-b border-border pb-4">
+                        <div className="p-2 bg-primary/5 rounded-lg">
+                            <Eye className="w-5 h-5 text-primary" />
+                        </div>
+                        <div>
+                            <h3 className="text-lg font-bold">Profile Visibility</h3>
+                            <p className="text-xs text-muted-foreground font-medium">Control how your profile appears to the public.</p>
+                        </div>
+                    </div>
+
+                    <div className="space-y-6">
+                        <div className="flex items-center justify-between">
+                            <div className="space-y-0.5">
+                                <Label className="text-sm font-bold">Public Profile</Label>
+                                <p className="text-xs text-muted-foreground">Allow your profile to be indexed and shown in our directories.</p>
+                            </div>
+                            <Switch 
+                                disabled={updateVisibilityMutation.isPending}
+                                checked={profile?.isPublic ?? false}
+                                onCheckedChange={(val) => handleToggleVisibility('isPublic', val)}
+                            />
+                        </div>
+
+                        <div className="flex items-center justify-between border-t border-border pt-6">
+                            <div className="space-y-0.5">
+                                <div className="flex items-center gap-2">
+                                    <Label className="text-sm font-bold">Show Profile Picture</Label>
+                                    <ImageIcon className="w-3.5 h-3.5 text-muted-foreground" />
+                                </div>
+                                <p className="text-xs text-muted-foreground">Display your profile photo on your public website and cards.</p>
+                            </div>
+                            <Switch 
+                                checked={profile?.showPicture ?? true}
+                                disabled={updateVisibilityMutation.isPending || !(profile?.isPublic)}
+                                onCheckedChange={(val) => handleToggleVisibility('showPicture', val)}
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                {!profile?.googleAnalyticsId ? (
                 <div className="bg-white border border-border rounded-xl p-8 md:p-12 text-center shadow-sm">
                     <div className="w-16 h-16 bg-primary/5 rounded-full flex items-center justify-center mx-auto mb-6">
                         <TrendingUp className="w-8 h-8 text-primary" />
@@ -106,6 +185,7 @@ export default function Settings() {
                     </Button>
                 </div>
             )}
+            </div>
         </section>
 
       </main>
