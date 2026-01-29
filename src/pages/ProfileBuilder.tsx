@@ -11,10 +11,11 @@ import { ContactInfoStep } from '@/components/form/steps/ContactInfoStep';
 import { ProfessionalProfileStep } from '@/components/form/steps/ProfessionalProfileStep';
 import { OnlinePresenceStep } from '@/components/form/steps/OnlinePresenceStep';
 import { SubdomainSelectionStep } from '@/components/form/steps/SubdomainSelectionStep';
+import { ThemeSelector } from '@/components/form/ThemeSelector';
 import { ProfilePreview } from '@/components/preview/ProfilePreview';
 import { profile as profileApi, site as siteApi } from '@/lib/api';
 import { Button } from '@/components/ui/button';
-import { Scale, ArrowLeft, Trash2, Sparkles, Loader2 } from 'lucide-react';
+import { Scale, ArrowLeft, Trash2, Sparkles, Loader2, Monitor } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -261,52 +262,37 @@ export default function ProfileBuilder() {
             </p>
           </div>
 
-          {/* RIGHT COLUMN: Mobile Preview */}
           <div className="lg:col-span-5 w-full sticky top-6 hidden lg:block">
-            <div className="flex flex-col items-center gap-4 mb-6">
-              <div className="flex items-center justify-between w-full px-4">
-                <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                  <Sparkles className="w-3.5 h-3.5 text-primary" />
-                  Live Mobile Preview
-                </h3>
-                <Button 
-                  variant="link" 
-                  size="sm" 
-                  className="h-auto p-0 text-[10px] uppercase font-bold text-muted-foreground hover:text-primary transition-colors"
-                  onClick={() => navigate('/preview')}
-                >
-                  View Full Site <ArrowLeft className="w-3 h-3 ml-1 rotate-180" />
-                </Button>
-              </div>
+            <div className="relative w-full flex justify-center items-center mb-6 px-2 gap-4">
+              {/* Theme Selector Popover */}
+              <ThemeSelector
+                themes={themes}
+                currentTheme={profile.themeSelection?.theme}
+                isLoading={isLoadingPreview}
+                onThemeSelect={async (themeId) => {
+                  const updatedProfile = { ...profile, themeSelection: { theme: themeId as any } };
+                  setProfile(updatedProfile);
+                  await profileApi.save(updatedProfile);
+                  setIsLoadingPreview(true);
+                  try {
+                      const html = await fetchPreview();
+                      setPreviewHtml(html);
+                  } finally {
+                      setIsLoadingPreview(false);
+                  }
+                }}
+              />
 
-              {/* Theme Selector Pill */}
-              <div className="bg-white p-1.5 rounded-full shadow-sm border border-border/50 flex gap-1 items-center justify-center max-w-full overflow-x-auto no-scrollbar mx-auto">
-                {themes.map((themeId) => (
-                  <button
-                    key={themeId}
-                    onClick={async () => {
-                      const updatedProfile = { ...profile, themeSelection: { theme: themeId as any } };
-                      setProfile(updatedProfile);
-                      await profileApi.save(updatedProfile);
-                      setIsLoadingPreview(true);
-                      try {
-                          const html = await fetchPreview();
-                          setPreviewHtml(html);
-                      } finally {
-                          setIsLoadingPreview(false);
-                      }
-                    }}
-                    className={cn(
-                      "px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all whitespace-nowrap",
-                      profile.themeSelection?.theme === themeId
-                        ? "bg-primary text-primary-foreground shadow-md"
-                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                    )}
-                  >
-                    {themeId.replace(/-/g, ' ')}
-                  </button>
-                ))}
-              </div>
+               {/* Desktop Preview Button */}
+               <Button
+                variant="ghost"
+                size="sm"
+                className="gap-2 rounded-full text-[10px] font-bold uppercase tracking-wider text-muted-foreground hover:text-primary hover:bg-primary/5 transition-all"
+                onClick={() => navigate('/preview')}
+              >
+                <Monitor className="w-3.5 h-3.5" />
+                Desktop View
+              </Button>
             </div>
 
             {/* Phone Mockup Container */}
@@ -332,13 +318,9 @@ export default function ProfileBuilder() {
                    <div className="absolute inset-0 bg-white/50 backdrop-blur-[1px] flex items-center justify-center z-30 animate-fade-in">
                      <Loader2 className="w-6 h-6 animate-spin text-primary" />
                    </div>
-                 )}
+                  )}
               </div>
             </div>
-            
-            <p className="text-center mt-6 text-[10px] text-muted-foreground max-w-[280px] mx-auto">
-              This preview updates automatically as you complete each step.
-            </p>
           </div>
         </div>
       </main>
