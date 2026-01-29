@@ -103,61 +103,65 @@ export default function Professionals() {
                             <p className="text-sm text-muted-foreground font-medium animate-pulse">Fetching professionals...</p>
                         </div>
                     ) : (filteredProfessionals && filteredProfessionals.length > 0) ? (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
                             {filteredProfessionals.map((person, i) => (
-                                <Card key={i} className="group border-none shadow-premium hover:shadow-premium-lg bg-white transition-all duration-300 overflow-hidden flex flex-col h-full border border-transparent hover:border-primary/10">
-                                    <div className="aspect-[16/10] bg-muted relative overflow-hidden shrink-0">
+                                <Card key={i} className="group border-none shadow-premium hover:shadow-premium-lg bg-white transition-all duration-500 overflow-hidden flex flex-col h-full rounded-[2.5rem]">
+                                    {/* Header Area */}
+                                    <div className="aspect-[4/3] relative overflow-hidden shrink-0">
                                         {person.picture && person.picture.trim() !== '' ? (
-                                            <img 
-                                                src={person.picture} 
-                                                alt={person.name}
-                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                                            />
+                                            <div className="w-full h-full">
+                                                <img 
+                                                    src={person.picture} 
+                                                    alt={person.name}
+                                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                                                />
+                                                <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                            </div>
                                         ) : (
-                                            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-accent/5">
-                                                <div className="w-14 h-14 rounded-full bg-white flex items-center justify-center text-primary font-heading font-bold text-xl shadow-sm border border-primary/10 group-hover:scale-110 transition-transform duration-500">
+                                            <div className="w-full h-full flex items-center justify-center bg-[#f8f9fb] relative overflow-hidden group">
+                                                <Scale className="absolute -right-4 -bottom-4 w-32 h-32 text-black/5 -rotate-12 transition-transform duration-700 group-hover:rotate-0" />
+                                                <div className="w-20 h-20 rounded-full bg-white flex items-center justify-center text-[#1a1c1e] font-heading font-bold text-2xl shadow-xl shadow-black/5 border border-white z-10 transition-transform duration-500 group-hover:scale-110">
                                                     {getInitials(person.name)}
                                                 </div>
                                             </div>
                                         )}
-                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
-                                            <a 
-                                                href={getProfileUrl(person.domains?.[0] || '')}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="translate-y-4 group-hover:translate-y-0 transition-all duration-300"
-                                            >
-                                                <Button size="sm" className="gap-2 bg-white text-black hover:bg-white/90 font-bold px-5">
-                                                    Visit Site
-                                                    <ExternalLink className="w-3.5 h-3.5" />
-                                                </Button>
-                                            </a>
-                                        </div>
+                                        {/* Optional Yellow/Scale Icon variant (Logic could be added here if needed, but initials are standard) */}
                                     </div>
-                                    <CardContent className="p-4 flex flex-col flex-1">
-                                        <div className="flex-1 space-y-1">
-                                            <h3 className="font-heading font-bold text-base leading-tight group-hover:text-primary transition-colors line-clamp-1">
+
+                                    {/* Content Area */}
+                                    <CardContent className="p-8 pt-6 flex flex-col flex-1">
+                                        <div className="mb-6">
+                                            <h3 className="font-heading font-extrabold text-xl leading-tight text-[#1a1c1e] group-hover:text-primary transition-colors line-clamp-1 mb-1">
                                                 {person.name}
                                             </h3>
-                                            <p className="text-xs text-muted-foreground font-medium line-clamp-1">
+                                            <p className="text-sm text-[#4b5563] font-medium opacity-80">
                                                 {person.professionalTitle}
                                             </p>
                                         </div>
-                                        <div className="flex flex-col gap-2 pt-4 mt-4 border-t border-border/30">
+
+                                        <div className="flex flex-col gap-3 mt-auto">
                                             {person.domains?.map((domain, dIdx) => (
                                                 <a 
                                                     key={dIdx}
                                                     href={getProfileUrl(domain)}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    className="text-primary text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 hover:gap-2 transition-all hover:underline"
+                                                    className={`
+                                                        w-full h-14 flex items-center justify-between px-6 rounded-2xl font-bold text-xs tracking-widest uppercase transition-all duration-300
+                                                        ${dIdx === 0 
+                                                            ? 'bg-[#1a1c24] text-white hover:bg-[#2a2c34] shadow-lg shadow-black/5' 
+                                                            : 'bg-[#f8f9fb] text-[#1a1c24] hover:bg-[#eeeff2] border border-[#e5e7eb]'
+                                                        }
+                                                    `}
                                                 >
-                                                    {domain}
-                                                    <ArrowRight className="w-3 h-3" />
+                                                    <span className="truncate mr-2">{domain}</span>
+                                                    <ArrowRight className={`w-4 h-4 shrink-0 transition-transform duration-300 ${dIdx === 0 ? 'group-hover:translate-x-1' : ''}`} />
                                                 </a>
                                             ))}
                                             {(!person.domains || person.domains.length === 0) && (
-                                                <span className="text-[10px] text-muted-foreground italic">No deployed site</span>
+                                                <div className="h-14 flex items-center justify-center px-6 rounded-2xl bg-muted/30 text-muted-foreground text-[10px] font-bold uppercase tracking-widest italic border border-dashed border-border">
+                                                    No Site Deployed
+                                                </div>
                                             )}
                                         </div>
                                     </CardContent>

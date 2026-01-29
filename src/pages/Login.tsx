@@ -90,7 +90,7 @@ export default function Login() {
                                     className="w-full sm:w-auto gap-2 h-12 px-8 text-base group"
                                     onClick={() => navigate('/professionals')}
                                 >
-                                    View Examples
+                                    Our Clients
                                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                                 </Button>
                             </div>
@@ -178,29 +178,42 @@ export default function Login() {
                     </div>
 
                     <div className="grid md:grid-cols-4 gap-8">
-                        {[{
-                            icon: <Globe className="w-6 h-6" />,
-                            title: "Instant Public URL",
-                            desc: "Get a clean, professional link to share with prospects and clients immediately."
-                        }, {
-                            icon: <Zap className="w-6 h-6" />,
-                            title: "Progressive Builder",
-                            desc: "Our step-by-step assistant guides you through creating the perfect profile in minutes."
-                        }, {
-                            icon: <BarChart3 className="w-6 h-6" />,
-                            title: "Customizable Business Card",
-                            desc: "Get your customizable business card with your contact and website QRs."
-                        }, {
-                            icon: <BarChart3 className="w-6 h-6" />,
-                            title: "Smart Analytics",
-                            desc: "Track profile views, analytics and view sources"
-                        }].map((feature, i) => (
-                            <div key={i} className="bg-card border border-border p-8 rounded-2xl text-left hover:border-primary/40 transition-colors group">
-                                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary mb-6 group-hover:scale-110 transition-transform">
+                        {[
+                            {
+                                icon: <Globe className="w-6 h-6" />,
+                                title: "Live Directories",
+                                desc: "Get listed in our premium directory and gain visibility among thousands of potential clients.",
+                                color: "primary"
+                            },
+                            {
+                                icon: <Shield className="w-6 h-6" />,
+                                title: "Custom Domain Mapping",
+                                desc: "Use your own professional domain (e.g., yourname.com) to host your personal legal profile.",
+                                color: "accent"
+                            },
+                            {
+                                icon: <Zap className="w-6 h-6" />,
+                                title: "Multiple Premium Themes",
+                                desc: "Choose from a curated collection of beautiful themes designed specifically for legal professionals.",
+                                color: "primary"
+                            },
+                            {
+                                icon: <BarChart3 className="w-6 h-6" />,
+                                title: "Smart Analytics",
+                                desc: "Real-time insights into profile views, engagement rates, and client acquisition sources.",
+                                color: "accent"
+                            }
+                        ].map((feature, i) => (
+                            <div 
+                                key={i} 
+                                className="bg-white/50 backdrop-blur-sm border border-border/60 p-8 rounded-[2rem] text-left hover:border-primary/40 hover:shadow-xl hover:shadow-primary/5 transition-all duration-500 group relative overflow-hidden"
+                            >
+                                <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-bl-[4rem] -mr-8 -mt-8 group-hover:scale-110 transition-transform duration-700" />
+                                <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-8 group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 shadow-sm border border-primary/5">
                                     {feature.icon}
                                 </div>
-                                <h3 className="text-xl font-heading font-bold mb-3">{feature.title}</h3>
-                                <p className="text-muted-foreground leading-relaxed">{feature.desc}</p>
+                                <h3 className="text-xl font-heading font-bold mb-4 tracking-tight group-hover:text-primary transition-colors">{feature.title}</h3>
+                                <p className="text-muted-foreground leading-relaxed text-sm font-medium opacity-80 group-hover:opacity-100 transition-opacity">{feature.desc}</p>
                             </div>
                         ))}
                     </div>
