@@ -31,7 +31,7 @@ export default function Login() {
         queryFn: publicPeople.list,
     });
 
-    const professionalsCount = professionals?.length || 0;
+    const professionalsCount = professionals?.meta?.total || 0;
 
     const handleLogin = async () => {
         try {
@@ -96,7 +96,7 @@ export default function Login() {
                             </div>
                             <div className="flex items-center justify-center lg:justify-start gap-4 text-sm text-muted-foreground pt-4">
                                 <div className="flex -space-x-3">
-                                    {(professionals?.filter(p => p.picture && p.picture.trim() !== '').slice(0, 5) || [1, 2, 3, 4]).map((p, i) => (
+                                    {(professionals?.profiles?.filter(p => p.picture && p.picture.trim() !== '').slice(0, 5) || [1, 2, 3, 4]).map((p, i) => (
                                         <div key={i} className="w-9 h-9 rounded-full border-2 border-background bg-muted flex items-center justify-center overflow-hidden shadow-sm">
                                             {typeof p === 'object' && p.picture ? (
                                                 <img src={p.picture} alt={p.name} className="w-full h-full object-cover" />

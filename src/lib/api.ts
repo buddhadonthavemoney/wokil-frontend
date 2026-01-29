@@ -136,9 +136,17 @@ export interface PublicProfileRow {
     domains: string[];
 }
 
+export interface PublicPeopleResponse {
+    profiles: PublicProfileRow[];
+    meta: {
+        total: number;
+        hidden: number;
+    };
+}
+
 export const publicPeople = {
     list: async () => {
-        const response = await api.get<PublicProfileRow[]>(ApiEndpoints.PUBLIC_PEOPLE);
+        const response = await api.get<PublicPeopleResponse>(ApiEndpoints.PUBLIC_PEOPLE);
         return response.data;
     },
 };
