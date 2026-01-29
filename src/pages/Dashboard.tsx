@@ -322,16 +322,17 @@ export default function Dashboard() {
 
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-[hsl(210,20%,98%)]/50 pb-20">
       {/* Main Content */}
-      <main className="container mx-auto px-6 py-10 max-w-6xl">
-        <div className="flex flex-col gap-10">
+      <main className="container mx-auto px-6 py-8 max-w-7xl">
+        <div className="flex flex-col gap-12">
           {/* Profile Section */}
           <section>
             <PageHeader 
               icon={<User />}
               title="Your Profile"
               description="Manage your professional presence and public details."
+              className="mb-12"
               actions={
                 <>
                   <Button
@@ -389,9 +390,9 @@ export default function Dashboard() {
               }
             />
 
-            <Card className="border-none shadow-premium bg-white overflow-hidden">
-              <CardContent className="p-8">
-                <div className="flex flex-col md:flex-row gap-8 items-center md:items-start text-center md:text-left">
+            <Card className="border-none shadow-premium bg-white overflow-hidden rounded-3xl">
+              <CardContent className="p-8 md:p-10">
+                <div className="flex flex-col md:flex-row gap-10 items-center md:items-start text-center md:text-left">
                   {/* Avatar */}
                   <div className="relative group shrink-0">
                     <div className="w-24 h-24 md:w-28 md:h-28 rounded-2xl bg-primary/5 flex items-center justify-center p-1 border-2 border-primary/10 transition-colors group-hover:border-primary/20 shadow-inner">
@@ -458,7 +459,7 @@ export default function Dashboard() {
               </div>
 
             {!analytics && !profile?.googleAnalyticsId ? (
-                <div className="bg-white border border-border rounded-xl p-8 md:p-12 text-center shadow-sm">
+                <div className="bg-white border-none rounded-3xl p-10 md:p-16 text-center shadow-premium">
                     <div className="w-16 h-16 bg-primary/5 rounded-full flex items-center justify-center mx-auto mb-6">
                         <TrendingUp className="w-8 h-8 text-primary" />
                     </div>
@@ -477,15 +478,15 @@ export default function Dashboard() {
             ) : (
                 <div className="space-y-6 animate-fade-in">
                     {/* Stats Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <div className="bg-white border border-border rounded-xl p-6 shadow-sm">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div className="bg-white border-none rounded-3xl p-8 shadow-premium">
                             <div className="flex items-center justify-between mb-4">
                                 <span className="text-sm font-medium text-muted-foreground">Total Views</span>
                                 <EyeIcon className="w-4 h-4 text-blue-500" />
                             </div>
                             <div className="text-3xl font-bold">{analytics?.totalViews || 0}</div>
                         </div>
-                         <div className="bg-white border border-border rounded-xl p-6 shadow-sm">
+                         <div className="bg-white border-none rounded-3xl p-8 shadow-premium">
                             <div className="flex items-center justify-between mb-4">
                                 <span className="text-sm font-medium text-muted-foreground">Unique Visitors</span>
                                 <Users className="w-4 h-4 text-green-500" />
@@ -493,7 +494,7 @@ export default function Dashboard() {
                             <div className="text-3xl font-bold">{analytics?.visitors || 0}</div>
                         </div>
                         {/* Placeholders for future stats */}
-                        <div className="bg-white border border-border rounded-xl p-6 shadow-sm opacity-60">
+                        <div className="bg-white border-none rounded-3xl p-8 shadow-premium opacity-60">
                             <div className="flex items-center justify-between mb-4">
                                 <span className="text-sm font-medium text-muted-foreground">QR Scans</span>
                                 <QrCodeIcon className="w-4 h-4 text-purple-500" />
@@ -501,7 +502,7 @@ export default function Dashboard() {
                             <div className="text-3xl font-bold">-</div>
                             <p className="text-xs text-muted-foreground mt-2">Coming Soon</p>
                         </div>
-                        <div className="bg-white border border-border rounded-xl p-6 shadow-sm opacity-60">
+                        <div className="bg-white border-none rounded-3xl p-8 shadow-premium opacity-60">
                             <div className="flex items-center justify-between mb-4">
                                 <span className="text-sm font-medium text-muted-foreground">Avg. Time</span>
                                 <ClockIcon className="w-4 h-4 text-orange-500" />
@@ -513,7 +514,7 @@ export default function Dashboard() {
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         {/* Views Chart */}
-                        <div className="lg:col-span-2 bg-white border border-border rounded-xl p-6 shadow-sm">
+                        <div className="lg:col-span-2 bg-white border-none rounded-3xl p-8 shadow-premium">
                             <h3 className="font-bold mb-6 flex items-center gap-2">
                                 <TrendingUp className="w-4 h-4 text-primary" />
                                 Traffic History
@@ -551,7 +552,7 @@ export default function Dashboard() {
                         </div>
 
                         {/* Sources Chart */}
-                        <div className="bg-white border border-border rounded-xl p-6 shadow-sm">
+                        <div className="bg-white border-none rounded-3xl p-8 shadow-premium">
                             <h3 className="font-bold mb-6 flex items-center gap-2">
                                 <Globe className="w-4 h-4 text-primary" />
                                 Traffic Sources

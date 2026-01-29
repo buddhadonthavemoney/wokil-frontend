@@ -41,18 +41,19 @@ export default function BusinessCardPage() {
   };
 
   return (
-    <div className="min-h-screen">
-      <main className="container mx-auto px-6 py-10 max-w-6xl">
-        <div className="flex flex-col gap-8">
+    <div className="min-h-screen bg-[hsl(210,20%,98%)]/50 pb-20">
+      <main className="container mx-auto px-6 py-8 max-w-7xl">
+        <div className="flex flex-col gap-12">
           
         <PageHeader 
           icon={<IdCard />}
           title="Professional Business Card"
           description="Customize and print your physical business card."
+          className="mb-12"
         />
 
-          <div className="bg-white rounded-2xl border border-border/50 shadow-sm p-6">
-               <div className="flex flex-col gap-6">
+          <div className="bg-white rounded-3xl border-none shadow-premium p-8 md:p-10">
+               <div className="flex flex-col gap-8">
                   <div className="flex flex-col sm:flex-row gap-6 justify-center items-center border-b border-border/50 pb-6">
                     {/* Layout Selector */}
                     <div className="flex flex-col gap-3">

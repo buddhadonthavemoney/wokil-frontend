@@ -86,11 +86,12 @@ export default function Settings() {
 
   return (
     <div className="min-h-screen bg-[hsl(210,20%,98%)]/50 pb-20">
-      <main className="container mx-auto px-6 py-10 max-w-6xl">
+      <main className="container mx-auto px-6 py-8 max-w-7xl">
         <PageHeader 
           icon={<SettingsIcon />}
           title="Settings"
           description="Manage your account preferences and site configuration."
+          className="mb-12"
           actions={
             <Button
               variant="ghost"
@@ -105,10 +106,10 @@ export default function Settings() {
         />
         
         {/* Analytics Section */}
-        <section className="space-y-6 pt-4">
-            <div className="grid gap-6">
+        <section className="space-y-8 pt-4">
+            <div className="grid gap-8">
                 {/* Visibility Settings */}
-                <div className="bg-white border border-border rounded-xl p-6 shadow-sm space-y-6">
+                <div className="bg-white border-none rounded-3xl p-8 shadow-premium space-y-6">
                     <div className="flex items-center gap-3 border-b border-border pb-4">
                         <div className="p-2 bg-primary/5 rounded-lg">
                             <Eye className="w-5 h-5 text-primary" />
@@ -150,7 +151,7 @@ export default function Settings() {
                 </div>
 
                 {!profile?.googleAnalyticsId ? (
-                <div className="bg-white border border-border rounded-xl p-8 md:p-12 text-center shadow-sm">
+                <div className="bg-white border-none rounded-3xl p-10 md:p-14 text-center shadow-premium">
                     <div className="w-16 h-16 bg-primary/5 rounded-full flex items-center justify-center mx-auto mb-6">
                         <TrendingUp className="w-8 h-8 text-primary" />
                     </div>
@@ -169,7 +170,7 @@ export default function Settings() {
                     </Button>
                 </div>
             ) : (
-                <div className="bg-white border border-border rounded-xl p-8 md:p-12 text-center shadow-sm">
+                <div className="bg-white border-none rounded-3xl p-10 md:p-14 text-center shadow-premium">
                     <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
                         <CheckCircle2 className="w-8 h-8 text-green-600" />
                     </div>

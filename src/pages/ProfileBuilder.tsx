@@ -11,9 +11,10 @@ import { ContactInfoStep } from '@/components/form/steps/ContactInfoStep';
 import { ProfessionalProfileStep } from '@/components/form/steps/ProfessionalProfileStep';
 import { OnlinePresenceStep } from '@/components/form/steps/OnlinePresenceStep';
 import { SubdomainSelectionStep } from '@/components/form/steps/SubdomainSelectionStep';
+import { ProfilePreview } from '@/components/preview/ProfilePreview';
 import { profile as profileApi, site as siteApi } from '@/lib/api';
 import { Button } from '@/components/ui/button';
-import { Scale, ArrowLeft, Trash2, Sparkles } from 'lucide-react';
+import { Scale, ArrowLeft, Trash2, Sparkles, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -107,6 +108,43 @@ export default function ProfileBuilder() {
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  const [previewHtml, setPreviewHtml] = useState('');
+  const [isLoadingPreview, setIsLoadingPreview] = useState(false);
+  const [themes, setThemes] = useState<string[]>([]);
+
+  useEffect(() => {
+    const loadThemes = async () => {
+      try {
+        const data = await siteApi.getThemes();
+        setThemes(data);
+      } catch (err) {
+        console.error("Failed to fetch themes", err);
+      }
+    };
+    loadThemes();
+  }, []);
+
+  useEffect(() => {
+    const loadPreview = async () => {
+      // Only load if we have some basic info
+      if (!profile.basicInformation.fullName) return;
+      
+      setIsLoadingPreview(true);
+      try {
+        const html = await fetchPreview();
+        setPreviewHtml(html);
+      } catch (err) {
+        console.error("Failed to load live preview", err);
+      } finally {
+        setIsLoadingPreview(false);
+      }
+    };
+
+    // Debounce slightly to avoid rapid updates if user clicks fast
+    const timer = setTimeout(loadPreview, 500);
+    return () => clearTimeout(timer);
+  }, [currentStep, fetchPreview, profile.basicInformation.fullName]);
+
   useEffect(() => {
     if (!localStorage.getItem('token')) {
       navigate('/');
@@ -162,23 +200,27 @@ export default function ProfileBuilder() {
 
 
   return (
-    <div className="min-h-screen bg-[hsl(210,20%,98%)]/50 pb-20">
-      <main className="container mx-auto px-6 py-12 max-w-2xl">
+    <div className="min-h-screen bg-[hsl(210,20%,98%)]/50 pb-10">
+      <main className="container mx-auto px-6 py-6 max-w-7xl">
         <PageHeader 
           icon={<Scale />}
           title="Profile Architect"
-          description="Craft your professional online presence step by step."
+          description="Craft your professional presence. Changes update in real-time."
+          className="mb-8"
         />
-        <div className="space-y-8">
-          <ProgressIndicator
-            currentStep={currentStep}
-            totalSteps={totalSteps}
-            steps={STEP_NAMES}
-            onStepClick={goToStep}
-          />
 
-          <div className="bg-white border-none rounded-2xl p-8 md:p-10 shadow-premium animate-fade-in relative overflow-hidden">
-            <div className="flex items-center justify-end gap-3 mb-6">
+        <div className="grid lg:grid-cols-12 gap-8 items-start">
+          {/* LEFT COLUMN: Form Builder */}
+          <div className="lg:col-span-7 space-y-6">
+            <ProgressIndicator
+              currentStep={currentStep}
+              totalSteps={totalSteps}
+              steps={STEP_NAMES}
+              onStepClick={goToStep}
+            />
+
+            <div className="bg-white border-none rounded-3xl p-6 md:p-8 shadow-premium animate-fade-in relative overflow-hidden h-[600px] flex flex-col">
+              <div className="flex items-center justify-end gap-3 mb-4 shrink-0">
               <Button
                 variant="ghost"
                 size="sm"
@@ -200,21 +242,104 @@ export default function ProfileBuilder() {
                 Clear
               </Button>
             </div>
-            <div className="relative">
+            <div className="relative overflow-y-auto flex-1 pr-2 -mr-2">
               {renderCurrentStep()}
 
-              <FormNavigation
-                currentStep={currentStep}
-                totalSteps={totalSteps}
-                onNext={handleNext}
-                onPrev={prevStep}
-              />
+              <div className="mt-8">
+                <FormNavigation
+                  currentStep={currentStep}
+                  totalSteps={totalSteps}
+                  onNext={handleNext}
+                  onPrev={prevStep}
+                />
+              </div>
             </div>
           </div>
 
-          <p className="text-center text-[10px] font-bold text-muted-foreground uppercase tracking-widest opacity-50">
-            Step {currentStep} of {totalSteps} • Your progress is saved automatically
-          </p>
+            <p className="text-center text-[10px] font-bold text-muted-foreground uppercase tracking-widest opacity-50">
+              Step {currentStep} of {totalSteps} • Your progress is saved automatically
+            </p>
+          </div>
+
+          {/* RIGHT COLUMN: Mobile Preview */}
+          <div className="lg:col-span-5 w-full sticky top-6 hidden lg:block">
+            <div className="flex flex-col items-center gap-4 mb-6">
+              <div className="flex items-center justify-between w-full px-4">
+                <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                  <Sparkles className="w-3.5 h-3.5 text-primary" />
+                  Live Mobile Preview
+                </h3>
+                <Button 
+                  variant="link" 
+                  size="sm" 
+                  className="h-auto p-0 text-[10px] uppercase font-bold text-muted-foreground hover:text-primary transition-colors"
+                  onClick={() => navigate('/preview')}
+                >
+                  View Full Site <ArrowLeft className="w-3 h-3 ml-1 rotate-180" />
+                </Button>
+              </div>
+
+              {/* Theme Selector Pill */}
+              <div className="bg-white p-1.5 rounded-full shadow-sm border border-border/50 flex gap-1 items-center justify-center max-w-full overflow-x-auto no-scrollbar mx-auto">
+                {themes.map((themeId) => (
+                  <button
+                    key={themeId}
+                    onClick={async () => {
+                      const updatedProfile = { ...profile, themeSelection: { theme: themeId as any } };
+                      setProfile(updatedProfile);
+                      await profileApi.save(updatedProfile);
+                      setIsLoadingPreview(true);
+                      try {
+                          const html = await fetchPreview();
+                          setPreviewHtml(html);
+                      } finally {
+                          setIsLoadingPreview(false);
+                      }
+                    }}
+                    className={cn(
+                      "px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all whitespace-nowrap",
+                      profile.themeSelection?.theme === themeId
+                        ? "bg-primary text-primary-foreground shadow-md"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    )}
+                  >
+                    {themeId.replace(/-/g, ' ')}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Phone Mockup Container */}
+            <div className="relative mx-auto border-gray-800 dark:border-gray-800 bg-gray-800 border-[14px] rounded-[2.5rem] h-[600px] w-[300px] shadow-xl">
+              <div className="w-[148px] h-[18px] bg-gray-800 top-0 rounded-b-[1rem] left-1/2 -translate-x-1/2 absolute z-20"></div>
+              <div className="h-[32px] w-[3px] bg-gray-800 absolute -start-[17px] top-[72px] rounded-s-lg"></div>
+              <div className="h-[46px] w-[3px] bg-gray-800 absolute -start-[17px] top-[124px] rounded-s-lg"></div>
+              <div className="h-[46px] w-[3px] bg-gray-800 absolute -start-[17px] top-[178px] rounded-s-lg"></div>
+              <div className="h-[64px] w-[3px] bg-gray-800 absolute -end-[17px] top-[142px] rounded-e-lg"></div>
+              
+              <div className="rounded-[2rem] overflow-hidden w-full h-full bg-white dark:bg-gray-800 relative z-10">
+                 {isLoadingPreview && !previewHtml ? (
+                   <div className="w-full h-full flex flex-col items-center justify-center bg-gray-50 text-muted-foreground gap-2">
+                     <Loader2 className="w-8 h-8 animate-spin opacity-20" />
+                     <span className="text-[10px] font-bold uppercase tracking-widest opacity-50">Rendering...</span>
+                   </div>
+                 ) : (
+                   <ProfilePreview profile={profile} html={previewHtml} />
+                 )}
+                 
+                 {/* Loading Overlay for updates */}
+                 {isLoadingPreview && previewHtml && (
+                   <div className="absolute inset-0 bg-white/50 backdrop-blur-[1px] flex items-center justify-center z-30 animate-fade-in">
+                     <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                   </div>
+                 )}
+              </div>
+            </div>
+            
+            <p className="text-center mt-6 text-[10px] text-muted-foreground max-w-[280px] mx-auto">
+              This preview updates automatically as you complete each step.
+            </p>
+          </div>
         </div>
       </main>
     </div>
