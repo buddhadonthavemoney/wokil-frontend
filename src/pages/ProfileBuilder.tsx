@@ -243,7 +243,7 @@ export default function ProfileBuilder() {
                 Clear
               </Button>
             </div>
-            <div className="relative overflow-y-auto flex-1 pr-2 -mr-2">
+            <div className="relative overflow-y-auto flex-1 no-scrollbar">
               {renderCurrentStep()}
 
               <div className="mt-8">
