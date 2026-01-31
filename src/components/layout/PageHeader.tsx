@@ -14,7 +14,9 @@ export function PageHeader({ icon, title, description, actions, className }: Pag
       <div className="flex items-center gap-4">
         <div className="p-3 bg-primary/10 rounded-xl shrink-0">
           <div className="text-primary">
-            {React.cloneElement(icon as React.ReactElement, { className: 'w-6 h-6' })}
+            {React.isValidElement(icon) 
+              ? React.cloneElement(icon as React.ReactElement<any>, { className: 'w-6 h-6' })
+              : <span className="w-6 h-6">{icon}</span>}
           </div>
         </div>
         <div>

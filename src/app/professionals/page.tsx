@@ -181,7 +181,7 @@ export default function Professionals() {
                                 </Card>
                             ))}
                             
-                            {professionals?.meta?.hidden > 0 && (
+                            {(professionals?.meta?.hidden ?? 0) > 0 && (
                                 <Card className="group border-none shadow-premium bg-[#1a1c24] transition-all duration-500 overflow-hidden flex flex-col rounded-[2.5rem]\">
                                     <div className="aspect-[4/3] relative overflow-hidden shrink-0 bg-white/5 flex items-center justify-center">
                                         <div className="w-16 h-16 rounded-2xl bg-white/10 flex items-center justify-center text-white group-hover:scale-110 transition-transform duration-500">
@@ -192,7 +192,7 @@ export default function Professionals() {
                                     <CardContent className="p-8 pt-6 flex flex-col flex-1">
                                         <div className="mb-6 text-center">
                                             <h3 className="text-3xl font-heading font-extrabold text-white mb-1">
-                                                +{professionals.meta.hidden}
+                                                +{professionals?.meta?.hidden ?? 0}
                                             </h3>
                                             <p className="text-white/40 text-xs font-bold uppercase tracking-[0.2em]">
                                                 More Hidden Profiles
