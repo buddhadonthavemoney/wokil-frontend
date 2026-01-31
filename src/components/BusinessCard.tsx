@@ -155,7 +155,7 @@ export const BusinessCard = React.forwardRef<HTMLDivElement, BusinessCardProps>(
                                 <div className={`w-[35%] ${colors.frontSidebarBg} h-full p-4 flex flex-col items-center justify-center ${colors.frontSidebarText} relative`}>
                                     <div className="absolute top-0 right-0 w-16 h-16 bg-white/10 rounded-bl-full"></div>
                                     <div className="z-10 relative flex flex-col items-center gap-2">
-                                        <span className="text-[8px] font-bold tracking-[0.2em] uppercase opacity-70">Visit Website</span>
+                                        <span className="text-[9px] font-bold tracking-widest uppercase opacity-70">Visit Website</span>
                                         <div className="p-1.5 bg-white rounded-lg shadow-lg w-[70px] h-[70px] flex items-center justify-center">
                                             <QRCode
                                                 value={publicUrl}
@@ -168,35 +168,43 @@ export const BusinessCard = React.forwardRef<HTMLDivElement, BusinessCardProps>(
                                 </div>
                                 <div className="w-[65%] p-5 flex flex-col justify-center gap-3">
                                     <div>
-                                        <h2 className="text-lg font-bold leading-tight mb-1 tracking-tight">{basicInformation.fullName}</h2>
+                                        <h2 className="text-xl font-bold tracking-tight font-heading leading-tight mb-1">{basicInformation.fullName}</h2>
                                         {basicInformation.lawFirmName && (
-                                            <p className="text-[9px] font-bold uppercase tracking-wider opacity-60 mb-0.5">{basicInformation.lawFirmName}</p>
+                                            <p className="text-[9px] font-bold uppercase tracking-widest opacity-60 mb-0.5">{basicInformation.lawFirmName}</p>
                                         )}
-                                        <p className="text-xs font-medium opacity-60">{basicInformation.professionalTitle}</p>
+                                        <p className="text-[10px] font-semibold uppercase tracking-wider opacity-70">{basicInformation.professionalTitle}</p>
                                     </div>
-                                    <div className="space-y-1.5 text-[9px]">
+                                    <div className="space-y-2.5 mt-2">
                                         {contactInformation.phoneNumber && (
-                                            <div className={`flex items-center gap-2 ${colors.frontText} opacity-80`}>
-                                                <Phone className={`w-2.5 h-2.5 ${colors.iconColor} shrink-0`} />
-                                                <span className="font-medium tracking-wide">{contactInformation.phoneNumber}</span>
+                                            <div className={`flex items-center gap-3 ${colors.frontText} opacity-80`}>
+                                                <div className="w-6 h-6 rounded-lg bg-current/5 flex items-center justify-center shrink-0">
+                                                    <Phone className={`w-3 h-3 ${colors.iconColor}`} />
+                                                </div>
+                                                <span className="text-[9px] font-medium tracking-wide">{contactInformation.phoneNumber}</span>
                                             </div>
                                         )}
                                         {contactInformation.email && (
-                                            <div className={`flex items-center gap-2 ${colors.frontText} opacity-80`}>
-                                                <Mail className={`w-2.5 h-2.5 ${colors.iconColor} shrink-0`} />
-                                                <span className="font-medium tracking-wide truncate">{contactInformation.email}</span>
+                                            <div className={`flex items-center gap-3 ${colors.frontText} opacity-80`}>
+                                                <div className="w-6 h-6 rounded-lg bg-current/5 flex items-center justify-center shrink-0">
+                                                    <Mail className={`w-3 h-3 ${colors.iconColor}`} />
+                                                </div>
+                                                <span className="text-[9px] font-medium tracking-wide truncate">{contactInformation.email}</span>
                                             </div>
                                         )}
                                         {publicUrl && (
-                                            <div className={`flex items-center gap-2 ${colors.frontText} opacity-80`}>
-                                                <Globe className={`w-2.5 h-2.5 ${colors.iconColor} shrink-0`} />
-                                                <span className="font-medium tracking-wide truncate">{publicUrl.replace(/^https?:\/\//, '')}</span>
+                                            <div className={`flex items-center gap-3 ${colors.frontText} opacity-80`}>
+                                                <div className="w-6 h-6 rounded-lg bg-current/5 flex items-center justify-center shrink-0">
+                                                    <Globe className={`w-3 h-3 ${colors.iconColor}`} />
+                                                </div>
+                                                <span className="text-[9px] font-medium tracking-wide truncate">{publicUrl.replace(/^https?:\/\//, '')}</span>
                                             </div>
                                         )}
                                         {contactInformation.officeAddress && (
-                                            <div className={`flex items-start gap-2 ${colors.frontText} opacity-80`}>
-                                                <MapPin className={`w-2.5 h-2.5 ${colors.iconColor} shrink-0 mt-0.5`} />
-                                                <span className="font-medium tracking-wide leading-snug text-[8px]">{contactInformation.officeAddress}</span>
+                                            <div className={`flex items-start gap-3 ${colors.frontText} opacity-80`}>
+                                                <div className="w-6 h-6 rounded-lg bg-current/5 flex items-center justify-center shrink-0 mt-0.5">
+                                                    <MapPin className={`w-3 h-3 ${colors.iconColor}`} />
+                                                </div>
+                                                <span className="text-[8px] font-medium leading-tight opacity-80 pt-0.5">{contactInformation.officeAddress}</span>
                                             </div>
                                         )}
                                     </div>
@@ -209,31 +217,37 @@ export const BusinessCard = React.forwardRef<HTMLDivElement, BusinessCardProps>(
                             <div className="w-full h-full p-6 flex flex-col items-center justify-center text-center relative">
                                 <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${colors.frontSidebarBg}`}></div>
                                 <div className="mb-4 w-full">
-                                    <h2 className="text-2xl font-bold tracking-tight mb-1">{basicInformation.fullName}</h2>
-                                    <p className="text-[9px] font-semibold opacity-60 uppercase tracking-[0.2em]">{basicInformation.professionalTitle}</p>
+                                    <h2 className="text-xl font-bold tracking-tight mb-1 font-heading">{basicInformation.fullName}</h2>
+                                    <p className="text-[10px] font-semibold uppercase tracking-wider opacity-70">{basicInformation.professionalTitle}</p>
                                     {basicInformation.lawFirmName && (
-                                        <p className="text-[9px] font-medium opacity-50 mt-1">{basicInformation.lawFirmName}</p>
+                                        <p className="text-[9px] font-bold uppercase tracking-widest opacity-60 mt-1">{basicInformation.lawFirmName}</p>
                                     )}
                                 </div>
 
-                                <div className="w-full grid grid-cols-2 gap-4 mt-2 border-t border-current/10 pt-3">
-                                    <div className="text-left space-y-1.5 text-[8px] opacity-80 flex flex-col justify-center">
+                                <div className="w-full grid grid-cols-2 gap-4 mt-2 border-t border-current/10 pt-4">
+                                    <div className="text-left space-y-2">
                                         {contactInformation.phoneNumber && (
-                                            <div className="flex items-center gap-1.5">
-                                                <Phone className={`w-2.5 h-2.5 ${colors.iconColor}`} />
-                                                <span>{contactInformation.phoneNumber}</span>
+                                            <div className="flex items-center gap-2 opacity-80">
+                                                <div className="w-5 h-5 rounded-md bg-current/5 flex items-center justify-center shrink-0">
+                                                    <Phone className={`w-2.5 h-2.5 ${colors.iconColor}`} />
+                                                </div>
+                                                <span className="text-[9px] font-medium tracking-wide">{contactInformation.phoneNumber}</span>
                                             </div>
                                         )}
                                         {contactInformation.email && (
-                                            <div className="flex items-center gap-1.5">
-                                                <Mail className={`w-2.5 h-2.5 ${colors.iconColor}`} />
-                                                <span className="truncate">{contactInformation.email}</span>
+                                            <div className="flex items-center gap-2 opacity-80">
+                                                <div className="w-5 h-5 rounded-md bg-current/5 flex items-center justify-center shrink-0">
+                                                    <Mail className={`w-2.5 h-2.5 ${colors.iconColor}`} />
+                                                </div>
+                                                <span className="text-[9px] font-medium tracking-wide truncate">{contactInformation.email}</span>
                                             </div>
                                         )}
                                         {publicUrl && (
-                                            <div className="flex items-center gap-1.5">
-                                                <Globe className={`w-2.5 h-2.5 ${colors.iconColor}`} />
-                                                <span className="truncate">{publicUrl.replace(/^https?:\/\//, '')}</span>
+                                            <div className="flex items-center gap-2 opacity-80">
+                                                <div className="w-5 h-5 rounded-md bg-current/5 flex items-center justify-center shrink-0">
+                                                    <Globe className={`w-2.5 h-2.5 ${colors.iconColor}`} />
+                                                </div>
+                                                <span className="text-[9px] font-medium tracking-wide truncate">{publicUrl.replace(/^https?:\/\//, '')}</span>
                                             </div>
                                         )}
                                     </div>
@@ -247,7 +261,7 @@ export const BusinessCard = React.forwardRef<HTMLDivElement, BusinessCardProps>(
                                                 viewBox={`0 0 256 256`}
                                             />
                                         </div>
-                                        <span className="text-[6px] font-bold uppercase tracking-wider opacity-50">Website</span>
+                                        <span className="text-[8px] font-bold uppercase tracking-widest opacity-50">Website</span>
                                     </div>
                                 </div>
                             </div>
@@ -258,34 +272,40 @@ export const BusinessCard = React.forwardRef<HTMLDivElement, BusinessCardProps>(
                             <div className="w-full h-full flex flex-col relative bg-slate-50">
                                 <div className={`h-16 w-full ${colors.frontSidebarBg} flex items-center justify-between px-6 ${colors.frontSidebarText}`}>
                                     <div>
-                                        <h2 className="text-lg font-bold leading-none tracking-tight">{basicInformation.fullName}</h2>
-                                        <p className="text-[8px] opacity-80 font-bold uppercase tracking-[0.15em] mt-1">{basicInformation.professionalTitle}</p>
+                                        <h2 className="text-xl font-bold tracking-tight font-heading leading-tight">{basicInformation.fullName}</h2>
+                                        <p className="text-[10px] font-semibold uppercase tracking-wider opacity-90 mt-1">{basicInformation.professionalTitle}</p>
                                     </div>
                                     {basicInformation.lawFirmName && (
-                                        <div className="text-[8px] font-bold opacity-80 bg-white/10 px-2 py-1 rounded-full border border-white/10">
+                                        <div className="text-[9px] font-bold uppercase tracking-widest opacity-90 bg-white/10 px-2 py-1 rounded-full border border-white/10">
                                             {basicInformation.lawFirmName}
                                         </div>
                                     )}
                                 </div>
 
                                 <div className={cn("flex-1 p-6 flex items-start justify-between", colors.frontBg, colors.frontText)}>
-                                    <div className="space-y-2 text-[9px] opacity-90">
+                                    <div className="space-y-3">
                                         {contactInformation.phoneNumber && (
-                                            <div className="flex items-center gap-2">
-                                                <Phone className={`w-2.5 h-2.5 ${colors.iconColor}`} />
-                                                <span className="font-semibold">{contactInformation.phoneNumber}</span>
+                                            <div className="flex items-center gap-3 opacity-90">
+                                                <div className={`w-6 h-6 rounded-lg ${colors.frontSidebarBg} bg-opacity-10 flex items-center justify-center shrink-0`}>
+                                                    <Phone className={`w-3 h-3 ${colors.iconColor}`} />
+                                                </div>
+                                                <span className="text-[10px] font-semibold tracking-wide">{contactInformation.phoneNumber}</span>
                                             </div>
                                         )}
                                         {contactInformation.email && (
-                                            <div className="flex items-center gap-2">
-                                                <Mail className={`w-2.5 h-2.5 ${colors.iconColor} shrink-0`} />
-                                                <span className="font-semibold">{contactInformation.email}</span>
+                                            <div className="flex items-center gap-3 opacity-90">
+                                                <div className={`w-6 h-6 rounded-lg ${colors.frontSidebarBg} bg-opacity-10 flex items-center justify-center shrink-0`}>
+                                                    <Mail className={`w-3 h-3 ${colors.iconColor} shrink-0`} />
+                                                </div>
+                                                <span className="text-[10px] font-semibold tracking-wide">{contactInformation.email}</span>
                                             </div>
                                         )}
                                         {contactInformation.officeAddress && (
-                                            <div className="flex items-center gap-2">
-                                                <MapPin className={`w-2.5 h-2.5 ${colors.iconColor} shrink-0`} />
-                                                <span className="font-semibold leading-tight max-w-[150px] text-[8px]">{contactInformation.officeAddress}</span>
+                                            <div className="flex items-center gap-3 opacity-90">
+                                                <div className={`w-6 h-6 rounded-lg ${colors.frontSidebarBg} bg-opacity-10 flex items-center justify-center shrink-0`}>
+                                                    <MapPin className={`w-3 h-3 ${colors.iconColor} shrink-0`} />
+                                                </div>
+                                                <span className="text-[9px] font-medium leading-tight opacity-80 max-w-[150px]">{contactInformation.officeAddress}</span>
                                             </div>
                                         )}
                                     </div>
@@ -299,7 +319,7 @@ export const BusinessCard = React.forwardRef<HTMLDivElement, BusinessCardProps>(
                                                 viewBox={`0 0 256 256`}
                                             />
                                         </div>
-                                        <span className="text-[7px] font-bold uppercase tracking-wider opacity-50">Website</span>
+                                        <span className="text-[8px] font-bold uppercase tracking-widest opacity-50">Website</span>
                                     </div>
                                 </div>
                             </div>
@@ -322,8 +342,7 @@ export const BusinessCard = React.forwardRef<HTMLDivElement, BusinessCardProps>(
 
                         <div className="z-10 flex flex-col items-center gap-3">
                             <div className="flex items-center gap-2 mb-1">
-                                <User className="w-4 h-4 opacity-70" />
-                                <span className="text-sm font-bold tracking-[0.2em] uppercase opacity-90">Save Contact</span>
+                                <span className="text-[10px] font-bold tracking-[0.2em] uppercase font-heading opacity-90">Save Contact</span>
                             </div>
 
                             <div className="p-2 bg-white rounded-xl shadow-xl">

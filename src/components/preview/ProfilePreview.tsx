@@ -9,9 +9,10 @@ import { useState, useEffect } from 'react';
 interface ProfilePreviewProps {
   profile: LawyerProfile;
   html?: string;
+  zoom?: number;
 }
 
-export function ProfilePreview({ profile, html }: ProfilePreviewProps) {
+export function ProfilePreview({ profile, html, zoom = 1 }: ProfilePreviewProps) {
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
 
   useEffect(() => {
@@ -109,17 +110,23 @@ export function ProfilePreview({ profile, html }: ProfilePreviewProps) {
   if (!html || !blobUrl) return null;
 
   return (
-    <div className="w-full h-full animate-fade-in">
-      <iframe 
-        key={blobUrl} 
-        src={blobUrl}
-        title="Profile Preview"
-        className="w-full h-full border-none bg-white"
-        // Removed allow-same-origin to be stricter if possible, but scripts might need it. 
-        // Keeping allow-scripts is essential for the theme's JS (menu toggles etc)
-        sandbox="allow-scripts allow-forms allow-popups"
-        style={{ display: 'block' }}
-      />
+    <div className="w-full h-full animate-fade-in relative overflow-hidden bg-white">
+      <div 
+        className="absolute top-0 left-0 origin-top-left"
+        style={{ 
+          width: `${(1 / zoom) * 100}%`,
+          height: `${(1 / zoom) * 100}%`,
+          transform: `scale(${zoom})`,
+        }}
+      >
+        <iframe 
+          key={blobUrl} 
+          src={blobUrl}
+          title="Profile Preview"
+          className="w-full h-full border-none"
+          sandbox="allow-scripts allow-forms allow-popups"
+        />
+      </div>
     </div>
   );
 }

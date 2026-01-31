@@ -5,12 +5,14 @@ import { useReactToPrint } from 'react-to-print';
 import { BusinessCard, CardLayout, CardColor } from '@/components/BusinessCard';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/layout/PageHeader';
-import { Printer, IdCard, Loader2 } from 'lucide-react';
+import { Printer, IdCard, Loader2, AlertCircle, ArrowRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export default function BusinessCardPage() {
   const [cardLayout, setCardLayout] = useState<CardLayout>('classic');
   const [cardColor, setCardColor] = useState<CardColor>('slate');
   const componentRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
 
   const { data: profile, isLoading } = useQuery({
     queryKey: ['profile'],
@@ -23,13 +25,68 @@ export default function BusinessCardPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-[hsl(210,20%,98%)]/50">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
 
-  if (!profile) return null;
+  const isProfileComplete = profile && 
+    profile.basicInformation?.fullName && 
+    profile.basicInformation?.professionalTitle && 
+    profile.basicInformation?.yearsOfExperience !== undefined;
+
+  if (!profile || !isProfileComplete) {
+    return (
+      <div className="min-h-screen bg-[hsl(210,20%,98%)]/50 flex flex-col items-center justify-center p-6">
+        <div className="max-w-md w-full bg-white rounded-3xl shadow-premium p-10 text-center space-y-6 animate-fade-in">
+          <div className="w-20 h-20 bg-amber-50 rounded-2xl flex items-center justify-center mx-auto mb-2">
+            <AlertCircle className="w-10 h-10 text-amber-500" />
+          </div>
+          
+          <div className="space-y-3">
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Profile Incomplete</h1>
+            <p className="text-slate-500 leading-relaxed">
+              We need a bit more information before we can generate your professional business card.
+            </p>
+          </div>
+
+          <div className="bg-slate-50/80 rounded-2xl p-4 text-left border border-slate-100">
+            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-3">Required Fields</p>
+            <ul className="space-y-2">
+              <li className="flex items-center gap-2 text-sm text-slate-600">
+                <div className={`w-1.5 h-1.5 rounded-full ${profile?.basicInformation?.fullName ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+                Full Name
+              </li>
+              <li className="flex items-center gap-2 text-sm text-slate-600">
+                <div className={`w-1.5 h-1.5 rounded-full ${profile?.basicInformation?.professionalTitle ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+                Professional Title
+              </li>
+              <li className="flex items-center gap-2 text-sm text-slate-600">
+                <div className={`w-1.5 h-1.5 rounded-full ${profile?.basicInformation?.yearsOfExperience !== undefined ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+                Years of Experience
+              </li>
+            </ul>
+          </div>
+
+          <Button 
+            onClick={() => navigate('/profile-builder')} 
+            className="w-full h-12 rounded-xl text-md font-semibold gap-2 shadow-sm transition-all hover:scale-[1.02]"
+          >
+            Complete Profile
+            <ArrowRight className="w-4 h-4" />
+          </Button>
+          
+          <button 
+            onClick={() => navigate('/dashboard')}
+            className="text-sm font-medium text-slate-400 hover:text-slate-600 transition-colors"
+          >
+            Back to Dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const getPublicUrl = () => {
     if (!profile.siteUrl) return '';

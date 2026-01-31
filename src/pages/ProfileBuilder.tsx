@@ -15,7 +15,8 @@ import { ThemeSelector } from '@/components/form/ThemeSelector';
 import { ProfilePreview } from '@/components/preview/ProfilePreview';
 import { profile as profileApi, site as siteApi } from '@/lib/api';
 import { Button } from '@/components/ui/button';
-import { Scale, ArrowLeft, Trash2, Sparkles, Loader2, Monitor } from 'lucide-react';
+import { Slider } from '@/components/ui/slider';
+import { Scale, ArrowLeft, Trash2, Sparkles, Loader2, Monitor, ZoomIn, ZoomOut, Smartphone } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -112,6 +113,7 @@ export default function ProfileBuilder() {
   const [previewHtml, setPreviewHtml] = useState('');
   const [isLoadingPreview, setIsLoadingPreview] = useState(false);
   const [themes, setThemes] = useState<string[]>([]);
+  const [zoom, setZoom] = useState([1.0]);
 
   useEffect(() => {
     const loadThemes = async () => {
@@ -128,7 +130,14 @@ export default function ProfileBuilder() {
   useEffect(() => {
     const loadPreview = async () => {
       // Only load if we have some basic info
-      if (!profile.basicInformation.fullName) return;
+      const hasBasicInfo = profile.basicInformation.fullName && 
+                          profile.basicInformation.professionalTitle && 
+                          profile.basicInformation.yearsOfExperience !== undefined;
+      
+      if (!hasBasicInfo) {
+        if (previewHtml) setPreviewHtml('');
+        return;
+      }
       
       setIsLoadingPreview(true);
       try {
@@ -144,7 +153,7 @@ export default function ProfileBuilder() {
     // Debounce slightly to avoid rapid updates if user clicks fast
     const timer = setTimeout(loadPreview, 500);
     return () => clearTimeout(timer);
-  }, [currentStep, fetchPreview, profile.basicInformation.fullName]);
+  }, [currentStep, fetchPreview, profile.basicInformation.fullName, profile.basicInformation.professionalTitle, profile.basicInformation.yearsOfExperience, previewHtml]);
 
   useEffect(() => {
     if (!localStorage.getItem('token')) {
@@ -189,7 +198,7 @@ export default function ProfileBuilder() {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Enter') {
         const target = e.target as HTMLElement;
-        if (target.tagName === 'TEXTAREA') return;
+        if (target.tagName === 'TEXTAREA' || target.hasAttribute('data-prevent-navigation')) return;
         handleNext();
       }
     };
@@ -243,7 +252,7 @@ export default function ProfileBuilder() {
                 Clear
               </Button>
             </div>
-            <div className="relative overflow-y-auto flex-1 no-scrollbar">
+            <div className="relative overflow-y-auto flex-1 no-scrollbar px-1.5">
               {renderCurrentStep()}
 
               <div className="mt-8">
@@ -263,7 +272,7 @@ export default function ProfileBuilder() {
           </div>
 
           <div className="lg:col-span-5 w-full sticky top-6 hidden lg:block">
-            <div className="relative w-full flex justify-center items-center mb-6 px-2 gap-4">
+            <div className="relative w-full flex justify-center items-center mb-4 px-2 gap-4">
               {/* Theme Selector Popover */}
               <ThemeSelector
                 themes={themes}
@@ -273,6 +282,13 @@ export default function ProfileBuilder() {
                   const updatedProfile = { ...profile, themeSelection: { theme: themeId as any } };
                   setProfile(updatedProfile);
                   await profileApi.save(updatedProfile);
+                  
+                  const hasBasicInfo = updatedProfile.basicInformation.fullName && 
+                                      updatedProfile.basicInformation.professionalTitle && 
+                                      updatedProfile.basicInformation.yearsOfExperience !== undefined;
+                  
+                  if (!hasBasicInfo) return;
+
                   setIsLoadingPreview(true);
                   try {
                       const html = await fetchPreview();
@@ -295,6 +311,23 @@ export default function ProfileBuilder() {
               </Button>
             </div>
 
+            {/* Minimal Zoom Slider */}
+            <div className="flex justify-center mb-8 px-4">
+              <div className="w-full max-w-[200px] flex items-center gap-3">
+                <ZoomOut className="w-3 h-3 text-muted-foreground/40" />
+                <Slider
+                  value={zoom}
+                  onValueChange={setZoom}
+                  min={0.5}
+                  max={1.5}
+                  step={0.05}
+                  className="w-full cursor-pointer h-1"
+                />
+                <ZoomIn className="w-3 h-3 text-muted-foreground/40" />
+                <span className="text-[9px] font-mono text-muted-foreground/60 w-8 text-right">{Math.round(zoom[0] * 100)}%</span>
+              </div>
+            </div>
+
             {/* Phone Mockup Container */}
             <div className="relative mx-auto border-gray-800 dark:border-gray-800 bg-gray-800 border-[14px] rounded-[2.5rem] h-[600px] w-[300px] shadow-xl">
               <div className="w-[148px] h-[18px] bg-gray-800 top-0 rounded-b-[1rem] left-1/2 -translate-x-1/2 absolute z-20"></div>
@@ -309,8 +342,22 @@ export default function ProfileBuilder() {
                      <Loader2 className="w-8 h-8 animate-spin opacity-20" />
                      <span className="text-[10px] font-bold uppercase tracking-widest opacity-50">Rendering...</span>
                    </div>
+                 ) : (!profile.basicInformation.fullName || !profile.basicInformation.professionalTitle || profile.basicInformation.yearsOfExperience === undefined) ? (
+                   <div className="w-full h-full flex flex-col items-center justify-center bg-white p-8 text-center space-y-4 animate-fade-in">
+                      <div className="w-16 h-16 bg-primary/5 rounded-2xl flex items-center justify-center mb-2">
+                        <Sparkles className="w-8 h-8 text-primary opacity-40" />
+                      </div>
+                      <h3 className="text-lg font-bold text-slate-800 leading-tight">Ready to build your profile?</h3>
+                      <p className="text-xs text-slate-400 leading-relaxed font-medium">
+                        Fill up the basic information to see a real-time preview of your professional site.
+                      </p>
+                      <div className="pt-4 flex flex-col gap-2 w-full">
+                        <div className="h-2 bg-slate-50 rounded-full w-3/4 mx-auto" />
+                        <div className="h-2 bg-slate-50 rounded-full w-1/2 mx-auto opacity-50" />
+                      </div>
+                   </div>
                  ) : (
-                   <ProfilePreview profile={profile} html={previewHtml} />
+                   <ProfilePreview profile={profile} html={previewHtml} zoom={zoom[0]} />
                  )}
                  
                  {/* Loading Overlay for updates */}

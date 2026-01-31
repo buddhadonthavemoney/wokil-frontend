@@ -1,9 +1,9 @@
 import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { LawyerProfile, PRACTICE_AREAS } from '@/types/lawyer';
 import { cn } from '@/lib/utils';
 import { X } from 'lucide-react';
+import { CourtSelector } from '../CourtSelector';
 
 interface PracticeDetailsStepProps {
   profile: LawyerProfile;
@@ -22,15 +22,12 @@ export function PracticeDetailsStep({ profile, onUpdate }: PracticeDetailsStepPr
     }
   };
 
-  const addJurisdiction = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      const input = e.currentTarget;
-      const value = input.value.trim();
-      if (value && !practiceDetails.jurisdictions?.includes(value)) {
-        onUpdate({ jurisdictions: [...(practiceDetails.jurisdictions || []), value] });
-        input.value = '';
-      }
+  const toggleJurisdiction = (court: string) => {
+    const jurisdictions = practiceDetails.jurisdictions || [];
+    if (jurisdictions.includes(court)) {
+      onUpdate({ jurisdictions: jurisdictions.filter(j => j !== court) });
+    } else {
+      onUpdate({ jurisdictions: [...jurisdictions, court] });
     }
   };
 
@@ -76,12 +73,10 @@ export function PracticeDetailsStep({ profile, onUpdate }: PracticeDetailsStepPr
         </div>
 
         <div className="space-y-3">
-          <Label htmlFor="jurisdictions">Jurisdictions Served (Optional)</Label>
-          <Input
-            id="jurisdictions"
-            placeholder="Type a jurisdiction and press Enter"
-            onKeyDown={addJurisdiction}
-            className="h-12"
+          <Label htmlFor="jurisdictions">Jurisdictions Served (Courts)</Label>
+          <CourtSelector 
+            selectedCourts={practiceDetails.jurisdictions || []}
+            onSelect={toggleJurisdiction}
           />
           {practiceDetails.jurisdictions && practiceDetails.jurisdictions.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-2">
