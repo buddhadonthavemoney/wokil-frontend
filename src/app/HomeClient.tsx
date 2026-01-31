@@ -16,6 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { PublicPeopleResponse } from '@/lib/api';
+import { StructuredData } from '@/components/SEO/StructuredData';
 
 interface HomeClientProps {
     professionals: PublicPeopleResponse;
@@ -48,6 +49,8 @@ export function HomeClient({ professionals }: HomeClientProps) {
 
     return (
         <>
+            <StructuredData type="Organization" />
+            <StructuredData type="WebSite" />
             {/* Navbar */}
             <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
                 <div className="container mx-auto px-6 h-16 flex items-center justify-between">

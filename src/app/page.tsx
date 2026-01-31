@@ -1,5 +1,15 @@
 import { publicPeopleServer } from '@/lib/api-server';
 import { HomeClient } from './HomeClient';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: "Home",
+  description: "Discover legal professionals and create your own professional profile with Wokil. Build beautiful websites and business cards for lawyers.",
+  openGraph: {
+    title: "Wokil - Discover Legal Professionals",
+    description: "Discover legal professionals and create your own professional profile with Wokil. Build beautiful websites and business cards for lawyers.",
+  },
+};
 
 export default async function Home() {
     const professionals = await publicPeopleServer.list();
