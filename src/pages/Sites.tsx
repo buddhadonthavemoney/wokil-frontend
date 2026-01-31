@@ -187,18 +187,19 @@ export default function Sites() {
   };
 
   return (
-    <div className="min-h-screen">
-      <main className="container mx-auto px-6 py-10 max-w-6xl">
-        <div className="flex flex-col gap-10">
+    <div className="min-h-screen bg-[hsl(210,20%,98%)]/50 pb-20">
+      <main className="container mx-auto px-6 py-8 max-w-7xl">
+        <div className="flex flex-col gap-12">
           
           <PageHeader 
             icon={<Globe />}
             title="Sites Management"
             description="Manage and monitor your professional published websites."
+            className="mb-12"
           />
 
           {(!sites || sites.length === 0) ? (
-            <div className="bg-white border-2 border-dashed border-border rounded-2xl p-12 text-center shadow-sm">
+            <div className="bg-white border-2 border-dashed border-border rounded-3xl p-12 text-center shadow-none">
               <div className="w-16 h-16 bg-muted flex items-center justify-center mx-auto mb-6 rounded-full">
                 <Globe className="w-8 h-8 text-muted-foreground" />
               </div>
@@ -214,7 +215,7 @@ export default function Sites() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
               {sites.map((site) => (
-                <Card key={site.reference} className="border-none shadow-premium bg-white overflow-hidden group">
+                <Card key={site.reference} className="border-none shadow-premium bg-white overflow-hidden group rounded-3xl">
                   <div className="aspect-video bg-muted relative overflow-hidden">
                     {/* Mock Site Preview Backdrop */}
                     <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-accent/5 flex items-center justify-center">
@@ -314,7 +315,7 @@ export default function Sites() {
 
               {/* Add New Site Card */}
               <Card 
-                className="border-2 border-dashed border-border/60 bg-muted/2 shadow-none overflow-hidden group hover:border-primary/30 hover:bg-muted/5 transition-all flex flex-col items-center justify-center p-8 gap-6 min-h-[440px] cursor-pointer"
+                className="border-2 border-dashed border-border/60 bg-muted/2 shadow-none overflow-hidden group rounded-3xl hover:border-primary/30 hover:bg-muted/5 transition-all flex flex-col items-center justify-center p-8 gap-6 min-h-[440px] cursor-pointer"
                 onClick={() => setIsCreateDialogOpen(true)}
               >
                 <div className="flex flex-col items-center gap-4">

@@ -5,11 +5,12 @@ interface PageHeaderProps {
   title: string;
   description?: string;
   actions?: React.ReactNode;
+  className?: string; // Added to support styling
 }
 
-export function PageHeader({ icon, title, description, actions }: PageHeaderProps) {
+export function PageHeader({ icon, title, description, actions, className }: PageHeaderProps) {
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-10">
+    <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-10 ${className || ''}`}>
       <div className="flex items-center gap-4">
         <div className="p-3 bg-primary/10 rounded-xl shrink-0">
           <div className="text-primary">
