@@ -5,6 +5,7 @@ import ThemeProvider from "@/components/providers/ThemeProvider";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { Analytics } from "@vercel/analytics/next";
 
 export const metadata: Metadata = {
   title: "Wokil",
@@ -25,6 +26,7 @@ export default function RootLayout({
               {children}
               <Toaster />
               <Sonner />
+              <Analytics />
             </TooltipProvider>
           </ThemeProvider>
         </QueryProvider>
