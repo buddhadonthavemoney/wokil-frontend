@@ -26,7 +26,8 @@ import {
   Sparkles,
   Loader2,
   XCircle,
-  ArrowLeft
+  ArrowLeft,
+  Clock
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { toast as sonnerToast } from "sonner";
@@ -134,7 +135,7 @@ function DashboardContent() {
 
     const showToast = (variant: 'loading' | 'success' | 'error', message: string, detail?: string) => {
       sonnerToast.custom((t) => (
-        <div className="w-[380px] bg-white/80 backdrop-blur-xl rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-white/20 p-5 flex items-start gap-4 animate-in slide-in-from-bottom-5 fade-in duration-500 ring-1 ring-black/5">
+        <div className="w-full max-w-sm bg-white/80 backdrop-blur-xl rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-white/20 p-5 flex items-start gap-4 animate-in slide-in-from-bottom-5 fade-in duration-500 ring-1 ring-black/5">
           <div className={`
             mt-0.5 w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-lg transition-transform duration-300 hover:scale-105
             ${variant === 'loading' ? 'bg-primary/10 text-primary' : ''}
@@ -476,6 +477,23 @@ function DashboardContent() {
                                 <Users className="w-4 h-4 text-green-500" />
                             </div>
                             <div className="text-3xl font-bold">{analytics?.visitors || 0}</div>
+                        </div>
+                        {/* Placeholders for future stats */}
+                        <div className="bg-white border-none rounded-3xl p-8 shadow-premium opacity-60">
+                            <div className="flex items-center justify-between mb-4">
+                                <span className="text-sm font-medium text-muted-foreground">QR Scans</span>
+                                <QrCode className="w-4 h-4 text-purple-500" />
+                            </div>
+                            <div className="text-3xl font-bold">-</div>
+                            <p className="text-xs text-muted-foreground mt-2">Coming Soon</p>
+                        </div>
+                        <div className="bg-white border-none rounded-3xl p-8 shadow-premium opacity-60">
+                            <div className="flex items-center justify-between mb-4">
+                                <span className="text-sm font-medium text-muted-foreground">Avg. Time</span>
+                                <Clock className="w-4 h-4 text-orange-500" />
+                            </div>
+                            <div className="text-3xl font-bold">-</div>
+                            <p className="text-xs text-muted-foreground mt-2">Coming Soon</p>
                         </div>
                     </div>
 

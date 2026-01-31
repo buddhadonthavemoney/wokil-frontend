@@ -219,7 +219,7 @@ export default function ProfileBuilder() {
               onStepClick={goToStep}
             />
 
-            <div className="bg-white border-none rounded-3xl p-6 md:p-8 shadow-premium animate-fade-in relative overflow-hidden h-[600px] flex flex-col">
+            <div className="bg-white border-none rounded-3xl p-6 md:p-8 shadow-premium animate-fade-in relative overflow-hidden min-h-[400px] max-h-[600px] flex flex-col">
               <div className="flex items-center justify-end gap-3 mb-4 shrink-0">
               <Button
                 variant="ghost"
