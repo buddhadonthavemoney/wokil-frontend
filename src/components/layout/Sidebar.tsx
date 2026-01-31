@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
+import Link from 'next/link';
 import { Scale, LayoutDashboard, User, Globe, Settings, LogOut, IdCard, Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -10,13 +11,13 @@ interface NavLinkProps {
   label: string;
   path: string;
   isActive: boolean;
-  onClick: () => void;
 }
 
-function NavLink({ icon, label, isActive, onClick }: NavLinkProps) {
+function NavLink({ icon, label, path, isActive }: NavLinkProps) {
   return (
-    <button
-      onClick={onClick}
+    <Link
+      href={path}
+      prefetch={true}
       className={`
         w-full flex items-center gap-3 px-4 py-2.5 rounded-lg
         transition-all duration-200 font-medium text-sm
@@ -30,7 +31,7 @@ function NavLink({ icon, label, isActive, onClick }: NavLinkProps) {
         {icon}
       </span>
       <span>{label}</span>
-    </button>
+    </Link>
   );
 }
 
@@ -52,8 +53,7 @@ export default function Sidebar() {
     router.push('/');
   };
 
-  const handleNavClick = (path: string) => {
-    router.push(path);
+  const handleNavClick = () => {
     setIsMobileMenuOpen(false);
   };
 
@@ -61,9 +61,10 @@ export default function Sidebar() {
     <>
       {/* Mobile Header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white border-b border-border px-4 py-3 flex items-center justify-between">
-        <div 
+        <Link 
+          href="/dashboard"
+          prefetch={true}
           className="flex items-center gap-3 cursor-pointer"
-          onClick={() => router.push('/dashboard')}
         >
           <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
             <Scale className="w-4 h-4 text-primary-foreground" />
@@ -71,7 +72,7 @@ export default function Sidebar() {
           <h1 className="font-heading font-bold text-base leading-tight text-foreground">
             Wokil
           </h1>
-        </div>
+        </Link>
         <Button
           variant="ghost"
           size="sm"
@@ -101,9 +102,10 @@ export default function Sidebar() {
       `}>
         {/* Logo Section - Hidden on mobile, shown on desktop */}
         <div className="hidden lg:block p-6 border-b border-border">
-          <div 
+          <Link 
+            href="/dashboard"
+            prefetch={true}
             className="flex items-center gap-3 cursor-pointer group"
-            onClick={() => router.push('/dashboard')}
           >
             <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20 group-hover:scale-105 transition-transform">
               <Scale className="w-5 h-5 text-primary-foreground" />
@@ -116,20 +118,20 @@ export default function Sidebar() {
                 Professional
               </p>
             </div>
-          </div>
+          </Link>
         </div>
 
         {/* Navigation */}
         <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
           {navItems.map((item) => (
-            <NavLink
-              key={item.path}
-              icon={item.icon}
-              label={item.label}
-              path={item.path}
-              isActive={pathname === item.path}
-              onClick={() => handleNavClick(item.path)}
-            />
+            <div key={item.path} onClick={handleNavClick}>
+              <NavLink
+                icon={item.icon}
+                label={item.label}
+                path={item.path}
+                isActive={pathname === item.path}
+              />
+            </div>
           ))}
         </nav>
 
