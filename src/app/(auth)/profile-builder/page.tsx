@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useProfileForm } from '@/hooks/useProfileForm';
 
 import { LawyerProfile } from '@/types/lawyer';
@@ -112,6 +112,7 @@ export default function ProfileBuilder() {
   const [isLoadingPreview, setIsLoadingPreview] = useState(false);
   const [themes, setThemes] = useState<string[]>([]);
   const [zoom, setZoom] = useState([1.0]);
+  const previewFetchRef = useRef(false);
 
   useEffect(() => {
     const loadThemes = async () => {
@@ -126,17 +127,22 @@ export default function ProfileBuilder() {
   }, []);
 
   useEffect(() => {
+    // Only load if we have some basic info
+    const hasBasicInfo = profile.basicInformation.fullName && 
+                        profile.basicInformation.professionalTitle && 
+                        profile.basicInformation.yearsOfExperience !== undefined;
+    
+    if (!hasBasicInfo) {
+      if (previewHtml) setPreviewHtml('');
+      previewFetchRef.current = false;
+      return;
+    }
+    
+    // Prevent fetching if already loading to avoid infinite loops
+    if (isLoadingPreview || previewFetchRef.current) return;
+    
     const loadPreview = async () => {
-      // Only load if we have some basic info
-      const hasBasicInfo = profile.basicInformation.fullName && 
-                          profile.basicInformation.professionalTitle && 
-                          profile.basicInformation.yearsOfExperience !== undefined;
-      
-      if (!hasBasicInfo) {
-        if (previewHtml) setPreviewHtml('');
-        return;
-      }
-      
+      previewFetchRef.current = true;
       setIsLoadingPreview(true);
       try {
         const html = await fetchPreview();
@@ -145,13 +151,17 @@ export default function ProfileBuilder() {
         console.error("Failed to load live preview", err);
       } finally {
         setIsLoadingPreview(false);
+        previewFetchRef.current = false;
       }
     };
 
     // Debounce slightly to avoid rapid updates if user clicks fast
     const timer = setTimeout(loadPreview, 500);
-    return () => clearTimeout(timer);
-  }, [currentStep, fetchPreview, profile.basicInformation.fullName, profile.basicInformation.professionalTitle, profile.basicInformation.yearsOfExperience, previewHtml]);
+    return () => {
+      clearTimeout(timer);
+      previewFetchRef.current = false;
+    };
+  }, [currentStep, fetchPreview, profile.basicInformation.fullName, profile.basicInformation.professionalTitle, profile.basicInformation.yearsOfExperience]);
 
   const renderCurrentStep = () => {
     switch (currentStep) {
