@@ -95,7 +95,7 @@ export default function Login() {
                                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                                 </Button>
                             </div>
-                            <div className="flex items-center justify-center lg:justify-start gap-4 text-sm text-muted-foreground pt-4">
+                            <div className="flex items-center justify-center lg:justify-start gap-4 text-sm text-muted-foreground pt-2">
                                 <div className="flex -space-x-3">
                                     {(professionals?.profiles?.filter(p => p.picture && p.picture.trim() !== '').slice(0, 5) || [1, 2, 3, 4]).map((p, i) => (
                                         <div key={i} className="w-9 h-9 rounded-full border-2 border-background bg-muted flex items-center justify-center overflow-hidden shadow-sm">

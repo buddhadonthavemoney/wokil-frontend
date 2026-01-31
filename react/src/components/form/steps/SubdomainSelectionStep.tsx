@@ -112,7 +112,7 @@ export function SubdomainSelectionStep({ profile, onUpdate }: SubdomainSelection
                         <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
                             <span>Your site is:</span>
                             <span className={`lowercase transition-all px-2 py-0.5 rounded-md ${isDeployed || isAvailable === true ? 'bg-green-100 text-green-700 font-bold' : 'text-primary bg-primary/5'}`}>
-                                {subdomain || 'your-name'}.{process.env.NEXT_PUBLIC_PUBLISH_LIVE_DOMAIN || 'wokil.com'}
+                                {subdomain || 'your-name'}.{import.meta.env.VITE_PUBLISH_LIVE_DOMAIN || 'wokil.com'}
                             </span>
                             {(isDeployed || isAvailable === true) && <Check className="w-3.5 h-3.5 text-green-600 animate-in fade-in slide-in-from-left-2" />}
                         </p>

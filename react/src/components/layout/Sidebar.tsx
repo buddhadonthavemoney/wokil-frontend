@@ -1,7 +1,5 @@
-'use client';
-
 import { useState } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Scale, LayoutDashboard, User, Globe, Settings, LogOut, IdCard, Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -35,25 +33,25 @@ function NavLink({ icon, label, isActive, onClick }: NavLinkProps) {
 }
 
 export default function Sidebar() {
-  const router = useRouter();
-  const pathname = usePathname();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const navItems = [
     { icon: <LayoutDashboard className="w-5 h-5" />, label: 'Dashboard', path: '/dashboard' },
     { icon: <User className="w-5 h-5" />, label: 'Profile', path: '/profile-builder' },
     { icon: <Globe className="w-5 h-5" />, label: 'Sites', path: '/sites' },
-    { icon: <IdCard className="w-5 h-5" />, label: 'Business Cards', path: '/business-cards' },
+    { icon: <IdCard className="w-5 h-5" />, label: 'Business Cards', path: '/cards' },
     { icon: <Settings className="w-5 h-5" />, label: 'Settings', path: '/settings' },
   ];
 
   const handleLogout = () => {
     localStorage.removeItem('token');
-    router.push('/');
+    navigate('/');
   };
 
   const handleNavClick = (path: string) => {
-    router.push(path);
+    navigate(path);
     setIsMobileMenuOpen(false);
   };
 
@@ -63,7 +61,7 @@ export default function Sidebar() {
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white border-b border-border px-4 py-3 flex items-center justify-between">
         <div 
           className="flex items-center gap-3 cursor-pointer"
-          onClick={() => router.push('/dashboard')}
+          onClick={() => navigate('/dashboard')}
         >
           <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
             <Scale className="w-4 h-4 text-primary-foreground" />
@@ -103,7 +101,7 @@ export default function Sidebar() {
         <div className="hidden lg:block p-6 border-b border-border">
           <div 
             className="flex items-center gap-3 cursor-pointer group"
-            onClick={() => router.push('/dashboard')}
+            onClick={() => navigate('/dashboard')}
           >
             <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20 group-hover:scale-105 transition-transform">
               <Scale className="w-5 h-5 text-primary-foreground" />
@@ -127,7 +125,7 @@ export default function Sidebar() {
               icon={item.icon}
               label={item.label}
               path={item.path}
-              isActive={pathname === item.path}
+              isActive={location.pathname === item.path}
               onClick={() => handleNavClick(item.path)}
             />
           ))}
