@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { LawyerProfile } from '@/types/lawyer';
-import { profile as profileApi, site as siteApi } from '@/lib/api';
+import { getProfile, saveProfile, deploySite, previewSite } from '@/generated/wokil-api';
 import { useToast } from '@/hooks/use-toast';
 
 const generateSlug = (name: string): string => {
@@ -84,7 +84,7 @@ export function useProfileForm() {
         delete (dataToSave as any).subdomainSelection;
       }
 
-      await profileApi.save(dataToSave as LawyerProfile);
+      await saveProfile({ body: dataToSave as LawyerProfile, throwOnError: true });
       lastSavedProfile.current = currentProfileJson;
     } catch (error) {
       console.error("Failed to auto-save profile:", error);
@@ -97,7 +97,7 @@ export function useProfileForm() {
 
       try {
         setLoading(true);
-        const data = await profileApi.get();
+        const data = (await getProfile({ throwOnError: true })).data as unknown as LawyerProfile;
         // Merge with initial to ensure all nested fields exist
         setProfile(prev => ({
           ...prev,
@@ -180,9 +180,12 @@ export function useProfileForm() {
       if (profile.professionalProfile?.deploymentURL) {
         delete (dataToSave as any).subdomainSelection;
       }
-      await profileApi.save(dataToSave as LawyerProfile);
+      await saveProfile({ body: dataToSave as LawyerProfile, throwOnError: true });
 
-      const { url } = await siteApi.deploy({ slug: finalSlug });
+      // deploySite kicks off async deployment (no site URL is returned; progress
+      // arrives on the deploy stream). The final URL is derived from the slug.
+      await deploySite({ throwOnError: true });
+      const url: string | undefined = updatedProfile.siteUrl;
 
       if (url) {
         const finalProfile = { ...updatedProfile, siteUrl: url };
@@ -192,7 +195,7 @@ export function useProfileForm() {
         if (profile.professionalProfile?.deploymentURL || finalProfile.professionalProfile?.deploymentURL) {
           delete (finalDataToSave as any).subdomainSelection;
         }
-        await profileApi.save(finalDataToSave as LawyerProfile);
+        await saveProfile({ body: finalDataToSave as LawyerProfile, throwOnError: true });
       }
       return updatedProfile.siteUrl || finalSlug;
     } catch (err) {
@@ -207,7 +210,7 @@ export function useProfileForm() {
 
   const fetchPreview = useCallback(async () => {
     try {
-      return await siteApi.getPreview();
+      return (await previewSite({ throwOnError: true })).data;
     } catch (err) {
       console.error("Failed to fetch preview:", err);
       return "";

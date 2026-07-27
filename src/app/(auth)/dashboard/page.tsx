@@ -33,7 +33,7 @@ import { useToast } from '@/hooks/use-toast';
 import { toast as sonnerToast } from "sonner";
 import { InfoModal } from '@/components/InfoModal';
 import { useQuery } from '@tanstack/react-query';
-import { profile as profileApi, site as siteApi } from '@/lib/api';
+import { getProfile, getSiteAnalytics } from '@/generated/wokil-api';
 import {
   LineChart,
   Line,
@@ -77,14 +77,14 @@ function DashboardContent() {
 
   const { data: analytics } = useQuery({
     queryKey: ['analytics'],
-    queryFn: siteApi.getAnalytics,
+    queryFn: async () => (await getSiteAnalytics({ throwOnError: true })).data,
     enabled: !!profile?.googleAnalyticsId,
     refetchInterval: 30000,
   });
 
   const fetchProfile = async () => {
     try {
-      const data = await profileApi.get();
+      const data = (await getProfile({ throwOnError: true })).data as unknown as LawyerProfile;
       if (data && (data.id || data.basicInformation)) {
         setProfile(data);
       }
@@ -184,7 +184,7 @@ function DashboardContent() {
         if (!response.ok) {
            const errorText = await response.text();
            if (errorText.toLowerCase().includes("no ongoing deployment") || response.status === 400) {
-              const data = await profileApi.get();
+              const data = (await getProfile({ throwOnError: true })).data as unknown as LawyerProfile;
               if (data && (data.isPublished || data.professionalProfile?.deploymentURL)) {
                  await handleSuccess('Deployment complete!');
                  setActiveDeployment(false);

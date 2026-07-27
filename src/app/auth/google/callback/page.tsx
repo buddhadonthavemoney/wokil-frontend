@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { auth } from '@/lib/api';
+import { googleCallback } from '@/generated/wokil-api';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -16,9 +16,9 @@ function GoogleCallbackContent() {
     const code = searchParams.get('code');
     if (code && !handledRef.current) {
       handledRef.current = true;
-      auth.handleCallback(code)
-        .then(({ token }) => {
-          localStorage.setItem('token', token);
+      googleCallback({ query: { code }, throwOnError: true })
+        .then(({ data }) => {
+          localStorage.setItem('token', data.token);
           toast({
             title: "Success",
             description: "Successfully logged in with Google.",

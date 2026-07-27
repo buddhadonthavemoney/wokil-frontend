@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { LawyerProfile } from '@/types/lawyer';
-import { site as siteApi } from '@/lib/api';
+import { checkDomainAvailability } from '@/generated/wokil-api';
 import { Check, X, Loader2, Globe, CheckCircle2, Shield } from 'lucide-react';
 
 interface SubdomainSelectionStepProps {
@@ -29,16 +29,20 @@ export function SubdomainSelectionStep({ profile, onUpdate }: SubdomainSelection
             setIsValidating(true);
             setError(null);
             try {
-                await siteApi.checkSlug(subdomain);
-                setIsAvailable(true);
-            } catch (err: any) {
-                if (err.response?.status === 400) {
+                // 200 → available, 400 → taken (see checkDomainAvailability spec).
+                const { response } = await checkDomainAvailability({ body: { subDomain: subdomain } });
+                if (response?.status === 200) {
+                    setIsAvailable(true);
+                } else if (response?.status === 400) {
                     setIsAvailable(false);
                 } else {
-                    console.error('Failed to check subdomain availability:', err);
                     setError('Failed to verify subdomain. Please try again.');
                     setIsAvailable(null);
                 }
+            } catch (err) {
+                console.error('Failed to check subdomain availability:', err);
+                setError('Failed to verify subdomain. Please try again.');
+                setIsAvailable(null);
             } finally {
                 setIsValidating(false);
             }
