@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { LawyerProfile } from '@/types/lawyer';
 import { getProfile, saveProfile, deploySite, previewSite } from '@/generated/wokil-api';
 import { useToast } from '@/hooks/use-toast';
+import { toLawyerProfile } from '@/lib/lawyer-profile-adapter';
 
 const generateSlug = (name: string): string => {
   return name
@@ -97,24 +98,8 @@ export function useProfileForm() {
 
       try {
         setLoading(true);
-        const data = (await getProfile({ throwOnError: true })).data as unknown as LawyerProfile;
-        // Merge with initial to ensure all nested fields exist
-        setProfile(prev => ({
-          ...prev,
-          ...data,
-          basicInformation: { ...prev.basicInformation, ...data.basicInformation },
-          practiceDetails: {
-            ...prev.practiceDetails,
-            ...data.practiceDetails,
-            areasOfPractice: data.practiceDetails?.areasOfPractice || [],
-            jurisdictions: data.practiceDetails?.jurisdictions || [],
-          },
-          contactInformation: { ...prev.contactInformation, ...data.contactInformation },
-          professionalProfile: { ...prev.professionalProfile, ...data.professionalProfile },
-          onlinePresence: { ...prev.onlinePresence, ...data.onlinePresence },
-          themeSelection: { ...prev.themeSelection, ...data.themeSelection },
-          subdomainSelection: { ...prev.subdomainSelection, ...data.subdomainSelection },
-        }));
+        const data = (await getProfile({ throwOnError: true })).data;
+        setProfile(prev => toLawyerProfile(data, prev));
         if (data.slug) {
           setCurrentStep(totalSteps);
         }
@@ -183,9 +168,11 @@ export function useProfileForm() {
       await saveProfile({ body: dataToSave as LawyerProfile, throwOnError: true });
 
       // deploySite kicks off async deployment (no site URL is returned; progress
-      // arrives on the deploy stream). The final URL is derived from the slug.
+      // arrives on the deploy stream, see dashboard/page.tsx). Derive the URL
+      // deterministically from the slug + the known live-site domain instead.
       await deploySite({ throwOnError: true });
-      const url: string | undefined = updatedProfile.siteUrl;
+      const liveDomain = process.env.NEXT_PUBLIC_PUBLISH_LIVE_DOMAIN || 'wokil.com';
+      const url: string | undefined = finalSlug ? `${finalSlug}.${liveDomain}` : undefined;
 
       if (url) {
         const finalProfile = { ...updatedProfile, siteUrl: url };

@@ -3,7 +3,7 @@
 import { useState, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getProfile } from '@/generated/wokil-api';
-import { LawyerProfile } from '@/types/lawyer';
+import { toLawyerProfile } from '@/lib/lawyer-profile-adapter';
 import { useReactToPrint } from 'react-to-print';
 import { BusinessCard, CardLayout, CardColor } from '@/components/BusinessCard';
 import { Button } from '@/components/ui/button';
@@ -19,7 +19,7 @@ export default function BusinessCardPage() {
 
   const { data: profile, isLoading } = useQuery({
     queryKey: ['profile'],
-    queryFn: async () => (await getProfile({ throwOnError: true })).data as unknown as LawyerProfile,
+    queryFn: async () => toLawyerProfile((await getProfile({ throwOnError: true })).data),
   });
 
   const handlePrint = useReactToPrint({

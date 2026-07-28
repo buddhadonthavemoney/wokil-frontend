@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { LawyerProfile } from '@/types/lawyer';
+import { toLawyerProfile } from '@/lib/lawyer-profile-adapter';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card, CardContent } from '@/components/ui/card';
@@ -84,9 +85,9 @@ function DashboardContent() {
 
   const fetchProfile = async () => {
     try {
-      const data = (await getProfile({ throwOnError: true })).data as unknown as LawyerProfile;
-      if (data && (data.id || data.basicInformation)) {
-        setProfile(data);
+      const data = (await getProfile({ throwOnError: true })).data;
+      if (data && (data.slug || data.basicInformation)) {
+        setProfile(prev => toLawyerProfile(data, prev ?? undefined));
       }
     } catch (error) {
       console.error("Failed to fetch profile:", error);
@@ -184,7 +185,7 @@ function DashboardContent() {
         if (!response.ok) {
            const errorText = await response.text();
            if (errorText.toLowerCase().includes("no ongoing deployment") || response.status === 400) {
-              const data = (await getProfile({ throwOnError: true })).data as unknown as LawyerProfile;
+              const data = (await getProfile({ throwOnError: true })).data;
               if (data && (data.isPublished || data.professionalProfile?.deploymentURL)) {
                  await handleSuccess('Deployment complete!');
                  setActiveDeployment(false);
