@@ -5,7 +5,9 @@ import { useRouter } from 'next/navigation';
 import { useProfileForm } from '@/hooks/useProfileForm';
 import { LawyerProfile } from '@/types/lawyer';
 import { cn } from '@/lib/utils';
-import { profile as profileApi, site as siteApi } from '@/lib/api';
+import { saveProfile } from '@/generated/wokil-api';
+import { useQuery } from '@tanstack/react-query';
+import { listThemesOptions } from '@/generated/wokil-api/@tanstack/react-query.gen';
 import { ProfilePreview } from '@/components/preview/ProfilePreview';
 import { Button } from '@/components/ui/button';
 import { Scale, Eye, ArrowLeft, Check, Loader2 } from 'lucide-react';
@@ -23,21 +25,10 @@ export default function Preview() {
   const [previewHtml, setPreviewHtml] = useState('');
   const [loadingPreview, setLoadingPreview] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
-  const [themes, setThemes] = useState<string[]>([]);
+  const { data: themesData } = useQuery(listThemesOptions());
+  const themes = themesData ?? [];
   const { toast } = useToast();
   const router = useRouter();
-
-  useEffect(() => {
-    const loadThemes = async () => {
-      try {
-        const data = await siteApi.getThemes();
-        setThemes(data);
-      } catch (err) {
-        console.error("Failed to fetch themes", err);
-      }
-    };
-    loadThemes();
-  }, []);
 
   const loadPreviewData = async () => {
     setLoadingPreview(true);
@@ -67,7 +58,7 @@ export default function Preview() {
     setLoadingPreview(true);
     
     try {
-      await profileApi.save(updatedProfile);
+      await saveProfile({ body: updatedProfile as LawyerProfile, throwOnError: true });
       // Wait a bit for the backend to update
       await new Promise(resolve => setTimeout(resolve, 300));
       const html = await fetchPreview();

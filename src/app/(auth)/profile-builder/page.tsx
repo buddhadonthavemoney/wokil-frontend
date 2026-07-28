@@ -15,7 +15,9 @@ import { OnlinePresenceStep } from '@/components/form/steps/OnlinePresenceStep';
 import { SubdomainSelectionStep } from '@/components/form/steps/SubdomainSelectionStep';
 import { ThemeSelector } from '@/components/form/ThemeSelector';
 import { ProfilePreview } from '@/components/preview/ProfilePreview';
-import { profile as profileApi, site as siteApi } from '@/lib/api';
+import { saveProfile } from '@/generated/wokil-api';
+import { useQuery } from '@tanstack/react-query';
+import { listThemesOptions } from '@/generated/wokil-api/@tanstack/react-query.gen';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Scale, ArrowLeft, Trash2, Sparkles, Loader2, Monitor, ZoomIn, ZoomOut } from 'lucide-react';
@@ -110,21 +112,10 @@ export default function ProfileBuilder() {
 
   const [previewHtml, setPreviewHtml] = useState('');
   const [isLoadingPreview, setIsLoadingPreview] = useState(false);
-  const [themes, setThemes] = useState<string[]>([]);
+  const { data: themesData } = useQuery(listThemesOptions());
+  const themes = themesData ?? [];
   const [zoom, setZoom] = useState([1.0]);
   const previewFetchRef = useRef(false);
-
-  useEffect(() => {
-    const loadThemes = async () => {
-      try {
-        const data = await siteApi.getThemes();
-        setThemes(data);
-      } catch (err) {
-        console.error("Failed to fetch themes", err);
-      }
-    };
-    loadThemes();
-  }, []);
 
   useEffect(() => {
     // Only load if we have some basic info
@@ -281,7 +272,7 @@ export default function ProfileBuilder() {
                 onThemeSelect={async (themeId) => {
                   const updatedProfile = { ...profile, themeSelection: { theme: themeId as any } };
                   setProfile(updatedProfile);
-                  await profileApi.save(updatedProfile);
+                  await saveProfile({ body: updatedProfile as LawyerProfile, throwOnError: true });
                   
                   const hasBasicInfo = updatedProfile.basicInformation.fullName && 
                                       updatedProfile.basicInformation.professionalTitle && 

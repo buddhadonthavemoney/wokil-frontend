@@ -1,7 +1,8 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { LawyerProfile } from '@/types/lawyer';
-import { profile as profileApi, site as siteApi } from '@/lib/api';
+import { getProfile, saveProfile, deploySite, previewSite } from '@/generated/wokil-api';
 import { useToast } from '@/hooks/use-toast';
+import { toLawyerProfile } from '@/lib/lawyer-profile-adapter';
 
 const generateSlug = (name: string): string => {
   return name
@@ -84,7 +85,7 @@ export function useProfileForm() {
         delete (dataToSave as any).subdomainSelection;
       }
 
-      await profileApi.save(dataToSave as LawyerProfile);
+      await saveProfile({ body: dataToSave as LawyerProfile, throwOnError: true });
       lastSavedProfile.current = currentProfileJson;
     } catch (error) {
       console.error("Failed to auto-save profile:", error);
@@ -97,24 +98,8 @@ export function useProfileForm() {
 
       try {
         setLoading(true);
-        const data = await profileApi.get();
-        // Merge with initial to ensure all nested fields exist
-        setProfile(prev => ({
-          ...prev,
-          ...data,
-          basicInformation: { ...prev.basicInformation, ...data.basicInformation },
-          practiceDetails: {
-            ...prev.practiceDetails,
-            ...data.practiceDetails,
-            areasOfPractice: data.practiceDetails?.areasOfPractice || [],
-            jurisdictions: data.practiceDetails?.jurisdictions || [],
-          },
-          contactInformation: { ...prev.contactInformation, ...data.contactInformation },
-          professionalProfile: { ...prev.professionalProfile, ...data.professionalProfile },
-          onlinePresence: { ...prev.onlinePresence, ...data.onlinePresence },
-          themeSelection: { ...prev.themeSelection, ...data.themeSelection },
-          subdomainSelection: { ...prev.subdomainSelection, ...data.subdomainSelection },
-        }));
+        const data = (await getProfile({ throwOnError: true })).data;
+        setProfile(prev => toLawyerProfile(data, prev));
         if (data.slug) {
           setCurrentStep(totalSteps);
         }
@@ -180,9 +165,14 @@ export function useProfileForm() {
       if (profile.professionalProfile?.deploymentURL) {
         delete (dataToSave as any).subdomainSelection;
       }
-      await profileApi.save(dataToSave as LawyerProfile);
+      await saveProfile({ body: dataToSave as LawyerProfile, throwOnError: true });
 
-      const { url } = await siteApi.deploy({ slug: finalSlug });
+      // deploySite kicks off async deployment (no site URL is returned; progress
+      // arrives on the deploy stream, see dashboard/page.tsx). Derive the URL
+      // deterministically from the slug + the known live-site domain instead.
+      await deploySite({ throwOnError: true });
+      const liveDomain = process.env.NEXT_PUBLIC_PUBLISH_LIVE_DOMAIN || 'wokil.com';
+      const url: string | undefined = finalSlug ? `${finalSlug}.${liveDomain}` : undefined;
 
       if (url) {
         const finalProfile = { ...updatedProfile, siteUrl: url };
@@ -192,7 +182,7 @@ export function useProfileForm() {
         if (profile.professionalProfile?.deploymentURL || finalProfile.professionalProfile?.deploymentURL) {
           delete (finalDataToSave as any).subdomainSelection;
         }
-        await profileApi.save(finalDataToSave as LawyerProfile);
+        await saveProfile({ body: finalDataToSave as LawyerProfile, throwOnError: true });
       }
       return updatedProfile.siteUrl || finalSlug;
     } catch (err) {
@@ -207,7 +197,7 @@ export function useProfileForm() {
 
   const fetchPreview = useCallback(async () => {
     try {
-      return await siteApi.getPreview();
+      return (await previewSite({ throwOnError: true })).data;
     } catch (err) {
       console.error("Failed to fetch preview:", err);
       return "";

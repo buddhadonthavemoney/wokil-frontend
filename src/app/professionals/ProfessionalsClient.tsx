@@ -14,11 +14,11 @@ import {
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { auth } from '@/lib/api';
-import { PublicPeopleResponse } from '@/lib/api';
+import { googleLogin } from '@/generated/wokil-api';
+import type { PublicDirectoryResponse } from '@/generated/wokil-api';
 
 interface ProfessionalsClientProps {
-    professionals: PublicPeopleResponse;
+    professionals: PublicDirectoryResponse;
 }
 
 export function ProfessionalsClient({ professionals: initialProfessionals }: ProfessionalsClientProps) {
@@ -28,8 +28,8 @@ export function ProfessionalsClient({ professionals: initialProfessionals }: Pro
 
     const handleLogin = async () => {
         try {
-            const url = await auth.getLoginUrl();
-            window.location.href = url;
+            const { data } = await googleLogin({ throwOnError: true });
+            window.location.href = data.url;
         } catch (error) {
             toast({
                 title: "Error",
@@ -39,9 +39,9 @@ export function ProfessionalsClient({ professionals: initialProfessionals }: Pro
         }
     };
 
-    const filteredProfessionals = initialProfessionals?.profiles?.filter(p => 
-        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.professionalTitle.toLowerCase().includes(searchQuery.toLowerCase())
+    const filteredProfessionals = initialProfessionals?.profiles?.filter(p =>
+        p.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.professionalTitle?.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     const getProfileUrl = (domain: string) => {
@@ -130,7 +130,7 @@ export function ProfessionalsClient({ professionals: initialProfessionals }: Pro
                                             <div className="w-full h-full flex items-center justify-center bg-[#f8f9fb] relative overflow-hidden group">
                                                 <Scale className="absolute -right-4 -bottom-4 w-32 h-32 text-black/5 -rotate-12 transition-transform duration-700 group-hover:rotate-0" />
                                                 <div className="w-20 h-20 rounded-full bg-white flex items-center justify-center text-[#1a1c1e] font-heading font-bold text-2xl shadow-xl shadow-black/5 border border-white z-10 transition-transform duration-500 group-hover:scale-110">
-                                                    {getInitials(person.name)}
+                                                    {getInitials(person.name ?? '')}
                                                 </div>
                                             </div>
                                         )}

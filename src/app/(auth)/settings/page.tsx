@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { profile as profileApi, site as siteApi } from '@/lib/api';
+import { getProfile, createGaProperty, updateProfileVisibility } from '@/generated/wokil-api';
 import { useToast } from '@/hooks/use-toast';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Label } from '@/components/ui/label';
@@ -18,12 +18,12 @@ export default function Settings() {
   // Fetch Profile to check for Google Analytics ID
   const { data: profile, isLoading: isProfileLoading } = useQuery({
     queryKey: ['profile'],
-    queryFn: profileApi.get,
+    queryFn: async () => (await getProfile({ throwOnError: true })).data,
   });
 
   // Enable Analytics Mutation
   const enableAnalyticsMutation = useMutation({
-    mutationFn: siteApi.enableAnalytics,
+    mutationFn: async () => (await createGaProperty({ throwOnError: true })).data,
     onSuccess: () => {
       toast({
         title: "Analytics Enabled",
@@ -42,7 +42,7 @@ export default function Settings() {
 
   // Visibility Mutation
   const updateVisibilityMutation = useMutation({
-    mutationFn: (data: { isPublic: boolean; showPicture: boolean }) => profileApi.updateVisibility(data),
+    mutationFn: (data: { isPublic: boolean; showPicture: boolean }) => updateProfileVisibility({ body: data, throwOnError: true }),
     onSuccess: () => {
       toast({
         title: "Visibility Updated",

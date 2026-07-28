@@ -11,6 +11,8 @@ export const metadata: Metadata = {
   },
 };
 
+export const revalidate = 300;
+
 export default async function Home() {
     const professionals = await publicPeopleServer.list();
 

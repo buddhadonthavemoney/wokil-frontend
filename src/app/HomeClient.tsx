@@ -11,15 +11,15 @@ import {
     ArrowRight,
     User
 } from 'lucide-react';
-import { auth } from '@/lib/api';
+import { googleLogin } from '@/generated/wokil-api';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import { PublicPeopleResponse } from '@/lib/api';
+import type { PublicDirectoryResponse } from '@/generated/wokil-api';
 import { StructuredData } from '@/components/SEO/StructuredData';
 
 interface HomeClientProps {
-    professionals: PublicPeopleResponse;
+    professionals: PublicDirectoryResponse;
 }
 
 export function HomeClient({ professionals }: HomeClientProps) {
@@ -36,8 +36,8 @@ export function HomeClient({ professionals }: HomeClientProps) {
 
     const handleLogin = async () => {
         try {
-            const url = await auth.getLoginUrl();
-            window.location.href = url;
+            const { data } = await googleLogin({ throwOnError: true });
+            window.location.href = data.url;
         } catch (error) {
             toast({
                 title: "Error",

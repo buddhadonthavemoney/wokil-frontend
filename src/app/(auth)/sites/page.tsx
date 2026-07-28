@@ -4,7 +4,7 @@ import { Globe, ExternalLink, Edit, IdCard, Loader2, CheckCircle2, ShieldCheck, 
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { profile as profileApi, site as siteApi } from '@/lib/api';
+import { getProfile, listSites, createSite, deleteSite, verifyDns, getVerificationRecords } from '@/generated/wokil-api';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -58,16 +58,17 @@ export default function Sites() {
 
   const { data: profile, isLoading: profileLoading } = useQuery({
     queryKey: ['profile'],
-    queryFn: profileApi.get,
+    queryFn: async () => (await getProfile({ throwOnError: true })).data,
   });
 
   const { data: sites, isLoading: sitesLoading } = useQuery({
     queryKey: ['sites'],
-    queryFn: siteApi.list,
+    queryFn: async () => (await listSites({ throwOnError: true })).data,
   });
 
   const createSiteMutation = useMutation({
-    mutationFn: siteApi.create,
+    mutationFn: (body: { domain: string; status: 'requested' | 'link_pending' }) =>
+      createSite({ body, throwOnError: true }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sites'] });
       setIsCreateDialogOpen(false);
@@ -80,7 +81,7 @@ export default function Sites() {
   });
 
   const deleteSiteMutation = useMutation({
-    mutationFn: siteApi.delete,
+    mutationFn: (domain: string) => deleteSite({ path: { domain }, throwOnError: true }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sites'] });
       setSiteToDelete(null);
@@ -92,7 +93,7 @@ export default function Sites() {
   });
 
   const verifyMutation = useMutation({
-    mutationFn: siteApi.verify,
+    mutationFn: (domain: string) => verifyDns({ path: { domain }, throwOnError: true }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sites'] });
       setSiteToVerify(null);
@@ -106,7 +107,7 @@ export default function Sites() {
   const handleFetchRecords = async (domain: string) => {
     setIsLoadingRecords(true);
     try {
-      const data = await siteApi.getVerificationRecords(domain);
+      const { data } = await getVerificationRecords({ path: { domain }, throwOnError: true });
       // Map API response to UI record structure
       const records: VerificationRecord[] = [
         {

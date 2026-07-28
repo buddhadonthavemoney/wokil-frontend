@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { LawyerProfile } from '@/types/lawyer';
+import { toLawyerProfile } from '@/lib/lawyer-profile-adapter';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card, CardContent } from '@/components/ui/card';
@@ -33,7 +34,7 @@ import { useToast } from '@/hooks/use-toast';
 import { toast as sonnerToast } from "sonner";
 import { InfoModal } from '@/components/InfoModal';
 import { useQuery } from '@tanstack/react-query';
-import { profile as profileApi, site as siteApi } from '@/lib/api';
+import { getProfile, getSiteAnalytics } from '@/generated/wokil-api';
 import {
   LineChart,
   Line,
@@ -77,16 +78,16 @@ function DashboardContent() {
 
   const { data: analytics } = useQuery({
     queryKey: ['analytics'],
-    queryFn: siteApi.getAnalytics,
+    queryFn: async () => (await getSiteAnalytics({ throwOnError: true })).data,
     enabled: !!profile?.googleAnalyticsId,
     refetchInterval: 30000,
   });
 
   const fetchProfile = async () => {
     try {
-      const data = await profileApi.get();
-      if (data && (data.id || data.basicInformation)) {
-        setProfile(data);
+      const data = (await getProfile({ throwOnError: true })).data;
+      if (data && (data.slug || data.basicInformation)) {
+        setProfile(prev => toLawyerProfile(data, prev ?? undefined));
       }
     } catch (error) {
       console.error("Failed to fetch profile:", error);
@@ -184,7 +185,7 @@ function DashboardContent() {
         if (!response.ok) {
            const errorText = await response.text();
            if (errorText.toLowerCase().includes("no ongoing deployment") || response.status === 400) {
-              const data = await profileApi.get();
+              const data = (await getProfile({ throwOnError: true })).data;
               if (data && (data.isPublished || data.professionalProfile?.deploymentURL)) {
                  await handleSuccess('Deployment complete!');
                  setActiveDeployment(false);

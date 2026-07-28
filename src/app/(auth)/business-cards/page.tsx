@@ -2,7 +2,8 @@
 
 import { useState, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { profile as profileApi } from '@/lib/api';
+import { getProfile } from '@/generated/wokil-api';
+import { toLawyerProfile } from '@/lib/lawyer-profile-adapter';
 import { useReactToPrint } from 'react-to-print';
 import { BusinessCard, CardLayout, CardColor } from '@/components/BusinessCard';
 import { Button } from '@/components/ui/button';
@@ -18,7 +19,7 @@ export default function BusinessCardPage() {
 
   const { data: profile, isLoading } = useQuery({
     queryKey: ['profile'],
-    queryFn: profileApi.get,
+    queryFn: async () => toLawyerProfile((await getProfile({ throwOnError: true })).data),
   });
 
   const handlePrint = useReactToPrint({
