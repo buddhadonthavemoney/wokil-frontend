@@ -91,7 +91,10 @@ export type ProfessionalProfile = {
     bio?: string;
     officeHours?: string;
     profilePhoto?: string;
-    deploymentURL?: string;
+    /**
+     * Deprecated alias of `siteUrl`, kept for backward compatibility. Derived from the sites table on read — never stored on the profile.
+     */
+    readonly deploymentURL?: string;
 };
 
 export type OnlinePresence = {
@@ -117,9 +120,15 @@ export type LawyerProfile = {
     themeSelection?: ThemeSelection;
     googleAnalyticsId?: string;
     isPublic?: boolean;
-    isPublished?: boolean;
+    /**
+     * Whether the user has a live deployed site. Derived from the sites table on read — never stored on the profile and ignored if sent on write.
+     */
+    readonly isPublished?: boolean;
     showPicture?: boolean;
-    siteUrl?: string;
+    /**
+     * Live domain of the user's deployed site. Derived from the sites table on read — never stored on the profile and ignored if sent on write.
+     */
+    readonly siteUrl?: string;
     slug?: string;
 };
 
@@ -188,6 +197,26 @@ export type AnalyticsData = {
         [key: string]: number;
     };
     history: Array<DailyMetric>;
+};
+
+export type ProfessionalProfileWritable = {
+    bio?: string;
+    officeHours?: string;
+    profilePhoto?: string;
+};
+
+export type LawyerProfileWritable = {
+    basicInformation?: BasicInformation;
+    contactInformation?: ContactInformation;
+    practiceDetails?: PracticeDetails;
+    professionalProfile?: ProfessionalProfileWritable;
+    onlinePresence?: OnlinePresence;
+    subdomainSelection?: SubdomainSelection;
+    themeSelection?: ThemeSelection;
+    googleAnalyticsId?: string;
+    isPublic?: boolean;
+    showPicture?: boolean;
+    slug?: string;
 };
 
 export type GoogleLoginData = {
@@ -260,9 +289,9 @@ export type ListUsersError = ListUsersErrors[keyof ListUsersErrors];
 
 export type ListUsersResponses = {
     /**
-     * OK
+     * OK (null when no users)
      */
-    200: Array<User>;
+    200: Array<User> | null;
 };
 
 export type ListUsersResponse = ListUsersResponses[keyof ListUsersResponses];
@@ -490,7 +519,7 @@ export type GetProfileResponses = {
 export type GetProfileResponse = GetProfileResponses[keyof GetProfileResponses];
 
 export type SaveProfileData = {
-    body: LawyerProfile;
+    body: LawyerProfileWritable;
     path?: never;
     query?: never;
     url: '/api/profile';

@@ -84,6 +84,10 @@ export default function Sites() {
     mutationFn: (domain: string) => deleteSite({ path: { domain }, throwOnError: true }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sites'] });
+      // siteUrl/deploymentURL/isPublished are derived from the sites table, so
+      // deleting a site changes the profile response too — without this the
+      // dashboard keeps showing the deleted site's URL from cache.
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
       setSiteToDelete(null);
       toast.success("Site deleted successfully");
     },
@@ -96,6 +100,8 @@ export default function Sites() {
     mutationFn: (domain: string) => verifyDns({ path: { domain }, throwOnError: true }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sites'] });
+      // Linking a domain can change which site the profile derives from.
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
       setSiteToVerify(null);
       toast.success("Site verified and linked successfully!");
     },

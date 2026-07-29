@@ -56,6 +56,12 @@ export function toLawyerProfile(
     ...data,
     id: existing.id,
     slug: data.slug ?? existing.slug,
+    // siteUrl/isPublished/deploymentURL are derived server-side from the sites
+    // table and come back omitted (not empty) when there's no live site. Take
+    // them straight from `data` with empty defaults so a deleted site's URL
+    // can't survive via the `...existing` fallback above.
+    siteUrl: data.siteUrl ?? '',
+    isPublished: data.isPublished ?? false,
     basicInformation: { ...existing.basicInformation, ...data.basicInformation },
     practiceDetails: {
       ...existing.practiceDetails,
@@ -64,7 +70,13 @@ export function toLawyerProfile(
       jurisdictions: data.practiceDetails?.jurisdictions ?? existing.practiceDetails.jurisdictions,
     },
     contactInformation: { ...existing.contactInformation, ...data.contactInformation },
-    professionalProfile: { ...existing.professionalProfile, ...data.professionalProfile },
+    professionalProfile: {
+      ...existing.professionalProfile,
+      ...data.professionalProfile,
+      // Derived; force empty when omitted so it can't inherit a stale URL from
+      // `existing` — covers the case where the backend drops the whole object.
+      deploymentURL: data.professionalProfile?.deploymentURL ?? '',
+    },
     onlinePresence: { ...existing.onlinePresence, ...data.onlinePresence },
     themeSelection: {
       ...existing.themeSelection,

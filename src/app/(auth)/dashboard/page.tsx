@@ -33,7 +33,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { toast as sonnerToast } from "sonner";
 import { InfoModal } from '@/components/InfoModal';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getProfile, getSiteAnalytics } from '@/generated/wokil-api';
 import {
   LineChart,
@@ -60,8 +60,6 @@ export default function Dashboard() {
 }
 
 function DashboardContent() {
-  const [profile, setProfile] = useState<LawyerProfile | null>(null);
-  const [loading, setLoading] = useState(true);
   const [highlightViewSite, setHighlightViewSite] = useState(false);
   const [showGuideArrow, setShowGuideArrow] = useState(false);
 
@@ -75,6 +73,27 @@ function DashboardContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Keyed in the query cache rather than local state so other pages can
+  // invalidate it — deleting a site on /sites has to be able to tell the
+  // dashboard its derived siteUrl/isPublished just changed. Routed through
+  // toLawyerProfile (not a raw cast) because the generated API type has no
+  // `id` and marks everything optional; existing cache data fills the gaps
+  // the response omits.
+  const {
+    data: profile = null,
+    isLoading: loading,
+    refetch: fetchProfile,
+  } = useQuery({
+    queryKey: ['profile'],
+    queryFn: async () => {
+      const data = (await getProfile({ throwOnError: true })).data;
+      if (!data || !(data.slug || data.basicInformation)) return null;
+      const existing = queryClient.getQueryData<LawyerProfile>(['profile']) ?? undefined;
+      return toLawyerProfile(data, existing);
+    },
+  });
 
   const { data: analytics } = useQuery({
     queryKey: ['analytics'],
@@ -82,19 +101,6 @@ function DashboardContent() {
     enabled: !!profile?.googleAnalyticsId,
     refetchInterval: 30000,
   });
-
-  const fetchProfile = async () => {
-    try {
-      const data = (await getProfile({ throwOnError: true })).data;
-      if (data && (data.slug || data.basicInformation)) {
-        setProfile(prev => toLawyerProfile(data, prev ?? undefined));
-      }
-    } catch (error) {
-      console.error("Failed to fetch profile:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   useEffect(() => {
     const showInfo = searchParams.get('showInfoModal');
@@ -262,11 +268,9 @@ function DashboardContent() {
 
     startStream();
     return () => abortController.abort();
-  }, [activeDeployment]);
-
-  useEffect(() => {
-    fetchProfile();
-  }, []);
+    // fetchProfile is react-query's refetch, which is referentially stable, so
+    // including it cannot restart the deploy stream.
+  }, [activeDeployment, fetchProfile]);
 
   const getPublicUrl = () => {
     if (!profile || !profile.siteUrl) return '';
@@ -354,7 +358,7 @@ function DashboardContent() {
                             "gap-2 rounded-lg font-medium shadow-lg shadow-primary/10 hover:shadow-primary/20 transition-all text-primary-foreground bg-primary hover:bg-primary/90 border-none relative overflow-visible",
                             highlightViewSite && "animate-highlight-glow ring-2 ring-emerald-500 ring-offset-2 ring-offset-background"
                           )}
-                          disabled={(!profile.slug && !profile.id) || !profile.isPublished}
+                          disabled={(!profile.slug && !profile.id) || !profile.isPublished || !getPublicUrl()}
                         >
                           <ExternalLink className="w-4 h-4" />
                           View Site
@@ -364,15 +368,21 @@ function DashboardContent() {
                     </HoverCardTrigger>
                     <HoverCardContent className="w-auto p-4 bg-white" align="end">
                       <div className="flex flex-col items-center gap-2">
-                        <div className="p-2 bg-white rounded-lg border border-border">
-                          <QRCode
-                            value={getPublicUrl()}
-                            size={128}
-                            style={{ height: "auto", maxWidth: "100%", width: "100%" }}
-                            viewBox={`0 0 256 256`}
-                          />
-                        </div>
-                        <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest text-center mt-1">Scan to Visit</p>
+                        {getPublicUrl() ? (
+                          <>
+                            <div className="p-2 bg-white rounded-lg border border-border">
+                              <QRCode
+                                value={getPublicUrl()}
+                                size={128}
+                                style={{ height: "auto", maxWidth: "100%", width: "100%" }}
+                                viewBox={`0 0 256 256`}
+                              />
+                            </div>
+                            <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest text-center mt-1">Scan to Visit</p>
+                          </>
+                        ) : (
+                          <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest text-center max-w-[128px]">No live site yet</p>
+                        )}
                       </div>
                     </HoverCardContent>
                   </HoverCard>
@@ -417,19 +427,25 @@ function DashboardContent() {
                       </p>
                     </div>
 
-                    <div className="flex flex-col md:flex-row flex-wrap gap-3 md:gap-4 pt-2 items-center md:items-start w-full">
-                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/50 border border-border/50 text-sm font-medium max-w-full">
-                        <Globe className="w-4 h-4 text-primary shrink-0" />
-                        <code className="text-foreground/80 truncate max-w-[200px] sm:max-w-xs md:max-w-md">{getPublicUrl().replace(/^https?:\/\//, '')}</code>
-                        <button
-                          onClick={copyUrl}
-                          className="ml-1 p-1 hover:bg-primary/10 rounded transition-colors"
-                          title="Copy Link"
-                        >
-                          <Copy className="w-3.5 h-3.5 text-muted-foreground hover:text-primary" />
-                        </button>
+                    {/* Only rendered when a site is actually live. siteUrl is
+                        derived from the sites table, so deleting a site clears
+                        it and this chip disappears instead of showing a dead
+                        link (or an empty pill with a copy button). */}
+                    {getPublicUrl() && (
+                      <div className="flex flex-col md:flex-row flex-wrap gap-3 md:gap-4 pt-2 items-center md:items-start w-full">
+                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/50 border border-border/50 text-sm font-medium max-w-full">
+                          <Globe className="w-4 h-4 text-primary shrink-0" />
+                          <code className="text-foreground/80 truncate max-w-[200px] sm:max-w-xs md:max-w-md">{getPublicUrl().replace(/^https?:\/\//, '')}</code>
+                          <button
+                            onClick={copyUrl}
+                            className="ml-1 p-1 hover:bg-primary/10 rounded transition-colors"
+                            title="Copy Link"
+                          >
+                            <Copy className="w-3.5 h-3.5 text-muted-foreground hover:text-primary" />
+                          </button>
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 </div>
               </CardContent>

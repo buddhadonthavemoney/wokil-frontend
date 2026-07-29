@@ -81,6 +81,20 @@ interface BusinessCardProps {
     colorTheme?: CardColor;
 }
 
+// publicUrl is derived from the sites table, so a user with no live site gets
+// an empty string. react-qr-code will happily encode that into a QR that scans
+// to nothing — on a card that gets printed. Render a placeholder instead.
+const SiteQRCode = ({ value, style }: { value: string; style?: React.CSSProperties }) => {
+    if (!value) {
+        return (
+            <div className="w-full h-full flex items-center justify-center text-center text-[6px] font-bold uppercase tracking-widest text-slate-400 leading-tight px-0.5">
+                No live site
+            </div>
+        );
+    }
+    return <QRCode value={value} size={256} style={style} viewBox={`0 0 256 256`} />;
+};
+
 const ScalableCardContainer = ({ children }: { children: React.ReactNode }) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const [scale, setScale] = useState(1);
@@ -157,11 +171,9 @@ export const BusinessCard = React.forwardRef<HTMLDivElement, BusinessCardProps>(
                                     <div className="z-10 relative flex flex-col items-center gap-2">
                                         <span className="text-[9px] font-bold tracking-widest uppercase opacity-70">Visit Website</span>
                                         <div className="p-1.5 bg-white rounded-lg shadow-lg w-[70px] h-[70px] flex items-center justify-center">
-                                            <QRCode
+                                            <SiteQRCode
                                                 value={publicUrl}
-                                                size={256}
                                                 style={{ height: "auto", maxWidth: "100%", width: "100%" }}
-                                                viewBox={`0 0 256 256`}
                                             />
                                         </div>
                                     </div>
@@ -254,11 +266,9 @@ export const BusinessCard = React.forwardRef<HTMLDivElement, BusinessCardProps>(
 
                                     <div className="flex justify-end items-center flex-col gap-1">
                                         <div className="p-1 bg-white border border-slate-100 rounded shadow-sm">
-                                            <QRCode
+                                            <SiteQRCode
                                                 value={publicUrl}
-                                                size={256}
                                                 style={{ height: "auto", width: "50px" }}
-                                                viewBox={`0 0 256 256`}
                                             />
                                         </div>
                                         <span className="text-[8px] font-bold uppercase tracking-widest opacity-50">Website</span>
@@ -312,11 +322,9 @@ export const BusinessCard = React.forwardRef<HTMLDivElement, BusinessCardProps>(
 
                                     <div className="flex flex-col items-center gap-1">
                                         <div className="p-1 bg-white border border-slate-100 rounded shadow-sm">
-                                            <QRCode
+                                            <SiteQRCode
                                                 value={publicUrl}
-                                                size={256}
                                                 style={{ height: "auto", width: "55px" }}
-                                                viewBox={`0 0 256 256`}
                                             />
                                         </div>
                                         <span className="text-[8px] font-bold uppercase tracking-widest opacity-50">Website</span>

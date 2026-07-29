@@ -84,7 +84,7 @@ export const zProfessionalProfile = z.object({
     bio: z.string().optional(),
     officeHours: z.string().optional(),
     profilePhoto: z.string().optional(),
-    deploymentURL: z.string().optional()
+    deploymentURL: z.string().readonly().optional()
 });
 
 export const zOnlinePresence = z.object({
@@ -110,9 +110,9 @@ export const zLawyerProfile = z.object({
     themeSelection: zThemeSelection.optional(),
     googleAnalyticsId: z.string().optional(),
     isPublic: z.boolean().optional(),
-    isPublished: z.boolean().optional(),
+    isPublished: z.boolean().readonly().optional(),
     showPicture: z.boolean().optional(),
-    siteUrl: z.string().optional(),
+    siteUrl: z.string().readonly().optional(),
     slug: z.string().optional()
 });
 
@@ -176,6 +176,26 @@ export const zAnalyticsData = z.object({
     history: z.array(zDailyMetric)
 });
 
+export const zProfessionalProfileWritable = z.object({
+    bio: z.string().optional(),
+    officeHours: z.string().optional(),
+    profilePhoto: z.string().optional()
+});
+
+export const zLawyerProfileWritable = z.object({
+    basicInformation: zBasicInformation.optional(),
+    contactInformation: zContactInformation.optional(),
+    practiceDetails: zPracticeDetails.optional(),
+    professionalProfile: zProfessionalProfileWritable.optional(),
+    onlinePresence: zOnlinePresence.optional(),
+    subdomainSelection: zSubdomainSelection.optional(),
+    themeSelection: zThemeSelection.optional(),
+    googleAnalyticsId: z.string().optional(),
+    isPublic: z.boolean().optional(),
+    showPicture: z.boolean().optional(),
+    slug: z.string().optional()
+});
+
 /**
  * OK
  */
@@ -196,9 +216,9 @@ export const zGoogleCallbackResponse = z.object({
 });
 
 /**
- * OK
+ * OK (null when no users)
  */
-export const zListUsersResponse = z.array(zUser);
+export const zListUsersResponse = z.array(zUser).nullable();
 
 export const zGetPublicDirectoryQuery = z.object({
     search: z.string().optional()
@@ -251,7 +271,7 @@ export const zListSubmissionsResponse = z.array(zSubmission).nullable();
  */
 export const zGetProfileResponse = zLawyerProfile;
 
-export const zSaveProfileBody = zLawyerProfile;
+export const zSaveProfileBody = zLawyerProfileWritable;
 
 /**
  * Updated profile
