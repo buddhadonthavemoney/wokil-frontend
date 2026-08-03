@@ -8,7 +8,7 @@ import { getProfile, listSites, createSite, deleteSite, verifyDns, getVerificati
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -41,6 +41,21 @@ import {
 import QRCode from "react-qr-code";
 import { toast } from "sonner";
 import { VerificationRecord } from '@/types/site';
+import { useDeployStream } from '@/hooks/useDeployStream';
+import { DeployProgressModal } from '@/components/deploy/DeployProgressModal';
+
+// Verification is throttled server-side to one attempt per domain per minute
+// (it queries the zone's authoritative nameservers, and retrying sooner can't
+// return a different answer).
+class VerifyRateLimitError extends Error {
+  readonly retryAfterSeconds: number;
+
+  constructor(retryAfterSeconds: number, serverMessage?: string) {
+    super(serverMessage || `Please wait ${retryAfterSeconds} seconds before verifying again.`);
+    this.name = 'VerifyRateLimitError';
+    this.retryAfterSeconds = retryAfterSeconds;
+  }
+}
 
 export default function Sites() {
   const router = useRouter();
@@ -55,6 +70,38 @@ export default function Sites() {
   const [siteToVerify, setSiteToVerify] = useState<string | null>(null);
   const [verificationRecords, setVerificationRecords] = useState<VerificationRecord[]>([]);
   const [isLoadingRecords, setIsLoadingRecords] = useState(false);
+  const [verifyCooldown, setVerifyCooldown] = useState<{ domain: string; until: number } | null>(null);
+  // Set once VerifyDNS returns 200. That response only means verification
+  // passed - Deploy() (R2 upload, custom hostname, worker route) then runs
+  // async on the backend, so the sites/profile caches must stay stale until
+  // the deploy stream reports it actually finished.
+  const [activeDeployDomain, setActiveDeployDomain] = useState<string | null>(null);
+  // useDeployStream clears activeDeployDomain the instant it hands back the
+  // terminal state, which is exactly when the modal needs the domain to
+  // build the "View Site" link for the success screen. A ref survives that
+  // transition without forcing an extra render on every deploy start/stop.
+  const lastDeployDomainRef = useRef<string | null>(null);
+  // Drives the countdown label; only ticks while a cooldown is actually active.
+  const [nowMs, setNowMs] = useState(() => Date.now());
+
+  useEffect(() => {
+    if (!verifyCooldown || verifyCooldown.until <= Date.now()) return;
+    // Self-stopping: the guard above only runs when this effect
+    // (re)mounts, so without clearing here on expiry the interval would
+    // keep ticking every 500ms for the rest of the component's lifetime,
+    // not just for the cooldown's duration.
+    const id = setInterval(() => {
+      const now = Date.now();
+      setNowMs(now);
+      if (now >= verifyCooldown.until) clearInterval(id);
+    }, 500);
+    return () => clearInterval(id);
+  }, [verifyCooldown]);
+
+  const cooldownSeconds =
+    verifyCooldown && verifyCooldown.domain === siteToVerify
+      ? Math.max(0, Math.ceil((verifyCooldown.until - nowMs) / 1000))
+      : 0;
 
   const { data: profile, isLoading: profileLoading } = useQuery({
     queryKey: ['profile'],
@@ -69,11 +116,17 @@ export default function Sites() {
   const createSiteMutation = useMutation({
     mutationFn: (body: { domain: string; status: 'requested' | 'link_pending' }) =>
       createSite({ body, throwOnError: true }),
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['sites'] });
       setIsCreateDialogOpen(false);
       setNewSite({ domain: '', status: 'requested' });
       toast.success("Site created successfully!");
+      // An onboarded domain is unusable until its DNS records are added, so go
+      // straight to them rather than making the user find the new card and
+      // click "Verify Domain" as a separate step.
+      if (variables.status === 'link_pending') {
+        handleFetchRecords(variables.domain);
+      }
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || "Failed to create site");
@@ -97,17 +150,68 @@ export default function Sites() {
   });
 
   const verifyMutation = useMutation({
-    mutationFn: (domain: string) => verifyDns({ path: { domain }, throwOnError: true }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['sites'] });
-      // Linking a domain can change which site the profile derives from.
-      queryClient.invalidateQueries({ queryKey: ['profile'] });
-      setSiteToVerify(null);
-      toast.success("Site verified and linked successfully!");
+    // Not `throwOnError: true`: that discards the response, and a 429 carries
+    // its cooldown in the Retry-After header. The API's error bodies are
+    // text/plain (http.Error), so `error` is a plain string here — reading
+    // `error.response.data.message` (the old axios shape) always came back
+    // undefined, which is why every failure showed the same generic message.
+    mutationFn: async (domain: string) => {
+      const { error, response } = await verifyDns({ path: { domain } });
+      if (!response) {
+        throw new Error("Could not reach the server. Check your connection and try again.");
+      }
+      if (response.status === 429) {
+        const retryAfter = Number(response.headers.get('Retry-After')) || 60;
+        throw new VerifyRateLimitError(retryAfter, typeof error === 'string' ? error : undefined);
+      }
+      if (!response.ok) {
+        throw new Error(
+          typeof error === 'string' && error
+            ? error
+            : "Verification failed. Please check your DNS records."
+        );
+      }
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Verification failed. Please check your DNS records.");
+    onSuccess: (_data, domain) => {
+      setSiteToVerify(null);
+      // No toast here: DeployProgressModal takes over the instant
+      // activeDeployDomain is set below, showing its own progress state.
+      lastDeployDomainRef.current = domain;
+      setActiveDeployDomain(domain);
+    },
+    onError: (error: Error, domain: string) => {
+      if (error instanceof VerifyRateLimitError) {
+        // Mirror the server's window client-side so the button stays disabled
+        // instead of re-enabling into a guaranteed second 429.
+        setVerifyCooldown({ domain, until: Date.now() + error.retryAfterSeconds * 1000 });
+      }
+      toast.error(error.message);
     }
+  });
+
+  // Same progress modal the dashboard shows for a profile publish - a deploy
+  // triggered from here shouldn't look like a different, lesser-featured
+  // feature just because it started on this page.
+  const deployStream = useDeployStream({
+    active: activeDeployDomain !== null,
+    onDeactivate: () => setActiveDeployDomain(null),
+    // Without this, useDeployStream trusts ANY 400 from the initial stream
+    // request as "already succeeded" (its default when no confirmation is
+    // supplied) - an auth hiccup or backend restart would show "Deployment
+    // complete!" with a View Site button for a domain that never actually
+    // deployed. Check the sites list for this exact domain instead of
+    // assuming, matching what the dashboard does via the profile.
+    confirmAlreadyDone: async () => {
+      const domain = lastDeployDomainRef.current;
+      if (!domain) return false;
+      const { data } = await listSites({ throwOnError: true });
+      return !!data?.some((site) => site.domain === domain && site.status === 'deployed');
+    },
+    onDone: () => {
+      queryClient.invalidateQueries({ queryKey: ['sites'] });
+      // Deploying can change which site the profile derives its URL from.
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+    },
   });
 
   const handleFetchRecords = async (domain: string) => {
@@ -224,8 +328,16 @@ export default function Sites() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
-              {sites.map((site) => (
-                <Card key={site.reference} className="border-none shadow-premium bg-white overflow-hidden group rounded-3xl">
+              {sites.map((site) => {
+                const isDeletingThisSite = deleteSiteMutation.isPending && deleteSiteMutation.variables === site.domain;
+                return (
+                <Card key={site.reference} className="border-none shadow-premium bg-white overflow-hidden group rounded-3xl relative">
+                  {isDeletingThisSite && (
+                    <div className="absolute inset-0 z-10 bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center gap-3 animate-in fade-in duration-200">
+                      <Loader2 className="w-7 h-7 animate-spin text-destructive" />
+                      <span className="text-xs font-semibold text-muted-foreground">Deleting site...</span>
+                    </div>
+                  )}
                   <div className="aspect-video bg-muted relative overflow-hidden">
                     {/* Mock Site Preview Backdrop */}
                     <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-accent/5 flex items-center justify-center">
@@ -322,7 +434,8 @@ export default function Sites() {
                     </div>
                   </CardContent>
                 </Card>
-              ))}
+                );
+              })}
 
               {/* Add New Site Card */}
               <Card 
@@ -403,19 +516,19 @@ export default function Sites() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-            <AlertDialogDescription className="space-y-3">
-              <p>This action cannot be undone. This will permanently delete your site management record for this domain.</p>
-              {siteTypeToDelete === 'subdomain' && (
-                <Alert className="bg-amber-50 border-amber-200">
-                  <AlertCircle className="h-4 w-4 text-amber-600" />
-                  <AlertTitle className="text-sm font-bold text-amber-900">Important Note</AlertTitle>
-                  <AlertDescription className="text-xs text-amber-800">
-                    After deleting this subdomain, you'll need to go to the Profile Builder and refill the subdomain field to create a new one.
-                  </AlertDescription>
-                </Alert>
-              )}
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete your site management record for this domain.
             </AlertDialogDescription>
           </AlertDialogHeader>
+          {siteTypeToDelete === 'subdomain' && (
+            <Alert className="bg-amber-50 border-amber-200">
+              <AlertCircle className="h-4 w-4 text-amber-600" />
+              <AlertTitle className="text-sm font-bold text-amber-900">Important Note</AlertTitle>
+              <AlertDescription className="text-xs text-amber-800">
+                After deleting this subdomain, you'll need to go to the Profile Builder and refill the subdomain field to create a new one.
+              </AlertDescription>
+            </Alert>
+          )}
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction 
@@ -489,14 +602,21 @@ export default function Sites() {
             </Button>
             <Button 
                 onClick={() => siteToVerify && verifyMutation.mutate(siteToVerify)}
-                disabled={verifyMutation.isPending}
+                disabled={verifyMutation.isPending || cooldownSeconds > 0}
             >
               {verifyMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Verify & Link Site
+              {cooldownSeconds > 0 ? `Try again in ${cooldownSeconds}s` : 'Verify & Link Site'}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <DeployProgressModal
+        phase={deployStream.phase}
+        steps={deployStream.steps}
+        message={deployStream.message}
+        onClose={deployStream.reset}
+        siteUrl={lastDeployDomainRef.current ? getPublicUrl(lastDeployDomainRef.current) : undefined}
+      />
     </div>
   );
 }
