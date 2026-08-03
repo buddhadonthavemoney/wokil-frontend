@@ -86,7 +86,15 @@ export default function Sites() {
 
   useEffect(() => {
     if (!verifyCooldown || verifyCooldown.until <= Date.now()) return;
-    const id = setInterval(() => setNowMs(Date.now()), 500);
+    // Self-stopping: the guard above only runs when this effect
+    // (re)mounts, so without clearing here on expiry the interval would
+    // keep ticking every 500ms for the rest of the component's lifetime,
+    // not just for the cooldown's duration.
+    const id = setInterval(() => {
+      const now = Date.now();
+      setNowMs(now);
+      if (now >= verifyCooldown.until) clearInterval(id);
+    }, 500);
     return () => clearInterval(id);
   }, [verifyCooldown]);
 
@@ -187,6 +195,18 @@ export default function Sites() {
   const deployStream = useDeployStream({
     active: activeDeployDomain !== null,
     onDeactivate: () => setActiveDeployDomain(null),
+    // Without this, useDeployStream trusts ANY 400 from the initial stream
+    // request as "already succeeded" (its default when no confirmation is
+    // supplied) - an auth hiccup or backend restart would show "Deployment
+    // complete!" with a View Site button for a domain that never actually
+    // deployed. Check the sites list for this exact domain instead of
+    // assuming, matching what the dashboard does via the profile.
+    confirmAlreadyDone: async () => {
+      const domain = lastDeployDomainRef.current;
+      if (!domain) return false;
+      const { data } = await listSites({ throwOnError: true });
+      return !!data?.some((site) => site.domain === domain && site.status === 'deployed');
+    },
     onDone: () => {
       queryClient.invalidateQueries({ queryKey: ['sites'] });
       // Deploying can change which site the profile derives its URL from.

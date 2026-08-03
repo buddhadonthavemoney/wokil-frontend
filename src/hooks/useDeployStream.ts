@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 
 export type DeployPhase = 'idle' | 'running' | 'success' | 'error';
 
@@ -80,6 +80,19 @@ export function useDeployStream({
     setMessage('');
   }, []);
 
+  // Callers pass fresh closures every render (none of the three are
+  // memoized with useCallback), so the effect below reads through refs
+  // updated on every render instead of depending on them directly - that
+  // way it only needs to depend on `active`, and can't ever run a stale
+  // closure that captured last render's props no matter what a future
+  // caller passes in.
+  const onDeactivateRef = useRef(onDeactivate);
+  const onDoneRef = useRef(onDone);
+  const confirmAlreadyDoneRef = useRef(confirmAlreadyDone);
+  onDeactivateRef.current = onDeactivate;
+  onDoneRef.current = onDone;
+  confirmAlreadyDoneRef.current = confirmAlreadyDone;
+
   useEffect(() => {
     if (!active) return;
 
@@ -110,8 +123,8 @@ export function useDeployStream({
       setSteps((prev) => prev.map((s) => ({ ...s, done: true })));
       setPhase(status === 'success' ? 'success' : 'error');
       setMessage(doneMessage);
-      await onDone(status, doneMessage);
-      onDeactivate();
+      await onDoneRef.current(status, doneMessage);
+      onDeactivateRef.current();
     };
 
     // Returns true once a terminal event has been handled.
@@ -141,7 +154,7 @@ export function useDeployStream({
         if (!response.ok) {
           const errorText = await response.text();
           if (errorText.toLowerCase().includes('no ongoing deployment') || response.status === 400) {
-            const reallyDone = confirmAlreadyDone ? await confirmAlreadyDone() : true;
+            const reallyDone = confirmAlreadyDoneRef.current ? await confirmAlreadyDoneRef.current() : true;
             if (reallyDone) {
               await finish('success', 'Deployment complete!');
               return;
@@ -193,14 +206,13 @@ export function useDeployStream({
           console.error('Deployment stream error:', err);
           setPhase('error');
           setMessage('The connection was lost. Your deployment may still be running.');
-          onDeactivate();
+          onDeactivateRef.current();
         }
       }
     };
 
     startStream();
     return () => abortController.abort();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active]);
 
   return { phase, steps, message, reset };
