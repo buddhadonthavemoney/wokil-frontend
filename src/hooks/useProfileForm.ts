@@ -147,14 +147,21 @@ export function useProfileForm() {
     // Priority: Nested subdomain > existing slug > generated slug
     const finalSlug = profile.subdomainSelection?.subdomain || profile.slug || generateSlug(profile.basicInformation.fullName);
 
-    let updatedProfile: LawyerProfile = {
+    // Deliberately does NOT set isPublished/siteUrl here. Both are derived
+    // server-side from the sites table (the API strips them on write), and
+    // deploySite below only *queues* the deploy - the DNS record is created
+    // several steps later. Claiming "live" now enables "View Site" while the
+    // name still NXDOMAINs, and one click (or the browser omnibox resolving
+    // as you type) caches that miss for the zone's 30-minute SOA minimum,
+    // leaving the site unreachable from that machine long after it is up.
+    // The deploy stream's terminal event refetches the profile for the truth.
+    const updatedProfile: LawyerProfile = {
       ...profile,
       slug: finalSlug,
       subdomainSelection: {
         ...profile.subdomainSelection,
         subdomain: finalSlug
       },
-      isPublished: true,
       publishedAt: profile.publishedAt || new Date().toISOString(),
     };
 
@@ -167,24 +174,12 @@ export function useProfileForm() {
       }
       await saveProfile({ body: dataToSave as LawyerProfile, throwOnError: true });
 
-      // deploySite kicks off async deployment (no site URL is returned; progress
-      // arrives on the deploy stream, see dashboard/page.tsx). Derive the URL
-      // deterministically from the slug + the known live-site domain instead.
+      // Only queues the deploy - progress arrives on the deploy stream
+      // (see useDeployStream / DeployProgressModal), which refetches the
+      // profile once the backend confirms DNS resolves. No second save:
+      // siteUrl is derived server-side, so writing it back is a no-op.
       await deploySite({ throwOnError: true });
-      const liveDomain = process.env.NEXT_PUBLIC_PUBLISH_LIVE_DOMAIN || 'wokil.com';
-      const url: string | undefined = finalSlug ? `${finalSlug}.${liveDomain}` : undefined;
-
-      if (url) {
-        const finalProfile = { ...updatedProfile, siteUrl: url };
-        setProfile(finalProfile);
-        // Also save again with the siteUrl
-        const finalDataToSave = { ...finalProfile };
-        if (profile.professionalProfile?.deploymentURL || finalProfile.professionalProfile?.deploymentURL) {
-          delete (finalDataToSave as any).subdomainSelection;
-        }
-        await saveProfile({ body: finalDataToSave as LawyerProfile, throwOnError: true });
-      }
-      return updatedProfile.siteUrl || finalSlug;
+      return finalSlug;
     } catch (err) {
       toast({
         title: "Error",
