@@ -245,15 +245,15 @@ export default function ProfileBuilder() {
             </div>
             <div className="relative overflow-y-auto flex-1 no-scrollbar px-1.5">
               {renderCurrentStep()}
+            </div>
 
-              <div className="mt-8">
-                <FormNavigation
-                  currentStep={currentStep}
-                  totalSteps={totalSteps}
-                  onNext={handleNext}
-                  onPrev={prevStep}
-                />
-              </div>
+            <div className="mt-8 pt-6 border-t border-border/50 shrink-0">
+              <FormNavigation
+                currentStep={currentStep}
+                totalSteps={totalSteps}
+                onNext={handleNext}
+                onPrev={prevStep}
+              />
             </div>
           </div>
 
