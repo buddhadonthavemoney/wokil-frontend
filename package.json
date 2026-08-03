@@ -5,10 +5,11 @@
   "packageManager": "pnpm@10.15.1",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "pnpm run build:theme-css && next build",
     "start": "next start",
     "lint": "eslint",
-    "codegen": "openapi-ts"
+    "codegen": "openapi-ts",
+    "build:theme-css": "tailwindcss -i src/app/globals.css -o src/generated/theme-styles.css --minify"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.12",
@@ -59,6 +60,7 @@
   },
   "devDependencies": {
     "@hey-api/openapi-ts": "0.99.0",
+    "@tailwindcss/cli": "^4.3.3",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

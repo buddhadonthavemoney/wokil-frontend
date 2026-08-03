@@ -22,12 +22,6 @@ const themes = [
     preview: { bg: 'bg-slate-950', accent: 'bg-blue-500' }
   },
   {
-    id: 'minimal',
-    name: 'Pure Minimal',
-    description: 'Strip away the noise with a focus on pure typography.',
-    preview: { bg: 'bg-white border-border', accent: 'bg-primary' }
-  },
-  {
     id: 'executive',
     name: 'Executive Suite',
     description: 'Institutional excellence for corporate and prestige law.',
