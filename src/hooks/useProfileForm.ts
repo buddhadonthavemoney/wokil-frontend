@@ -155,7 +155,7 @@ export function useProfileForm() {
     // as you type) caches that miss for the zone's 30-minute SOA minimum,
     // leaving the site unreachable from that machine long after it is up.
     // The deploy stream's terminal event refetches the profile for the truth.
-    let updatedProfile: LawyerProfile = {
+    const updatedProfile: LawyerProfile = {
       ...profile,
       slug: finalSlug,
       subdomainSelection: {
@@ -175,9 +175,9 @@ export function useProfileForm() {
       await saveProfile({ body: dataToSave as LawyerProfile, throwOnError: true });
 
       // Only queues the deploy - progress arrives on the deploy stream
-      // (see useDeployStreamToast), which refetches the profile once the
-      // backend confirms DNS resolves. No second save: siteUrl is derived
-      // server-side, so writing it back is a no-op the API discards.
+      // (see useDeployStream / DeployProgressModal), which refetches the
+      // profile once the backend confirms DNS resolves. No second save:
+      // siteUrl is derived server-side, so writing it back is a no-op.
       await deploySite({ throwOnError: true });
       return finalSlug;
     } catch (err) {

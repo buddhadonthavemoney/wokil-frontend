@@ -31,7 +31,8 @@ import { useToast } from '@/hooks/use-toast';
 import { InfoModal } from '@/components/InfoModal';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getProfile, getSiteAnalytics } from '@/generated/wokil-api';
-import { useDeployStreamToast } from '@/hooks/useDeployStreamToast';
+import { useDeployStream } from '@/hooks/useDeployStream';
+import { DeployProgressModal } from '@/components/deploy/DeployProgressModal';
 import {
   LineChart,
   Line,
@@ -129,7 +130,7 @@ function DashboardContent() {
     }
   }, [searchParams, router]);
 
-  useDeployStreamToast({
+  const deployStream = useDeployStream({
     active: activeDeployment,
     onDeactivate: () => setActiveDeployment(false),
     confirmAlreadyDone: async () => {
@@ -141,6 +142,9 @@ function DashboardContent() {
       return !!(data && (data.isPublished || data.professionalProfile?.deploymentURL));
     },
     onDone: async (status) => {
+      // Refetch regardless of outcome: a failed deploy can still have rolled
+      // some state forward (or back) that the profile needs to reflect.
+      await fetchProfile();
       if (status !== 'success') return;
       setShowGuideArrow(true);
       setTimeout(() => {
@@ -148,7 +152,6 @@ function DashboardContent() {
         setHighlightViewSite(true);
         setTimeout(() => setHighlightViewSite(false), 10000);
       }, 4000);
-      await fetchProfile();
     },
   });
 
@@ -460,6 +463,13 @@ function DashboardContent() {
         description={modalContent.description}
         type={modalContent.type}
         actionLabel="Got it"
+      />
+      <DeployProgressModal
+        phase={deployStream.phase}
+        steps={deployStream.steps}
+        message={deployStream.message}
+        onClose={deployStream.reset}
+        siteUrl={getPublicUrl()}
       />
     </div>
   );

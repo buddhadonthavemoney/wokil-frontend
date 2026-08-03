@@ -8,7 +8,7 @@ import { getProfile, listSites, createSite, deleteSite, verifyDns, getVerificati
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -41,7 +41,8 @@ import {
 import QRCode from "react-qr-code";
 import { toast } from "sonner";
 import { VerificationRecord } from '@/types/site';
-import { useDeployStreamToast } from '@/hooks/useDeployStreamToast';
+import { useDeployStream } from '@/hooks/useDeployStream';
+import { DeployProgressModal } from '@/components/deploy/DeployProgressModal';
 
 // Verification is throttled server-side to one attempt per domain per minute
 // (it queries the zone's authoritative nameservers, and retrying sooner can't
@@ -75,6 +76,11 @@ export default function Sites() {
   // async on the backend, so the sites/profile caches must stay stale until
   // the deploy stream reports it actually finished.
   const [activeDeployDomain, setActiveDeployDomain] = useState<string | null>(null);
+  // useDeployStream clears activeDeployDomain the instant it hands back the
+  // terminal state, which is exactly when the modal needs the domain to
+  // build the "View Site" link for the success screen. A ref survives that
+  // transition without forcing an extra render on every deploy start/stop.
+  const lastDeployDomainRef = useRef<string | null>(null);
   // Drives the countdown label; only ticks while a cooldown is actually active.
   const [nowMs, setNowMs] = useState(() => Date.now());
 
@@ -160,9 +166,9 @@ export default function Sites() {
     },
     onSuccess: (_data, domain) => {
       setSiteToVerify(null);
-      // No toast here: useDeployStreamToast immediately renders its own
-      // "Deploying Website" toast on the same id once activeDeployDomain is
-      // set below, so a toast fired from here would just be replaced by it.
+      // No toast here: DeployProgressModal takes over the instant
+      // activeDeployDomain is set below, showing its own progress state.
+      lastDeployDomainRef.current = domain;
       setActiveDeployDomain(domain);
     },
     onError: (error: Error, domain: string) => {
@@ -175,10 +181,10 @@ export default function Sites() {
     }
   });
 
-  // Same progress/success/error toast the dashboard shows for a profile
-  // publish - a deploy triggered from here shouldn't look like a different,
-  // lesser-featured feature just because it started on this page.
-  useDeployStreamToast({
+  // Same progress modal the dashboard shows for a profile publish - a deploy
+  // triggered from here shouldn't look like a different, lesser-featured
+  // feature just because it started on this page.
+  const deployStream = useDeployStream({
     active: activeDeployDomain !== null,
     onDeactivate: () => setActiveDeployDomain(null),
     onDone: () => {
@@ -584,6 +590,13 @@ export default function Sites() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <DeployProgressModal
+        phase={deployStream.phase}
+        steps={deployStream.steps}
+        message={deployStream.message}
+        onClose={deployStream.reset}
+        siteUrl={lastDeployDomainRef.current ? getPublicUrl(lastDeployDomainRef.current) : undefined}
+      />
     </div>
   );
 }
