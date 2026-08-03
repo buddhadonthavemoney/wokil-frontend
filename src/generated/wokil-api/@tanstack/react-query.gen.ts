@@ -116,7 +116,7 @@ export const getPublicDirectoryOptions = (options?: Options<GetPublicDirectoryDa
 export const listThemesQueryKey = (options?: Options<ListThemesData>) => createQueryKey('listThemes', options);
 
 /**
- * List available theme ids
+ * List active themes
  */
 export const listThemesOptions = (options?: Options<ListThemesData>) => queryOptions<ListThemesResponse, ListThemesError, ListThemesResponse, ReturnType<typeof listThemesQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {

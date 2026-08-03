@@ -43,6 +43,14 @@ export type PublicDirectoryResponse = {
     meta: PublicDirectoryMeta;
 };
 
+export type Theme = {
+    id: string;
+    name: string;
+    description: NullString;
+    thumbnail_url: NullString;
+    category: 'individual';
+};
+
 export type Submission = {
     id: number;
     form_id: number;
@@ -149,7 +157,7 @@ export type Site = {
     id: number;
     domain: string;
     reference: string;
-    status: 'deployed' | 'requested' | 'link_pending';
+    status: 'deployed' | 'requested' | 'link_pending' | 'failed';
     type: 'subdomain' | 'external';
     created_at: string;
     updated_at: string;
@@ -344,9 +352,9 @@ export type ListThemesError = ListThemesErrors[keyof ListThemesErrors];
 
 export type ListThemesResponses = {
     /**
-     * Theme ids (null when none found)
+     * Active themes, ordered by sort_order (null when none found)
      */
-    200: Array<string> | null;
+    200: Array<Theme> | null;
 };
 
 export type ListThemesResponse = ListThemesResponses[keyof ListThemesResponses];

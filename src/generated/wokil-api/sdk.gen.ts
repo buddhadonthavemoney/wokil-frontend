@@ -41,7 +41,7 @@ export const listUsers = <ThrowOnError extends boolean = false>(options?: Option
 export const getPublicDirectory = <ThrowOnError extends boolean = false>(options?: Options<GetPublicDirectoryData, ThrowOnError>): RequestResult<GetPublicDirectoryResponses, GetPublicDirectoryErrors, ThrowOnError> => (options?.client ?? client).get<GetPublicDirectoryResponses, GetPublicDirectoryErrors, ThrowOnError>({ url: '/api/public/people', ...options });
 
 /**
- * List available theme ids
+ * List active themes
  */
 export const listThemes = <ThrowOnError extends boolean = false>(options?: Options<ListThemesData, ThrowOnError>): RequestResult<ListThemesResponses, ListThemesErrors, ThrowOnError> => (options?.client ?? client).get<ListThemesResponses, ListThemesErrors, ThrowOnError>({ url: '/api/themes', ...options });
 

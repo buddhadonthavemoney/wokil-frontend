@@ -152,20 +152,20 @@ export default function Preview() {
       {/* Theme Switcher Overlay */}
       <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] w-[90%] sm:w-auto overflow-hidden">
         <div className="bg-white/80 backdrop-blur-xl border border-white/20 shadow-2xl rounded-2xl p-1.5 sm:p-2 flex items-center gap-1 shadow-primary/10 overflow-x-auto no-scrollbar scroll-smooth">
-          {themes.map((themeId) => (
+          {themes.map((theme) => (
             <button
-              key={themeId}
-              onClick={() => handleThemeChange(themeId)}
+              key={theme.id}
+              onClick={() => handleThemeChange(theme.id)}
               disabled={loadingPreview || isPublishing}
               className={cn(
                 "px-3 sm:px-4 py-2 rounded-xl text-[9px] sm:text-[10px] font-bold uppercase tracking-widest transition-all duration-300 whitespace-nowrap shrink-0 capitalize",
                 (loadingPreview || isPublishing) && "opacity-50 cursor-not-allowed",
-                profile.themeSelection?.theme === themeId 
-                  ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" 
+                profile.themeSelection?.theme === theme.id
+                  ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
                   : "text-muted-foreground hover:bg-black/5 hover:text-foreground"
               )}
             >
-              {themeId.replace(/-/g, ' ')}
+              {theme.name}
             </button>
           ))}
         </div>

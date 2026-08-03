@@ -41,6 +41,14 @@ export const zPublicDirectoryResponse = z.object({
     meta: zPublicDirectoryMeta
 });
 
+export const zTheme = z.object({
+    id: z.string(),
+    name: z.string(),
+    description: zNullString,
+    thumbnail_url: zNullString,
+    category: z.enum(['individual'])
+});
+
 export const zSubmission = z.object({
     id: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }),
     form_id: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }),
@@ -133,7 +141,8 @@ export const zSite = z.object({
     status: z.enum([
         'deployed',
         'requested',
-        'link_pending'
+        'link_pending',
+        'failed'
     ]),
     type: z.enum(['subdomain', 'external']),
     created_at: z.iso.datetime(),
@@ -230,9 +239,9 @@ export const zGetPublicDirectoryQuery = z.object({
 export const zGetPublicDirectoryResponse = zPublicDirectoryResponse;
 
 /**
- * Theme ids (null when none found)
+ * Active themes, ordered by sort_order (null when none found)
  */
-export const zListThemesResponse = z.array(z.string()).nullable();
+export const zListThemesResponse = z.array(zTheme).nullable();
 
 export const zSubmitFormBody = z.record(z.string(), z.unknown());
 
