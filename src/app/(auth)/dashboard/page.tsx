@@ -24,17 +24,14 @@ import {
   Globe,
   Plus,
   Shield,
-  Sparkles,
-  Loader2,
-  XCircle,
   ArrowLeft,
   Clock
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { toast as sonnerToast } from "sonner";
 import { InfoModal } from '@/components/InfoModal';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getProfile, getSiteAnalytics } from '@/generated/wokil-api';
+import { useDeployStreamToast } from '@/hooks/useDeployStreamToast';
 import {
   LineChart,
   Line,
@@ -132,45 +129,19 @@ function DashboardContent() {
     }
   }, [searchParams, router]);
 
-  useEffect(() => {
-    if (!activeDeployment) return;
-
-    const token = localStorage.getItem('token');
-    const streamUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/sites/deploy/stream`;
-    const abortController = new AbortController();
-    let toastId: string | number = "deploy-toast";
-
-    const showToast = (variant: 'loading' | 'success' | 'error', message: string, detail?: string) => {
-      sonnerToast.custom((t) => (
-        <div className="w-full max-w-sm bg-white/80 backdrop-blur-xl rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-white/20 p-5 flex items-start gap-4 animate-in slide-in-from-bottom-5 fade-in duration-500 ring-1 ring-black/5">
-          <div className={`
-            mt-0.5 w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-lg transition-transform duration-300 hover:scale-105
-            ${variant === 'loading' ? 'bg-primary/10 text-primary' : ''}
-            ${variant === 'success' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : ''}
-            ${variant === 'error' ? 'bg-rose-50 text-rose-600 border border-rose-100' : ''}
-          `}>
-            {variant === 'loading' && <Loader2 className="w-6 h-6 animate-spin" />}
-            {variant === 'success' && <Sparkles className="w-6 h-6 animate-bounce" />}
-            {variant === 'error' && <XCircle className="w-6 h-6" />}
-          </div>
-          <div className="flex-1 space-y-1.5 pt-0.5">
-            <div className="flex items-center justify-between">
-              <h3 className="font-heading font-extrabold text-[15px] text-foreground tracking-tight leading-none">
-                {variant === 'loading' && 'Deploying Website'}
-                {variant === 'success' && 'Deployment Complete'}
-                {variant === 'error' && 'Deployment Failed'}
-              </h3>
-            </div>
-            <p className="text-sm font-medium text-muted-foreground/90 leading-relaxed font-body">
-              {message}
-            </p>
-          </div>
-        </div>
-      ), { id: toastId, duration: variant === 'loading' ? Infinity : 5000 });
-    };
-
-    const handleSuccess = async (message: string) => {
-      showToast('success', message, "LIVE");
+  useDeployStreamToast({
+    active: activeDeployment,
+    onDeactivate: () => setActiveDeployment(false),
+    confirmAlreadyDone: async () => {
+      // Disambiguates the stream's "no ongoing deployment" 400: only trust it
+      // as a finished deploy if the profile itself confirms publish, so a
+      // subscribe that raced a deploy which never actually ran doesn't get
+      // reported as a success.
+      const data = (await getProfile({ throwOnError: true })).data;
+      return !!(data && (data.isPublished || data.professionalProfile?.deploymentURL));
+    },
+    onDone: async (status) => {
+      if (status !== 'success') return;
       setShowGuideArrow(true);
       setTimeout(() => {
         setShowGuideArrow(false);
@@ -178,99 +149,8 @@ function DashboardContent() {
         setTimeout(() => setHighlightViewSite(false), 10000);
       }, 4000);
       await fetchProfile();
-    };
-
-    const startStream = async () => {
-      showToast('loading', 'Initializing deployment...', 'Preparing assets');
-      try {
-        const response = await fetch(streamUrl, {
-          headers: { 'Authorization': `Bearer ${token}` },
-          signal: abortController.signal,
-        });
-
-        if (!response.ok) {
-           const errorText = await response.text();
-           if (errorText.toLowerCase().includes("no ongoing deployment") || response.status === 400) {
-              const data = (await getProfile({ throwOnError: true })).data;
-              if (data && (data.isPublished || data.professionalProfile?.deploymentURL)) {
-                 await handleSuccess('Deployment complete!');
-                 setActiveDeployment(false);
-                 return;
-              }
-           }
-           throw new Error(`Stream request failed: ${response.status} ${errorText}`);
-        }
-
-        const reader = response.body?.getReader();
-        const decoder = new TextDecoder();
-        if (!reader) return;
-
-        let buffer = '';
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          const chunk = decoder.decode(value, { stream: true });
-          buffer += chunk;
-          const lines = buffer.split('\n');
-          buffer = lines.pop() || '';
-
-          for (const line of lines) {
-            const trimmed = line.trim();
-            if (!trimmed || !trimmed.startsWith('data: ')) continue;
-            try {
-              const eventStr = trimmed.substring(6);
-              const event = JSON.parse(eventStr);
-              if (event.type === 'status') {
-                showToast('loading', event.message || 'Processing...', event.status?.toUpperCase() || 'DEPLOYING');
-              } else if (event.type === 'done') {
-                if (event.status === 'success') {
-                  await handleSuccess(event.message);
-                } else {
-                  showToast('error', event.message, "FAILED");
-                }
-                setActiveDeployment(false);
-                return;
-              }
-            } catch (e) {
-               console.error("Failed to parse event", e);
-            }
-          }
-        }
-
-        if (buffer.trim()) {
-          const lines = buffer.split('\n');
-          for (const line of lines) {
-            const trimmed = line.trim();
-            if (!trimmed || !trimmed.startsWith('data: ')) continue;
-            try {
-              const eventStr = trimmed.substring(6);
-              const event = JSON.parse(eventStr);
-              if (event.type === 'done') {
-                if (event.status === 'success') {
-                  await handleSuccess(event.message);
-                } else {
-                  showToast('error', event.message, "FAILED");
-                }
-              }
-            } catch (e) {}
-          }
-        }
-      } catch (err: any) {
-        if (err.name !== 'AbortError') {
-          console.error("Deployment stream error:", err);
-          showToast('error', "The connection was lost.", "CONNECTION LOST");
-        }
-      } finally {
-        setActiveDeployment(false);
-      }
-    };
-
-    startStream();
-    return () => abortController.abort();
-    // fetchProfile is react-query's refetch, which is referentially stable, so
-    // including it cannot restart the deploy stream.
-  }, [activeDeployment, fetchProfile]);
+    },
+  });
 
   const getPublicUrl = () => {
     if (!profile || !profile.siteUrl) return '';
