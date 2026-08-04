@@ -60,7 +60,7 @@ const SAUL_GOODMAN_DATA = {
     linkedIn: "https://linkedin.com/in/saulgoodman",
   },
   themeSelection: {
-    theme: "modern" as const,
+    theme: "classic" as const,
   },
   isPublished: false,
 };

@@ -1,6 +1,5 @@
 import { LawyerProfile } from '@/types/lawyer';
 import { ClassicTheme } from './themes/ClassicTheme';
-import { ModernTheme } from './themes/ModernTheme';
 import { ExecutiveTheme } from './themes/ExecutiveTheme';
 import { LegalCraftTheme } from './themes/LegalCraftTheme';
 import { ComponentType } from 'react';
@@ -11,7 +10,6 @@ interface ProfilePreviewProps {
 }
 
 const THEME_COMPONENTS: Record<string, ComponentType<{ profile: LawyerProfile }>> = {
-  modern: ModernTheme,
   classic: ClassicTheme,
   executive: ExecutiveTheme,
   'legal-craft': LegalCraftTheme,
@@ -30,7 +28,7 @@ const THEME_COMPONENTS: Record<string, ComponentType<{ profile: LawyerProfile }>
 // instead of the browser viewport, which is what let a "mobile" preview
 // silently render in desktop layout before.
 export function ProfilePreview({ profile, zoom = 1 }: ProfilePreviewProps) {
-  const Theme = THEME_COMPONENTS[profile.themeSelection?.theme] ?? ModernTheme;
+  const Theme = THEME_COMPONENTS[profile.themeSelection?.theme] ?? ClassicTheme;
 
   return (
     <div className="@container w-full h-full overflow-auto bg-white no-scrollbar">

@@ -4,13 +4,11 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import { LawyerProfile } from '@/types/lawyer';
 import { buildShell } from '@/lib/site-shell';
-import { ModernTheme } from '@/components/preview/themes/ModernTheme';
 import { ClassicTheme } from '@/components/preview/themes/ClassicTheme';
 import { ExecutiveTheme } from '@/components/preview/themes/ExecutiveTheme';
 import { LegalCraftTheme } from '@/components/preview/themes/LegalCraftTheme';
 
 const THEME_COMPONENTS: Record<string, (props: { profile: LawyerProfile }) => React.ReactElement> = {
-  modern: ModernTheme,
   classic: ClassicTheme,
   executive: ExecutiveTheme,
   'legal-craft': LegalCraftTheme,
@@ -20,7 +18,7 @@ const THEME_COMPONENTS: Record<string, (props: { profile: LawyerProfile }) => Re
 // module load and cached in memory for the life of the server process.
 const THEME_CSS = readFileSync(join(process.cwd(), 'src/generated/theme-styles.css'), 'utf-8');
 
-// The theme components (e.g. ModernTheme.tsx:17, `basicInformation.fullName`)
+// The theme components (e.g. ClassicTheme.tsx:17, `basicInformation.fullName`)
 // assume every top-level group is present, not just individual leaf fields.
 // The Go side marshals LawyerProfile with `omitempty` pointer sub-structs, so an
 // incomplete profile can arrive with groups entirely missing — normalize before
@@ -54,7 +52,7 @@ function normalizeProfile(input: Partial<LawyerProfile>): LawyerProfile {
       ...input.onlinePresence,
     },
     themeSelection: {
-      theme: input.themeSelection?.theme ?? 'modern',
+      theme: input.themeSelection?.theme ?? 'classic',
     },
     subdomainSelection: {
       subdomain: '',
@@ -84,7 +82,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 
   const body = req.body as { profile?: Partial<LawyerProfile>; theme?: string };
-  const theme = body.theme ?? 'modern';
+  const theme = body.theme ?? 'classic';
   const Component = THEME_COMPONENTS[theme];
   if (!Component) {
     return res.status(400).json({ error: `unknown or unmigrated theme: ${theme}` });
