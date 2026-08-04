@@ -13,7 +13,7 @@ function GoogleCallbackContent() {
   const handledRef = useRef(false);
 
   useEffect(() => {
-    const code = searchParams.get('code');
+    const code = searchParams?.get('code');
     if (code && !handledRef.current) {
       handledRef.current = true;
       googleCallback({ query: { code }, throwOnError: true })
