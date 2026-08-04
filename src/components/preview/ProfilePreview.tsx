@@ -33,7 +33,7 @@ export function ProfilePreview({ profile, zoom = 1 }: ProfilePreviewProps) {
   const Theme = THEME_COMPONENTS[profile.themeSelection?.theme] ?? ModernTheme;
 
   return (
-    <div className="@container w-full h-full overflow-auto bg-white">
+    <div className="@container w-full h-full overflow-auto bg-white no-scrollbar">
       <div
         className="origin-top-left"
         style={{

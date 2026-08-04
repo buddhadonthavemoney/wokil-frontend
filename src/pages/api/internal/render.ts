@@ -5,11 +5,15 @@ import { join } from 'path';
 import { LawyerProfile } from '@/types/lawyer';
 import { buildShell } from '@/lib/site-shell';
 import { ModernTheme } from '@/components/preview/themes/ModernTheme';
+import { ClassicTheme } from '@/components/preview/themes/ClassicTheme';
+import { ExecutiveTheme } from '@/components/preview/themes/ExecutiveTheme';
+import { LegalCraftTheme } from '@/components/preview/themes/LegalCraftTheme';
 
-// Only "modern" is wired for SCRUM-38 (renderer plumbing proof-of-concept).
-// SCRUM-39/40 add the rest as they migrate each theme.
 const THEME_COMPONENTS: Record<string, (props: { profile: LawyerProfile }) => React.ReactElement> = {
   modern: ModernTheme,
+  classic: ClassicTheme,
+  executive: ExecutiveTheme,
+  'legal-craft': LegalCraftTheme,
 };
 
 // Compiled once at frontend build time (pnpm run build:theme-css), read once at
