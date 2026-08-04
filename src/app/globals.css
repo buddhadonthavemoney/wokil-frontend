@@ -144,4 +144,25 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+  /* Mirrors the deployed site's shell (site-shell.ts) so the dashboard
+     preview matches production — same [data-reveal] markers on theme
+     sections, same transition, just driven by React's IntersectionObserver
+     effect (ProfilePreview.tsx) instead of the deployed page's inline
+     vanilla script, since this context has no equivalent to that shell. */
+  [data-reveal] {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  [data-reveal].is-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    [data-reveal] {
+      opacity: 1;
+      transform: none;
+      transition: none;
+    }
+  }
 }

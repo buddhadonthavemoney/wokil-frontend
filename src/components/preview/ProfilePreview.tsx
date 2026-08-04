@@ -2,7 +2,7 @@ import { LawyerProfile } from '@/types/lawyer';
 import { ClassicTheme } from './themes/ClassicTheme';
 import { ExecutiveTheme } from './themes/ExecutiveTheme';
 import { LegalCraftTheme } from './themes/LegalCraftTheme';
-import { ComponentType } from 'react';
+import { ComponentType, useEffect, useRef } from 'react';
 
 interface ProfilePreviewProps {
   profile: LawyerProfile;
@@ -29,9 +29,39 @@ const THEME_COMPONENTS: Record<string, ComponentType<{ profile: LawyerProfile }>
 // silently render in desktop layout before.
 export function ProfilePreview({ profile, zoom = 1 }: ProfilePreviewProps) {
   const Theme = THEME_COMPONENTS[profile.themeSelection?.theme] ?? ClassicTheme;
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // The deployed site's [data-reveal] scroll animation is driven by a plain
+  // <script> baked into site-shell.ts, because that page ships zero React —
+  // this dashboard preview is the one place that markup actually hydrates,
+  // so it needs its own IntersectionObserver wired up to match. `root` is
+  // this scrollable div itself, not the viewport: it's what actually
+  // scrolls in both the phone mockup and /preview.
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const revealEls = container.querySelectorAll('[data-reveal]');
+    if (!revealEls.length) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible');
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { root: container, threshold: 0.15, rootMargin: '0px 0px -10% 0px' }
+    );
+
+    revealEls.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, [Theme, profile]);
 
   return (
-    <div className="@container w-full h-full overflow-auto bg-white no-scrollbar">
+    <div ref={containerRef} className="@container w-full h-full overflow-auto bg-white no-scrollbar">
       <div
         className="origin-top-left"
         style={{
