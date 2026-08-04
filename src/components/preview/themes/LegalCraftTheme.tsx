@@ -128,7 +128,7 @@ export function LegalCraftTheme({ profile }: LegalCraftThemeProps) {
             <main className="container mx-auto px-6 py-24 max-w-6xl">
                 <div className="grid @lg:grid-cols-12 gap-20">
                     {/* Detailed Bio */}
-                    <div id="about" className="scroll-mt-24 @lg:col-span-12 space-y-12 mb-12">
+                    <div data-reveal id="about" className="scroll-mt-24 @lg:col-span-12 space-y-12 mb-12">
                         <div className="flex flex-col items-center text-center space-y-8 max-w-4xl mx-auto">
                             <h2 className="font-heading text-4xl font-bold text-[#1A120B]">Professional Philosophy</h2>
                             <div className="h-1.5 w-24 bg-[#D4A373] rounded-full" />
@@ -141,7 +141,7 @@ export function LegalCraftTheme({ profile }: LegalCraftThemeProps) {
                     {/* Core Expertise */}
                     <div className="@lg:col-span-8 space-y-16">
                         {areasOfPractice.length > 0 && (
-                            <section id="practice-areas" className="scroll-mt-24">
+                            <section data-reveal id="practice-areas" className="scroll-mt-24">
                                 <h3 className="font-heading text-2xl font-bold text-[#1A120B] mb-10 flex items-center gap-4 uppercase tracking-wider">
                                     <Pen className="w-6 h-6 text-[#D4A373]" />
                                     Crafted Expertise
@@ -157,7 +157,7 @@ export function LegalCraftTheme({ profile }: LegalCraftThemeProps) {
                             </section>
                         )}
 
-                        <section className="bg-[#1A120B] text-[#D4A373] p-16 rounded-sm relative overflow-hidden group">
+                        <section data-reveal className="bg-[#1A120B] text-[#D4A373] p-16 rounded-sm relative overflow-hidden group">
                             <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform duration-1000">
                                 <Scale className="w-64 h-64" />
                             </div>
@@ -172,7 +172,7 @@ export function LegalCraftTheme({ profile }: LegalCraftThemeProps) {
                             </div>
                         </section>
 
-                        <section id="why" className="scroll-mt-24">
+                        <section data-reveal id="why" className="scroll-mt-24">
                             <h3 className="font-heading text-2xl font-bold text-[#1A120B] mb-10 flex items-center gap-4 uppercase tracking-wider">
                                 <Pen className="w-6 h-6 text-[#D4A373]" />
                                 Why Work With Me
@@ -188,7 +188,7 @@ export function LegalCraftTheme({ profile }: LegalCraftThemeProps) {
                             </div>
                         </section>
 
-                        <section>
+                        <section data-reveal>
                             <h3 className="font-heading text-2xl font-bold text-[#1A120B] mb-10 flex items-center gap-4 uppercase tracking-wider">
                                 <Pen className="w-6 h-6 text-[#D4A373]" />
                                 How It Works
@@ -204,7 +204,7 @@ export function LegalCraftTheme({ profile }: LegalCraftThemeProps) {
                             </div>
                         </section>
 
-                        <section id="faq" className="scroll-mt-24">
+                        <section data-reveal id="faq" className="scroll-mt-24">
                             <h3 className="font-heading text-2xl font-bold text-[#1A120B] mb-10 flex items-center gap-4 uppercase tracking-wider">
                                 <Pen className="w-6 h-6 text-[#D4A373]" />
                                 Frequently Asked Questions
@@ -225,7 +225,7 @@ export function LegalCraftTheme({ profile }: LegalCraftThemeProps) {
 
                     {/* Sidebar */}
                     <div className="@lg:col-span-4 space-y-12">
-                        <div className="relative p-1 bg-gradient-to-br from-[#D4A373] to-[#3C2A21] rounded-sm shadow-2xl">
+                        <div data-reveal className="relative p-1 bg-gradient-to-br from-[#D4A373] to-[#3C2A21] rounded-sm shadow-2xl">
                             {profilePhoto ? (
                                 <img src={profilePhoto} alt={fullName} className="w-full aspect-square object-cover" />
                             ) : (
@@ -235,7 +235,7 @@ export function LegalCraftTheme({ profile }: LegalCraftThemeProps) {
                             )}
                         </div>
 
-                        <div id="contact" className="scroll-mt-24 space-y-10 bg-white p-10 border border-[#E5E5E5] shadow-sm">
+                        <div data-reveal id="contact" className="scroll-mt-24 space-y-10 bg-white p-10 border border-[#E5E5E5] shadow-sm">
                             <h4 className="font-heading font-bold text-lg uppercase tracking-widest border-b border-[#E5E5E5] pb-4">Chambers Details</h4>
                             <div className="space-y-8">
                                 <div className="flex gap-4 items-start">

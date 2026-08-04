@@ -137,7 +137,7 @@ export function ClassicTheme({ profile }: ClassicThemeProps) {
           {/* Main Content */}
           <div className="@lg:col-span-8 space-y-12">
             {/* About */}
-            <section id="about" className="scroll-mt-24 bg-white rounded-2xl p-10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-[#F0F0F0]">
+            <section data-reveal id="about" className="scroll-mt-24 bg-white rounded-2xl p-10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-[#F0F0F0]">
               <h2 className="font-heading text-3xl font-bold text-[#1B2B44] mb-8 flex items-center gap-4">
                 <span className="w-10 h-[2px] bg-[#C5A059]" />
                 Professional Profile
@@ -149,7 +149,7 @@ export function ClassicTheme({ profile }: ClassicThemeProps) {
 
             {/* Practice Areas */}
             {areasOfPractice.length > 0 && (
-              <section id="practice-areas" className="scroll-mt-24 bg-white rounded-2xl p-10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-[#F0F0F0]">
+              <section data-reveal id="practice-areas" className="scroll-mt-24 bg-white rounded-2xl p-10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-[#F0F0F0]">
                 <h2 className="font-heading text-3xl font-bold text-[#1B2B44] mb-8 flex items-center gap-4">
                   <span className="w-10 h-[2px] bg-[#C5A059]" />
                   Areas of Expertise
@@ -170,7 +170,7 @@ export function ClassicTheme({ profile }: ClassicThemeProps) {
 
             {/* Jurisdictions */}
             {jurisdictions && jurisdictions.length > 0 && (
-              <section className="bg-white rounded-2xl p-10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-[#F0F0F0]">
+              <section data-reveal className="bg-white rounded-2xl p-10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-[#F0F0F0]">
                 <h2 className="font-heading text-3xl font-bold text-[#1B2B44] mb-8 flex items-center gap-4">
                   <span className="w-10 h-[2px] bg-[#C5A059]" />
                   Jurisdictions
@@ -189,7 +189,7 @@ export function ClassicTheme({ profile }: ClassicThemeProps) {
             )}
 
             {/* Why Work With Me */}
-            <section id="why" className="scroll-mt-24 bg-white rounded-2xl p-10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-[#F0F0F0]">
+            <section data-reveal id="why" className="scroll-mt-24 bg-white rounded-2xl p-10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-[#F0F0F0]">
               <h2 className="font-heading text-3xl font-bold text-[#1B2B44] mb-8 flex items-center gap-4">
                 <span className="w-10 h-[2px] bg-[#C5A059]" />
                 Why Work With Me
@@ -208,7 +208,7 @@ export function ClassicTheme({ profile }: ClassicThemeProps) {
             </section>
 
             {/* Process */}
-            <section className="bg-white rounded-2xl p-10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-[#F0F0F0]">
+            <section data-reveal className="bg-white rounded-2xl p-10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-[#F0F0F0]">
               <h2 className="font-heading text-3xl font-bold text-[#1B2B44] mb-8 flex items-center gap-4">
                 <span className="w-10 h-[2px] bg-[#C5A059]" />
                 How It Works
@@ -225,7 +225,7 @@ export function ClassicTheme({ profile }: ClassicThemeProps) {
             </section>
 
             {/* FAQ */}
-            <section id="faq" className="scroll-mt-24 bg-white rounded-2xl p-10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-[#F0F0F0]">
+            <section data-reveal id="faq" className="scroll-mt-24 bg-white rounded-2xl p-10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-[#F0F0F0]">
               <h2 className="font-heading text-3xl font-bold text-[#1B2B44] mb-8 flex items-center gap-4">
                 <span className="w-10 h-[2px] bg-[#C5A059]" />
                 Frequently Asked Questions
@@ -247,7 +247,7 @@ export function ClassicTheme({ profile }: ClassicThemeProps) {
           {/* Sidebar */}
           <aside className="@lg:col-span-4 space-y-8">
             {/* Contact Card */}
-            <div id="contact" className="scroll-mt-24 bg-[#1B2B44] rounded-2xl p-8 shadow-2xl text-white">
+            <div data-reveal id="contact" className="scroll-mt-24 bg-[#1B2B44] rounded-2xl p-8 shadow-2xl text-white">
               <h3 className="font-heading text-xl font-bold mb-8 text-[#C5A059] uppercase tracking-widest border-b border-white/10 pb-4">
                 Credentials
               </h3>

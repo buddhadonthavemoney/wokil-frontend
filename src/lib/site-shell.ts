@@ -68,9 +68,25 @@ export function buildShell({ bodyHtml, profile, css }: ShellOptions): string {
       .qr-active #chevron-icon {
         transform: rotate(180deg);
       }
+      [data-reveal] {
+        opacity: 0;
+        transform: translateY(24px);
+        transition: opacity 0.6s ease, transform 0.6s ease;
+      }
+      [data-reveal].is-visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      @media (prefers-reduced-motion: reduce) {
+        [data-reveal] {
+          opacity: 1;
+          transform: none;
+          transition: none;
+        }
+      }
     </style>${gaSnippet}
   </head>
-  <body class="min-h-screen selection:bg-blue-600/10">
+  <body class="@container min-h-screen selection:bg-blue-600/10">
     ${bodyHtml}
 
     <div id="qr-widget" class="fixed bottom-6 right-6 z-50 flex flex-col items-end sm:bottom-10 sm:right-10 pointer-events-none">
@@ -159,6 +175,32 @@ export function buildShell({ bodyHtml, profile, css }: ShellOptions): string {
             qrWidget.classList.remove("qr-active");
           }
         });
+      })();
+    </script>
+
+    <script>
+      (function () {
+        const revealEls = document.querySelectorAll("[data-reveal]");
+        if (!revealEls.length) return;
+
+        if (!("IntersectionObserver" in window)) {
+          revealEls.forEach((el) => el.classList.add("is-visible"));
+          return;
+        }
+
+        const observer = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) {
+                entry.target.classList.add("is-visible");
+                observer.unobserve(entry.target);
+              }
+            });
+          },
+          { threshold: 0.15, rootMargin: "0px 0px -10% 0px" }
+        );
+
+        revealEls.forEach((el) => observer.observe(el));
       })();
     </script>
   </body>

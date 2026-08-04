@@ -128,7 +128,7 @@ export function ExecutiveTheme({ profile }: ExecutiveThemeProps) {
                 <div className="grid @lg:grid-cols-3 gap-16">
                     {/* Main Profile col */}
                     <div className="@lg:col-span-2 space-y-24">
-                        <section id="about" className="scroll-mt-24 space-y-8">
+                        <section data-reveal id="about" className="scroll-mt-24 space-y-8">
                             <div className="flex items-center gap-4">
                                 <div className="w-12 h-1 bg-blue-700" />
                                 <h3 className="font-heading font-bold text-3xl text-slate-900 tracking-tight">Executive Summary</h3>
@@ -139,7 +139,7 @@ export function ExecutiveTheme({ profile }: ExecutiveThemeProps) {
                         </section>
 
                         {areasOfPractice.length > 0 && (
-                            <section id="practice-areas" className="scroll-mt-24 space-y-12">
+                            <section data-reveal id="practice-areas" className="scroll-mt-24 space-y-12">
                                 <div className="flex items-center gap-4">
                                     <div className="w-12 h-1 bg-blue-700" />
                                     <h3 className="font-heading font-bold text-3xl text-slate-900 tracking-tight">Practice Areas</h3>
@@ -157,7 +157,7 @@ export function ExecutiveTheme({ profile }: ExecutiveThemeProps) {
                             </section>
                         )}
 
-                        <section id="why" className="scroll-mt-24 space-y-12">
+                        <section data-reveal id="why" className="scroll-mt-24 space-y-12">
                             <div className="flex items-center gap-4">
                                 <div className="w-12 h-1 bg-blue-700" />
                                 <h3 className="font-heading font-bold text-3xl text-slate-900 tracking-tight">Why Work With Me</h3>
@@ -175,7 +175,7 @@ export function ExecutiveTheme({ profile }: ExecutiveThemeProps) {
                             </div>
                         </section>
 
-                        <section className="space-y-12">
+                        <section data-reveal className="space-y-12">
                             <div className="flex items-center gap-4">
                                 <div className="w-12 h-1 bg-blue-700" />
                                 <h3 className="font-heading font-bold text-3xl text-slate-900 tracking-tight">How It Works</h3>
@@ -191,7 +191,7 @@ export function ExecutiveTheme({ profile }: ExecutiveThemeProps) {
                             </div>
                         </section>
 
-                        <section id="faq" className="scroll-mt-24 space-y-12">
+                        <section data-reveal id="faq" className="scroll-mt-24 space-y-12">
                             <div className="flex items-center gap-4">
                                 <div className="w-12 h-1 bg-blue-700" />
                                 <h3 className="font-heading font-bold text-3xl text-slate-900 tracking-tight">Frequently Asked Questions</h3>
@@ -212,7 +212,7 @@ export function ExecutiveTheme({ profile }: ExecutiveThemeProps) {
 
                     {/* Institutional Sidebar */}
                     <aside className="space-y-10">
-                        <div id="contact" className="scroll-mt-24 bg-white border-2 border-slate-900 p-8 rounded-2xl space-y-10 shadow-2xl">
+                        <div data-reveal id="contact" className="scroll-mt-24 bg-white border-2 border-slate-900 p-8 rounded-2xl space-y-10 shadow-2xl">
                             <h4 className="font-heading font-bold text-xl uppercase tracking-widest border-b-2 border-slate-100 pb-4">
                                 Contact Office
                             </h4>
@@ -263,7 +263,7 @@ export function ExecutiveTheme({ profile }: ExecutiveThemeProps) {
                             )}
                         </div>
 
-                        <div className="bg-blue-700 text-white p-8 rounded-2xl space-y-6">
+                        <div data-reveal className="bg-blue-700 text-white p-8 rounded-2xl space-y-6">
                             <h4 className="font-heading font-bold text-lg uppercase tracking-widest opacity-60">Credentials</h4>
                             <div className="space-y-4">
                                 <div className="flex items-center gap-3">
