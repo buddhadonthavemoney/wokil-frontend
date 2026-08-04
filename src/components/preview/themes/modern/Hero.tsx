@@ -24,12 +24,12 @@ export function Hero({
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(59,130,246,0.1),transparent)]" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_70%,rgba(139,92,246,0.1),transparent)]" />
       <div className="container mx-auto px-6 py-24 relative">
-        <div className="grid md:grid-cols-2 gap-16 items-center">
+        <div className="grid @md:grid-cols-2 gap-16 items-center">
           <div className="animate-in fade-in slide-in-from-left duration-1000">
             <div className="inline-block px-4 py-1.5 bg-blue-500/10 border border-blue-500/20 rounded-full text-blue-400 text-sm font-semibold mb-8 tracking-wide uppercase">
               {professionalTitle}
             </div>
-            <h1 className="text-6xl md:text-7xl font-bold mb-6 font-heading tracking-tight leading-[1.1] bg-gradient-to-r from-white via-white to-slate-500 bg-clip-text text-transparent">
+            <h1 className="text-6xl @md:text-7xl font-bold mb-6 font-heading tracking-tight leading-[1.1] bg-gradient-to-r from-white via-white to-slate-500 bg-clip-text text-transparent">
               {fullName}
             </h1>
             {lawFirmName && (
@@ -61,10 +61,10 @@ export function Hero({
                 <img
                   src={profilePhoto}
                   alt={fullName}
-                  className="w-72 h-72 md:w-96 md:h-96 rounded-[2rem] object-cover border border-white/10 shadow-2xl relative z-10 transition-all"
+                  className="w-72 h-72 @md:w-96 @md:h-96 rounded-[2rem] object-cover border border-white/10 shadow-2xl relative z-10 transition-all"
                 />
               ) : (
-                <div className="w-72 h-72 md:w-96 md:h-96 rounded-[2rem] bg-slate-900 flex items-center justify-center border border-white/10 relative z-10 shadow-2xl">
+                <div className="w-72 h-72 @md:w-96 @md:h-96 rounded-[2rem] bg-slate-900 flex items-center justify-center border border-white/10 relative z-10 shadow-2xl">
                   <User className="w-32 h-32 text-slate-700" />
                 </div>
               )}

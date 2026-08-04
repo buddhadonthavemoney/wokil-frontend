@@ -38,34 +38,34 @@ export function ClassicTheme({ profile }: ClassicThemeProps) {
       {/* Hero Section */}
       <header className="bg-[#1B2B44] text-white relative overflow-hidden">
         <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]" />
-        <div className="container mx-auto px-6 py-20 md:py-32 relative z-10">
-          <div className="flex flex-col md:flex-row items-center gap-12 max-w-6xl mx-auto">
+        <div className="container mx-auto px-6 py-20 @md:py-32 relative z-10">
+          <div className="flex flex-col @md:flex-row items-center gap-12 max-w-6xl mx-auto">
             <div className="relative group">
               <div className="absolute -inset-1 bg-[#C5A059] rounded-full blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200" />
               {profilePhoto ? (
                 <img
                   src={profilePhoto}
                   alt={fullName}
-                  className="w-40 h-40 md:w-56 md:h-56 rounded-full object-cover border-4 border-[#C5A059] shadow-2xl relative"
+                  className="w-40 h-40 @md:w-56 @md:h-56 rounded-full object-cover border-4 border-[#C5A059] shadow-2xl relative"
                 />
               ) : (
-                <div className="w-40 h-40 md:w-56 md:h-56 rounded-full bg-[#2A3B54] flex items-center justify-center border-4 border-[#C5A059] shadow-2xl relative">
+                <div className="w-40 h-40 @md:w-56 @md:h-56 rounded-full bg-[#2A3B54] flex items-center justify-center border-4 border-[#C5A059] shadow-2xl relative">
                   <Scale className="w-20 h-20 text-[#C5A059]" />
                 </div>
               )}
             </div>
 
-            <div className="text-center md:text-left space-y-4">
-              <h1 className="font-heading text-5xl md:text-7xl font-bold tracking-tight">
+            <div className="text-center @md:text-left space-y-4">
+              <h1 className="font-heading text-5xl @md:text-7xl font-bold tracking-tight">
                 {fullName}
               </h1>
-              <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4">
+              <div className="flex flex-col @md:flex-row @md:items-center gap-2 @md:gap-4">
                 <span className="text-[#C5A059] text-2xl font-medium font-heading">
                   {professionalTitle}
                 </span>
                 {lawFirmName && (
                   <>
-                    <span className="hidden md:block w-1.5 h-1.5 rounded-full bg-white/20" />
+                    <span className="hidden @md:block w-1.5 h-1.5 rounded-full bg-white/20" />
                     <span className="text-white/80 text-xl font-light italic">{lawFirmName}</span>
                   </>
                 )}
@@ -79,9 +79,9 @@ export function ClassicTheme({ profile }: ClassicThemeProps) {
       </header>
 
       <main className="container mx-auto px-6 py-20">
-        <div className="grid lg:grid-cols-12 gap-12 max-w-6xl mx-auto">
+        <div className="grid @lg:grid-cols-12 gap-12 max-w-6xl mx-auto">
           {/* Main Content */}
-          <div className="lg:col-span-8 space-y-12">
+          <div className="@lg:col-span-8 space-y-12">
             {/* About */}
             <section className="bg-white rounded-2xl p-10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-[#F0F0F0]">
               <h2 className="font-heading text-3xl font-bold text-[#1B2B44] mb-8 flex items-center gap-4">
@@ -100,7 +100,7 @@ export function ClassicTheme({ profile }: ClassicThemeProps) {
                   <span className="w-10 h-[2px] bg-[#C5A059]" />
                   Areas of Expertise
                 </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 @md:grid-cols-2 gap-4">
                   {areasOfPractice.map((area) => (
                     <div
                       key={area}
@@ -136,7 +136,7 @@ export function ClassicTheme({ profile }: ClassicThemeProps) {
           </div>
 
           {/* Sidebar */}
-          <aside className="lg:col-span-4 space-y-8">
+          <aside className="@lg:col-span-4 space-y-8">
             {/* Contact Card */}
             <div className="bg-[#1B2B44] rounded-2xl p-8 shadow-2xl text-white">
               <h3 className="font-heading text-xl font-bold mb-8 text-[#C5A059] uppercase tracking-widest border-b border-white/10 pb-4">

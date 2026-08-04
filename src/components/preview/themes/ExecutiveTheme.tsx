@@ -49,13 +49,13 @@ export function ExecutiveTheme({ profile }: ExecutiveThemeProps) {
             {/* Hero Header */}
             <header className="bg-white border-b border-slate-200">
                 <div className="container mx-auto px-6 py-20">
-                    <div className="flex flex-col md:flex-row gap-16 items-center max-w-6xl mx-auto">
+                    <div className="flex flex-col @md:flex-row gap-16 items-center max-w-6xl mx-auto">
                         <div className="flex-1 space-y-8 animate-in fade-in slide-in-from-left duration-700">
                             <div className="space-y-4">
                                 <h2 className="text-blue-700 font-heading font-bold uppercase tracking-[0.25em] text-sm">
                                     {lawFirmName}
                                 </h2>
-                                <h1 className="text-5xl md:text-7xl font-heading font-extrabold text-slate-900 tracking-tight leading-none">
+                                <h1 className="text-5xl @md:text-7xl font-heading font-extrabold text-slate-900 tracking-tight leading-none">
                                     {fullName}
                                 </h1>
                                 <p className="text-2xl text-slate-500 font-light max-w-2xl">
@@ -73,7 +73,7 @@ export function ExecutiveTheme({ profile }: ExecutiveThemeProps) {
                             </div>
                         </div>
 
-                        <div className="w-full md:w-96 animate-in fade-in zoom-in duration-700">
+                        <div className="w-full @md:w-96 animate-in fade-in zoom-in duration-700">
                             <div className="relative group">
                                 <div className="absolute inset-0 bg-blue-700/5 rounded-2xl transform translate-x-4 translate-y-4 -z-10 transition-transform group-hover:translate-x-6 group-hover:translate-y-6" />
                                 {profilePhoto ? (
@@ -94,9 +94,9 @@ export function ExecutiveTheme({ profile }: ExecutiveThemeProps) {
             </header>
 
             <main className="container mx-auto px-6 py-24 max-w-6xl">
-                <div className="grid lg:grid-cols-3 gap-16">
+                <div className="grid @lg:grid-cols-3 gap-16">
                     {/* Main Profile col */}
-                    <div className="lg:col-span-2 space-y-24">
+                    <div className="@lg:col-span-2 space-y-24">
                         <section className="space-y-8">
                             <div className="flex items-center gap-4">
                                 <div className="w-12 h-1 bg-blue-700" />
@@ -112,7 +112,7 @@ export function ExecutiveTheme({ profile }: ExecutiveThemeProps) {
                                 <div className="w-12 h-1 bg-blue-700" />
                                 <h3 className="font-heading font-bold text-3xl text-slate-900 tracking-tight">Practice Areas</h3>
                             </div>
-                            <div className="grid sm:grid-cols-2 gap-6">
+                            <div className="grid @sm:grid-cols-2 gap-6">
                                 {areasOfPractice.map((area) => (
                                     <div key={area} className="p-8 bg-white border border-slate-200 rounded-xl hover:border-blue-600 hover:shadow-xl transition-all group">
                                         <div className="w-10 h-10 bg-slate-50 rounded-lg flex items-center justify-center mb-6 group-hover:bg-blue-50 transition-colors">

@@ -11,7 +11,7 @@ export function PracticeAreas({ areas }: PracticeAreasProps) {
         <span className="w-12 h-1 bg-blue-600 rounded-full" />
         Strategic Focus
       </h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 @md:grid-cols-2 @lg:grid-cols-4 gap-6">
         {areas.map((area, idx) => (
           <div
             key={area}

@@ -51,11 +51,11 @@ export function LegalCraftTheme({ profile }: LegalCraftThemeProps) {
                         </div>
 
                         <div className="space-y-6 animate-in fade-in duration-1000">
-                            <h1 className="text-6xl md:text-8xl font-heading font-bold text-[#1A120B] leading-tight tracking-tight">
+                            <h1 className="text-6xl @md:text-8xl font-heading font-bold text-[#1A120B] leading-tight tracking-tight">
                                 {fullName}
                             </h1>
                             <div className="flex flex-col items-center gap-2">
-                                <span className="text-2xl md:text-3xl font-heading italic text-[#D4A373] font-medium">
+                                <span className="text-2xl @md:text-3xl font-heading italic text-[#D4A373] font-medium">
                                     {professionalTitle}
                                 </span>
                                 {lawFirmName && (
@@ -83,9 +83,9 @@ export function LegalCraftTheme({ profile }: LegalCraftThemeProps) {
             </header>
 
             <main className="container mx-auto px-6 py-24 max-w-6xl">
-                <div className="grid lg:grid-cols-12 gap-20">
+                <div className="grid @lg:grid-cols-12 gap-20">
                     {/* Detailed Bio */}
-                    <div className="lg:col-span-12 space-y-12 mb-12">
+                    <div className="@lg:col-span-12 space-y-12 mb-12">
                         <div className="flex flex-col items-center text-center space-y-8 max-w-4xl mx-auto">
                             <h2 className="font-heading text-4xl font-bold text-[#1A120B]">Professional Philosophy</h2>
                             <div className="h-1.5 w-24 bg-[#D4A373] rounded-full" />
@@ -96,13 +96,13 @@ export function LegalCraftTheme({ profile }: LegalCraftThemeProps) {
                     </div>
 
                     {/* Core Expertise */}
-                    <div className="lg:col-span-8 space-y-16">
+                    <div className="@lg:col-span-8 space-y-16">
                         <section>
                             <h3 className="font-heading text-2xl font-bold text-[#1A120B] mb-10 flex items-center gap-4 uppercase tracking-wider">
                                 <Pen className="w-6 h-6 text-[#D4A373]" />
                                 Crafted Expertise
                             </h3>
-                            <div className="grid md:grid-cols-2 gap-8">
+                            <div className="grid @md:grid-cols-2 gap-8">
                                 {areasOfPractice.map((area, idx) => (
                                     <div key={area} className="relative p-8 bg-[#F5F2ED] border-l-4 border-[#D4A373] group hover:bg-white hover:shadow-2xl transition-all">
                                         <span className="absolute top-4 right-6 text-[#D4A373]/20 font-heading text-4xl font-black">0{idx + 1}</span>
@@ -133,7 +133,7 @@ export function LegalCraftTheme({ profile }: LegalCraftThemeProps) {
                     </div>
 
                     {/* Sidebar */}
-                    <div className="lg:col-span-4 space-y-12">
+                    <div className="@lg:col-span-4 space-y-12">
                         <div className="relative p-1 bg-gradient-to-br from-[#D4A373] to-[#3C2A21] rounded-sm shadow-2xl">
                             {profilePhoto ? (
                                 <img src={profilePhoto} alt={fullName} className="w-full aspect-square object-cover" />
