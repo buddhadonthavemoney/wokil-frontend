@@ -341,11 +341,6 @@ export const zCheckDomainAvailabilityBody = zDomainAvailabilityRequest;
 export const zCheckDomainAvailabilityResponse = zMessageResponse;
 
 /**
- * Rendered HTML
- */
-export const zPreviewSiteResponse = z.string();
-
-/**
  * Deployment started
  */
 export const zDeploySiteResponse = zMessageResponse;

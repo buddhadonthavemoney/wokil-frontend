@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useProfileForm } from '@/hooks/useProfileForm';
 import { LawyerProfile } from '@/types/lawyer';
@@ -17,62 +17,35 @@ export default function Preview() {
   const {
     profile,
     publishProfile,
-    fetchPreview,
     setProfile,
     loading: hookLoading,
   } = useProfileForm();
 
-  const [previewHtml, setPreviewHtml] = useState('');
-  const [loadingPreview, setLoadingPreview] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const { data: themesData } = useQuery(listThemesOptions());
   const themes = themesData ?? [];
   const { toast } = useToast();
   const router = useRouter();
 
-  const loadPreviewData = async () => {
-    setLoadingPreview(true);
-    try {
-      const html = await fetchPreview();
-      setPreviewHtml(html);
-    } catch (err) {
-      console.error("Failed to load preview", err);
-    } finally {
-      setLoadingPreview(false);
-    }
-  };
-
-  useEffect(() => {
-    if (!hookLoading) {
-      loadPreviewData();
-    }
-  }, [hookLoading, fetchPreview]);
-
-  const handleThemeChange = async (newTheme: string) => {
+  // Switching themes is instant — it's just picking a different component to
+  // render from local state, no server round trip needed for the preview
+  // itself. Still persists to the backend so the choice survives a reload.
+  const handleThemeChange = (newTheme: string) => {
     const updatedProfile: LawyerProfile = {
       ...profile,
-      themeSelection: { theme: newTheme as any }
+      themeSelection: { theme: newTheme as LawyerProfile['themeSelection']['theme'] }
     };
 
     setProfile(updatedProfile);
-    setLoadingPreview(true);
-    
-    try {
-      await saveProfile({ body: updatedProfile as LawyerProfile, throwOnError: true });
-      // Wait a bit for the backend to update
-      await new Promise(resolve => setTimeout(resolve, 300));
-      const html = await fetchPreview();
-      setPreviewHtml(html);
-    } catch (err) {
-      console.error("Theme switch failed:", err);
+
+    saveProfile({ body: updatedProfile, throwOnError: true }).catch((err) => {
+      console.error("Theme switch failed to save:", err);
       toast({
         title: "Update Failed",
-        description: "Could not switch theme. Please try again.",
+        description: "Could not save the theme change. Please try again.",
         variant: "destructive"
       });
-    } finally {
-      setLoadingPreview(false);
-    }
+    });
   };
 
   const handlePublish = async () => {
@@ -139,14 +112,7 @@ export default function Preview() {
       </div>
 
       <div className="pt-[73px] h-full">
-        {loadingPreview ? (
-          <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-            <Scale className="w-12 h-12 text-primary animate-pulse" />
-            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground animate-pulse">Generating Professional Site...</p>
-          </div>
-        ) : (
-          <ProfilePreview profile={profile} html={previewHtml} />
-        )}
+        <ProfilePreview profile={profile} />
       </div>
 
       {/* Theme Switcher Overlay */}
@@ -156,10 +122,10 @@ export default function Preview() {
             <button
               key={theme.id}
               onClick={() => handleThemeChange(theme.id)}
-              disabled={loadingPreview || isPublishing}
+              disabled={isPublishing}
               className={cn(
                 "px-3 sm:px-4 py-2 rounded-xl text-[9px] sm:text-[10px] font-bold uppercase tracking-widest transition-all duration-300 whitespace-nowrap shrink-0 capitalize",
-                (loadingPreview || isPublishing) && "opacity-50 cursor-not-allowed",
+                isPublishing && "opacity-50 cursor-not-allowed",
                 profile.themeSelection?.theme === theme.id
                   ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
                   : "text-muted-foreground hover:bg-black/5 hover:text-foreground"

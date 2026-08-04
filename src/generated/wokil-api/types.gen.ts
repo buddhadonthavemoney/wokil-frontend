@@ -751,6 +751,10 @@ export type VerifyDnsErrors = {
      */
     401: string;
     /**
+     * Rate limited; retry after the interval in the Retry-After header
+     */
+    429: string;
+    /**
      * Internal server error
      */
     500: string;
@@ -799,35 +803,6 @@ export type CheckDomainAvailabilityResponses = {
 };
 
 export type CheckDomainAvailabilityResponse = CheckDomainAvailabilityResponses[keyof CheckDomainAvailabilityResponses];
-
-export type PreviewSiteData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/sites/preview';
-};
-
-export type PreviewSiteErrors = {
-    /**
-     * Missing or invalid bearer token
-     */
-    401: string;
-    /**
-     * Internal server error
-     */
-    500: string;
-};
-
-export type PreviewSiteError = PreviewSiteErrors[keyof PreviewSiteErrors];
-
-export type PreviewSiteResponses = {
-    /**
-     * Rendered HTML
-     */
-    200: string;
-};
-
-export type PreviewSiteResponse = PreviewSiteResponses[keyof PreviewSiteResponses];
 
 export type DeploySiteData = {
     body?: never;

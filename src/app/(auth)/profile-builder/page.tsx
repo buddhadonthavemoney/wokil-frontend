@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useProfileForm } from '@/hooks/useProfileForm';
 
 import { LawyerProfile } from '@/types/lawyer';
@@ -20,7 +20,7 @@ import { useQuery } from '@tanstack/react-query';
 import { listThemesOptions } from '@/generated/wokil-api/@tanstack/react-query.gen';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
-import { Scale, ArrowLeft, Trash2, Sparkles, Loader2, Monitor, ZoomIn, ZoomOut } from 'lucide-react';
+import { Scale, ArrowLeft, Trash2, Sparkles, Monitor, ZoomIn, ZoomOut } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -75,7 +75,6 @@ export default function ProfileBuilder() {
     nextStep,
     prevStep,
     publishProfile,
-    fetchPreview,
     saveProfileData,
     setProfile,
     goToStep,
@@ -110,49 +109,15 @@ export default function ProfileBuilder() {
   const { toast } = useToast();
   const router = useRouter();
 
-  const [previewHtml, setPreviewHtml] = useState('');
-  const [isLoadingPreview, setIsLoadingPreview] = useState(false);
   const { data: themesData } = useQuery(listThemesOptions());
   const themes = themesData ?? [];
   const [zoom, setZoom] = useState([1.0]);
-  const previewFetchRef = useRef(false);
 
-  useEffect(() => {
-    // Only load if we have some basic info
-    const hasBasicInfo = profile.basicInformation.fullName && 
-                        profile.basicInformation.professionalTitle && 
-                        profile.basicInformation.yearsOfExperience !== undefined;
-    
-    if (!hasBasicInfo) {
-      if (previewHtml) setPreviewHtml('');
-      previewFetchRef.current = false;
-      return;
-    }
-    
-    // Prevent fetching if already loading to avoid infinite loops
-    if (isLoadingPreview || previewFetchRef.current) return;
-    
-    const loadPreview = async () => {
-      previewFetchRef.current = true;
-      setIsLoadingPreview(true);
-      try {
-        const html = await fetchPreview();
-        setPreviewHtml(html);
-      } catch (err) {
-        console.error("Failed to load live preview", err);
-      } finally {
-        setIsLoadingPreview(false);
-        previewFetchRef.current = false;
-      }
-    };
-
-    // Debounce slightly to avoid rapid updates if user clicks fast
-    const timer = setTimeout(loadPreview, 500);
-    return () => {
-      clearTimeout(timer);
-      previewFetchRef.current = false;
-    };
-  }, [currentStep, fetchPreview, profile.basicInformation.fullName, profile.basicInformation.professionalTitle, profile.basicInformation.yearsOfExperience]);
+  const hasBasicInfo = Boolean(
+    profile.basicInformation.fullName &&
+    profile.basicInformation.professionalTitle &&
+    profile.basicInformation.yearsOfExperience !== undefined
+  );
 
   const renderCurrentStep = () => {
     switch (currentStep) {
@@ -268,25 +233,15 @@ export default function ProfileBuilder() {
               <ThemeSelector
                 themes={themes}
                 currentTheme={profile.themeSelection?.theme}
-                isLoading={isLoadingPreview}
-                onThemeSelect={async (themeId) => {
-                  const updatedProfile = { ...profile, themeSelection: { theme: themeId as any } };
+                onThemeSelect={(themeId) => {
+                  const updatedProfile: LawyerProfile = {
+                    ...profile,
+                    themeSelection: { theme: themeId as LawyerProfile['themeSelection']['theme'] },
+                  };
                   setProfile(updatedProfile);
-                  await saveProfile({ body: updatedProfile as LawyerProfile, throwOnError: true });
-                  
-                  const hasBasicInfo = updatedProfile.basicInformation.fullName && 
-                                      updatedProfile.basicInformation.professionalTitle && 
-                                      updatedProfile.basicInformation.yearsOfExperience !== undefined;
-                  
-                  if (!hasBasicInfo) return;
-
-                  setIsLoadingPreview(true);
-                  try {
-                      const html = await fetchPreview();
-                      setPreviewHtml(html);
-                  } finally {
-                      setIsLoadingPreview(false);
-                  }
+                  saveProfile({ body: updatedProfile, throwOnError: true }).catch((err) => {
+                    console.error("Theme switch failed to save:", err);
+                  });
                 }}
               />
 
@@ -328,12 +283,7 @@ export default function ProfileBuilder() {
               <div className="h-[64px] w-[3px] bg-gray-800 absolute -end-[17px] top-[142px] rounded-e-lg"></div>
               
               <div className="rounded-[2rem] overflow-hidden w-full h-full bg-white dark:bg-gray-800 relative z-10">
-                 {isLoadingPreview && !previewHtml ? (
-                   <div className="w-full h-full flex flex-col items-center justify-center bg-gray-50 text-muted-foreground gap-2">
-                     <Loader2 className="w-8 h-8 animate-spin opacity-20" />
-                     <span className="text-[10px] font-bold uppercase tracking-widest opacity-50">Rendering...</span>
-                   </div>
-                 ) : (!profile.basicInformation.fullName || !profile.basicInformation.professionalTitle || profile.basicInformation.yearsOfExperience === undefined) ? (
+                 {!hasBasicInfo ? (
                    <div className="w-full h-full flex flex-col items-center justify-center bg-white p-8 text-center space-y-4 animate-fade-in">
                       <div className="w-16 h-16 bg-primary/5 rounded-2xl flex items-center justify-center mb-2">
                         <Sparkles className="w-8 h-8 text-primary opacity-40" />
@@ -348,15 +298,8 @@ export default function ProfileBuilder() {
                       </div>
                    </div>
                  ) : (
-                   <ProfilePreview profile={profile} html={previewHtml} zoom={zoom[0]} />
+                   <ProfilePreview profile={profile} zoom={zoom[0]} />
                  )}
-                 
-                 {/* Loading Overlay for updates */}
-                 {isLoadingPreview && previewHtml && (
-                   <div className="absolute inset-0 bg-white/50 backdrop-blur-[1px] flex items-center justify-center z-30 animate-fade-in">
-                     <Loader2 className="w-6 h-6 animate-spin text-primary" />
-                   </div>
-                  )}
               </div>
             </div>
           </div>

@@ -3,8 +3,8 @@
 import { type DefaultError, queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { checkDomainAvailability, createForm, createGaProperty, createSite, deleteSite, deploySite, getProfile, getPublicDirectory, getSiteAnalytics, getVerificationRecords, googleCallback, googleLogin, listForms, listSites, listSubmissions, listThemes, listUsers, type Options, previewSite, saveProfile, submitForm, updateProfileVisibility, uploadFile, verifyDns } from '../sdk.gen';
-import type { CheckDomainAvailabilityData, CheckDomainAvailabilityError, CheckDomainAvailabilityResponse, CreateFormData, CreateFormError, CreateFormResponse, CreateGaPropertyData, CreateGaPropertyError, CreateGaPropertyResponse, CreateSiteData, CreateSiteError, CreateSiteResponse, DeleteSiteData, DeleteSiteError, DeleteSiteResponse, DeploySiteData, DeploySiteError, DeploySiteResponse, GetProfileData, GetProfileError, GetProfileResponse, GetPublicDirectoryData, GetPublicDirectoryError, GetPublicDirectoryResponse, GetSiteAnalyticsData, GetSiteAnalyticsError, GetSiteAnalyticsResponse, GetVerificationRecordsData, GetVerificationRecordsError, GetVerificationRecordsResponse, GoogleCallbackData, GoogleCallbackError, GoogleCallbackResponse, GoogleLoginData, GoogleLoginResponse, ListFormsData, ListFormsError, ListFormsResponse, ListSitesData, ListSitesError, ListSitesResponse, ListSubmissionsData, ListSubmissionsError, ListSubmissionsResponse, ListThemesData, ListThemesError, ListThemesResponse, ListUsersData, ListUsersError, ListUsersResponse, PreviewSiteData, PreviewSiteError, PreviewSiteResponse, SaveProfileData, SaveProfileError, SaveProfileResponse, SubmitFormData, SubmitFormError, SubmitFormResponse, UpdateProfileVisibilityData, UpdateProfileVisibilityError, UpdateProfileVisibilityResponse, UploadFileData, UploadFileError, UploadFileResponse, VerifyDnsData, VerifyDnsError, VerifyDnsResponse } from '../types.gen';
+import { checkDomainAvailability, createForm, createGaProperty, createSite, deleteSite, deploySite, getProfile, getPublicDirectory, getSiteAnalytics, getVerificationRecords, googleCallback, googleLogin, listForms, listSites, listSubmissions, listThemes, listUsers, type Options, saveProfile, submitForm, updateProfileVisibility, uploadFile, verifyDns } from '../sdk.gen';
+import type { CheckDomainAvailabilityData, CheckDomainAvailabilityError, CheckDomainAvailabilityResponse, CreateFormData, CreateFormError, CreateFormResponse, CreateGaPropertyData, CreateGaPropertyError, CreateGaPropertyResponse, CreateSiteData, CreateSiteError, CreateSiteResponse, DeleteSiteData, DeleteSiteError, DeleteSiteResponse, DeploySiteData, DeploySiteError, DeploySiteResponse, GetProfileData, GetProfileError, GetProfileResponse, GetPublicDirectoryData, GetPublicDirectoryError, GetPublicDirectoryResponse, GetSiteAnalyticsData, GetSiteAnalyticsError, GetSiteAnalyticsResponse, GetVerificationRecordsData, GetVerificationRecordsError, GetVerificationRecordsResponse, GoogleCallbackData, GoogleCallbackError, GoogleCallbackResponse, GoogleLoginData, GoogleLoginResponse, ListFormsData, ListFormsError, ListFormsResponse, ListSitesData, ListSitesError, ListSitesResponse, ListSubmissionsData, ListSubmissionsError, ListSubmissionsResponse, ListThemesData, ListThemesError, ListThemesResponse, ListUsersData, ListUsersError, ListUsersResponse, SaveProfileData, SaveProfileError, SaveProfileResponse, SubmitFormData, SubmitFormError, SubmitFormResponse, UpdateProfileVisibilityData, UpdateProfileVisibilityError, UpdateProfileVisibilityResponse, UploadFileData, UploadFileError, UploadFileResponse, VerifyDnsData, VerifyDnsError, VerifyDnsResponse } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -358,24 +358,6 @@ export const checkDomainAvailabilityMutation = (options?: Partial<Options<CheckD
     };
     return mutationOptions;
 };
-
-export const previewSiteQueryKey = (options?: Options<PreviewSiteData>) => createQueryKey('previewSite', options);
-
-/**
- * Render the site preview HTML
- */
-export const previewSiteOptions = (options?: Options<PreviewSiteData>) => queryOptions<PreviewSiteResponse, PreviewSiteError, PreviewSiteResponse, ReturnType<typeof previewSiteQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-        const { data } = await previewSite({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: previewSiteQueryKey(options)
-});
 
 /**
  * Deploy the user's site(s)
