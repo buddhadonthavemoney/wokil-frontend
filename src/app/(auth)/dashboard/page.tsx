@@ -7,6 +7,7 @@ import { toLawyerProfile } from '@/lib/lawyer-profile-adapter';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { cn } from '@/lib/utils'
 import QRCode from "react-qr-code";
@@ -25,7 +26,9 @@ import {
   Plus,
   Shield,
   ArrowLeft,
-  Clock
+  Clock,
+  MapPin,
+  Gavel
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { InfoModal } from '@/components/InfoModal';
@@ -47,7 +50,7 @@ import {
 } from 'recharts';
 import AuthGuard from '@/components/auth/AuthGuard';
 
-const COLORS = ['#0f172a', '#d97706', '#2563eb', '#059669', '#4338ca'];
+const COLORS = ['#1B2B44', '#C5A059', '#4B5563', '#059669', '#4338ca'];
 
 export default function Dashboard() {
   return (
@@ -203,7 +206,7 @@ function DashboardContent() {
   }
 
   return (
-    <div className="min-h-screen bg-[hsl(210,20%,98%)]/50 pb-20">
+    <div className="min-h-screen bg-background pb-20">
       <main className="container mx-auto px-6 py-8 max-w-7xl">
         <div className="flex flex-col gap-12">
           <section>
@@ -251,7 +254,7 @@ function DashboardContent() {
                         </Button>
                       </div>
                     </HoverCardTrigger>
-                    <HoverCardContent className="w-auto p-4 bg-white" align="end">
+                    <HoverCardContent className="w-auto p-4 bg-card" align="end">
                       <div className="flex flex-col items-center gap-2">
                         {getPublicUrl() ? (
                           <>
@@ -275,7 +278,8 @@ function DashboardContent() {
               }
             />
 
-            <Card className="border-none shadow-premium bg-white overflow-hidden rounded-3xl">
+            <Card className="relative border border-border shadow-sm bg-card overflow-hidden rounded-xl">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-accent/5 rounded-bl-full pointer-events-none" />
               <CardContent className="p-8 md:p-10">
                 <div className="flex flex-col md:flex-row gap-10 items-center md:items-start text-center md:text-left">
                   <div className="relative group shrink-0">
@@ -312,6 +316,42 @@ function DashboardContent() {
                       </p>
                     </div>
 
+                    {/* Credential chips — only ever rendered for fields that
+                        actually exist on the profile, never fabricated. */}
+                    {(profile.practiceDetails.jurisdictions.length > 0 ||
+                      profile.basicInformation.yearsOfExperience > 0 ||
+                      profile.contactInformation.officeAddress) && (
+                      <div className="flex flex-wrap justify-center md:justify-start gap-2">
+                        {profile.practiceDetails.jurisdictions.map((jurisdiction) => (
+                          <Badge
+                            key={jurisdiction}
+                            variant="outline"
+                            className="gap-1 rounded-md border-border bg-muted/30 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground"
+                          >
+                            <Gavel className="w-3 h-3" />
+                            {jurisdiction}
+                          </Badge>
+                        ))}
+                        {profile.basicInformation.yearsOfExperience > 0 && (
+                          <Badge
+                            variant="outline"
+                            className="rounded-md border-border bg-muted/30 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground"
+                          >
+                            {profile.basicInformation.yearsOfExperience}+ Years Exp.
+                          </Badge>
+                        )}
+                        {profile.contactInformation.officeAddress && (
+                          <Badge
+                            variant="outline"
+                            className="gap-1 rounded-md border-border bg-muted/30 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground"
+                          >
+                            <MapPin className="w-3 h-3" />
+                            {profile.contactInformation.officeAddress}
+                          </Badge>
+                        )}
+                      </div>
+                    )}
+
                     {/* Only rendered when a site is actually live. siteUrl is
                         derived from the sites table, so deleting a site clears
                         it and this chip disappears instead of showing a dead
@@ -347,7 +387,7 @@ function DashboardContent() {
               </div>
 
             {!analytics && !profile?.googleAnalyticsId ? (
-                <div className="bg-white border-none rounded-3xl p-10 md:p-16 text-center shadow-premium">
+                <div className="bg-card border border-border rounded-xl p-10 md:p-16 text-center shadow-premium">
                     <div className="w-16 h-16 bg-primary/5 rounded-full flex items-center justify-center mx-auto mb-6">
                         <TrendingUp className="w-8 h-8 text-primary" />
                     </div>
@@ -366,14 +406,14 @@ function DashboardContent() {
             ) : (
                 <div className="space-y-6 animate-fade-in">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        <div className="bg-white border-none rounded-3xl p-8 shadow-premium">
+                        <div className="bg-card border border-border rounded-xl p-8 shadow-premium hover:shadow-md transition-shadow">
                             <div className="flex items-center justify-between mb-4">
                                 <span className="text-sm font-medium text-muted-foreground">Total Views</span>
                                 <Eye className="w-4 h-4 text-blue-500" />
                             </div>
                             <div className="text-3xl font-bold">{analytics?.totalViews || 0}</div>
                         </div>
-                        <div className="bg-white border-none rounded-3xl p-8 shadow-premium">
+                        <div className="bg-card border border-border rounded-xl p-8 shadow-premium hover:shadow-md transition-shadow">
                             <div className="flex items-center justify-between mb-4">
                                 <span className="text-sm font-medium text-muted-foreground">Unique Visitors</span>
                                 <Users className="w-4 h-4 text-green-500" />
@@ -381,7 +421,7 @@ function DashboardContent() {
                             <div className="text-3xl font-bold">{analytics?.visitors || 0}</div>
                         </div>
                         {/* Placeholders for future stats */}
-                        <div className="bg-white border-none rounded-3xl p-8 shadow-premium opacity-60">
+                        <div className="bg-card border border-border rounded-xl p-8 shadow-premium opacity-60">
                             <div className="flex items-center justify-between mb-4">
                                 <span className="text-sm font-medium text-muted-foreground">QR Scans</span>
                                 <QrCode className="w-4 h-4 text-purple-500" />
@@ -389,7 +429,7 @@ function DashboardContent() {
                             <div className="text-3xl font-bold">-</div>
                             <p className="text-xs text-muted-foreground mt-2">Coming Soon</p>
                         </div>
-                        <div className="bg-white border-none rounded-3xl p-8 shadow-premium opacity-60">
+                        <div className="bg-card border border-border rounded-xl p-8 shadow-premium opacity-60">
                             <div className="flex items-center justify-between mb-4">
                                 <span className="text-sm font-medium text-muted-foreground">Avg. Time</span>
                                 <Clock className="w-4 h-4 text-orange-500" />
@@ -400,7 +440,7 @@ function DashboardContent() {
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        <div className="lg:col-span-2 bg-white border-none rounded-3xl p-8 shadow-premium">
+                        <div className="lg:col-span-2 bg-card border border-border rounded-xl p-8 shadow-premium">
                             <h3 className="font-bold mb-6 flex items-center gap-2">
                                 <TrendingUp className="w-4 h-4 text-primary" />
                                 Traffic History
@@ -412,13 +452,13 @@ function DashboardContent() {
                                         <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fill: '#888', fontSize: 12}} dy={10} />
                                         <YAxis axisLine={false} tickLine={false} tick={{fill: '#888', fontSize: 12}} />
                                         <Tooltip contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}} />
-                                        <Line type="monotone" dataKey="views" stroke="#0f172a" strokeWidth={3} dot={false} activeDot={{r: 6, fill: '#0f172a', strokeWidth: 0}} />
+                                        <Line type="monotone" dataKey="views" stroke="#1B2B44" strokeWidth={3} dot={false} activeDot={{r: 6, fill: '#1B2B44', strokeWidth: 0}} />
                                     </LineChart>
                                 </ResponsiveContainer>
                             </div>
                         </div>
 
-                        <div className="bg-white border-none rounded-3xl p-8 shadow-premium">
+                        <div className="bg-card border border-border rounded-xl p-8 shadow-premium">
                             <h3 className="font-bold mb-6 flex items-center gap-2">
                                 <Globe className="w-4 h-4 text-primary" />
                                 Traffic Sources

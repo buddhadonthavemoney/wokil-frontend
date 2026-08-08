@@ -3,6 +3,7 @@
 import { Settings as SettingsIcon, ArrowLeft, TrendingUp, CheckCircle2, Loader2, Eye, Image as ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
+import { Card, CardContent } from '@/components/ui/card';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getProfile, createGaProperty, updateProfileVisibility } from '@/generated/wokil-api';
@@ -111,7 +112,7 @@ export default function Settings() {
         <section className="space-y-8 pt-4">
             <div className="grid gap-8">
                 {/* Visibility Settings */}
-                <div className="bg-white border-none rounded-3xl p-8 shadow-premium space-y-6">
+                <div className="bg-card border-none rounded-xl p-8 shadow-premium space-y-6">
                     <div className="flex items-center gap-3 border-b border-border pb-4">
                         <div className="p-2 bg-primary/5 rounded-lg">
                             <Eye className="w-5 h-5 text-primary" />
@@ -153,7 +154,7 @@ export default function Settings() {
                 </div>
 
                 {!profile?.googleAnalyticsId ? (
-                <div className="bg-white border-none rounded-3xl p-10 md:p-14 text-center shadow-premium">
+                <div className="bg-card border-none rounded-xl p-10 md:p-14 text-center shadow-premium">
                     <div className="w-16 h-16 bg-primary/5 rounded-full flex items-center justify-center mx-auto mb-6">
                         <TrendingUp className="w-8 h-8 text-primary" />
                     </div>
@@ -172,7 +173,7 @@ export default function Settings() {
                     </Button>
                 </div>
             ) : (
-                <div className="bg-white border-none rounded-3xl p-10 md:p-14 text-center shadow-premium">
+                <div className="bg-card border-none rounded-xl p-10 md:p-14 text-center shadow-premium">
                     <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
                         <CheckCircle2 className="w-8 h-8 text-green-600" />
                     </div>

@@ -60,7 +60,7 @@ export function HomeClient({ professionals }: HomeClientProps) {
                         </div>
                         <span className="font-heading font-bold text-xl tracking-tight">Wokil</span>
                     </div>
-                    <Button variant="ghost" onClick={handleLogin} className="gap-2 hidden sm:flex">
+                    <Button variant="ghost" onClick={handleLogin} className="gap-2 hidden sm:flex text-xs font-semibold uppercase tracking-widest">
                         <LogIn className="w-4 h-4" />
                         Sign In
                     </Button>
@@ -72,7 +72,7 @@ export function HomeClient({ professionals }: HomeClientProps) {
                 <div className="container mx-auto px-6">
                     <div className="flex flex-col lg:flex-row items-center gap-16">
                         <div className="flex-1 text-center lg:text-left space-y-8 max-w-2xl">
-                            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-semibold tracking-wide uppercase">
+                            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary border border-accent text-primary text-xs font-semibold tracking-widest uppercase">
                                 <Zap className="w-3 h-3" />
                                 The Future of Lawyer Presence
                             </div>
@@ -83,14 +83,14 @@ export function HomeClient({ professionals }: HomeClientProps) {
                                 Wokil empowers lawyers to create stunning, professional profiles that attract clients and build trust. No coding required.
                             </p>
                             <div className="flex flex-col sm:flex-row items-center gap-4">
-                                <Button onClick={handleLogin} size="lg" className="w-full sm:w-auto gap-2 h-12 px-8 text-base shadow-lg shadow-primary/20">
+                                <Button onClick={handleLogin} size="lg" className="w-full sm:w-auto gap-2 h-12 px-8 text-xs font-semibold uppercase tracking-widest shadow-lg shadow-primary/20">
                                     <LogIn className="w-4 h-4" />
                                     Get Started with Google
                                 </Button>
-                                <Button 
-                                    variant="outline" 
-                                    size="lg" 
-                                    className="w-full sm:w-auto gap-2 h-12 px-8 text-base group"
+                                <Button
+                                    variant="outline"
+                                    size="lg"
+                                    className="w-full sm:w-auto gap-2 h-12 px-8 text-xs font-semibold uppercase tracking-widest group"
                                     onClick={() => router.push('/professionals')}
                                 >
                                     Our Clients
@@ -186,37 +186,32 @@ export function HomeClient({ professionals }: HomeClientProps) {
                                 icon: <Globe className="w-6 h-6" />,
                                 title: "Live Directories",
                                 desc: "Get listed in our premium directory and gain visibility among thousands of potential clients.",
-                                color: "primary"
                             },
                             {
                                 icon: <Shield className="w-6 h-6" />,
                                 title: "Custom Domain Mapping",
                                 desc: "Use your own professional domain (e.g., yourname.com) to host your personal legal profile.",
-                                color: "accent"
                             },
                             {
                                 icon: <Zap className="w-6 h-6" />,
                                 title: "Multiple Premium Themes",
                                 desc: "Choose from a curated collection of beautiful themes designed specifically for legal professionals.",
-                                color: "primary"
                             },
                             {
                                 icon: <BarChart3 className="w-6 h-6" />,
                                 title: "Smart Analytics",
                                 desc: "Real-time insights into profile views, engagement rates, and client acquisition sources.",
-                                color: "accent"
                             }
                         ].map((feature, i) => (
-                            <div 
-                                key={i} 
-                                className="bg-white/50 backdrop-blur-sm border border-border/60 p-8 rounded-[2rem] text-left hover:border-primary/40 hover:shadow-xl hover:shadow-primary/5 transition-all duration-500 group relative overflow-hidden"
+                            <div
+                                key={i}
+                                className="bg-card border border-border p-8 rounded-xl text-left hover:border-accent/50 transition-colors"
                             >
-                                <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-bl-[4rem] -mr-8 -mt-8 group-hover:scale-110 transition-transform duration-700" />
-                                <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-8 group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 shadow-sm border border-primary/5">
+                                <div className="w-12 h-12 rounded-lg bg-primary/5 flex items-center justify-center text-primary mb-4">
                                     {feature.icon}
                                 </div>
-                                <h3 className="text-xl font-heading font-bold mb-4 tracking-tight group-hover:text-primary transition-colors">{feature.title}</h3>
-                                <p className="text-muted-foreground leading-relaxed text-sm font-medium opacity-80 group-hover:opacity-100 transition-opacity">{feature.desc}</p>
+                                <h3 className="text-lg font-heading font-semibold mb-2 tracking-tight text-foreground">{feature.title}</h3>
+                                <p className="text-muted-foreground leading-relaxed text-sm">{feature.desc}</p>
                             </div>
                         ))}
                     </div>
@@ -224,21 +219,21 @@ export function HomeClient({ professionals }: HomeClientProps) {
             </section>
 
             {/* Footer */}
-            <footer className="py-12 border-t border-border">
+            <footer className="py-12 bg-primary text-primary-foreground">
                 <div className="container mx-auto px-6">
                     <div className="flex flex-col md:flex-row items-center justify-between gap-8">
                         <div className="flex items-center gap-2">
-                            <div className="w-6 h-6 rounded bg-primary flex items-center justify-center">
-                                <Scale className="w-3 h-3 text-primary-foreground" />
+                            <div className="w-6 h-6 rounded bg-accent flex items-center justify-center">
+                                <Scale className="w-3 h-3 text-primary" />
                             </div>
-                            <span className="font-heading font-bold text-lg">Wokil</span>
+                            <span className="font-heading font-bold text-lg text-accent">Wokil</span>
                         </div>
-                        <div className="flex gap-8 text-sm text-muted-foreground">
-                            <a href="#" className="hover:text-foreground transition-colors">Privacy</a>
-                            <a href="#" className="hover:text-foreground transition-colors">Terms</a>
-                            <a href="#" className="hover:text-foreground transition-colors">Contact</a>
+                        <div className="flex gap-8 text-sm text-primary-foreground/70">
+                            <a href="#" className="hover:text-accent transition-colors">Privacy</a>
+                            <a href="#" className="hover:text-accent transition-colors">Terms</a>
+                            <a href="#" className="hover:text-accent transition-colors">Contact</a>
                         </div>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-sm text-primary-foreground/70">
                             © {new Date().getFullYear()} Wokil. All rights reserved.
                         </p>
                     </div>

@@ -39,7 +39,7 @@ export function DeployProgressModal({ phase, steps, message, onClose, siteUrl }:
           onEscapeKeyDown={(e) => isRunning && e.preventDefault()}
           onPointerDownOutside={(e) => isRunning && e.preventDefault()}
           onInteractOutside={(e) => isRunning && e.preventDefault()}
-          className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-3xl border border-white/20 bg-white p-8 shadow-[0_20px_60px_rgba(0,0,0,0.15)] duration-200 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95"
+          className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-xl border border-white/20 bg-card p-8 shadow-[0_20px_60px_rgba(0,0,0,0.15)] duration-200 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95"
         >
           <div className="flex flex-col items-center text-center">
             <div
