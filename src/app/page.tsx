@@ -1,4 +1,6 @@
 import { publicPeopleServer } from '@/lib/api-server';
+
+
 import { HomeClient } from './HomeClient';
 import type { Metadata } from 'next';
 
