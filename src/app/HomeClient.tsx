@@ -38,10 +38,12 @@ const researchTopics = [
 ];
 
 const websiteThemes = [
-    { bg: '#FDFCFB', accent: '#1B2B44', selected: false },
-    { bg: '#FDFBF7', accent: '#D4A373', selected: true },
-    { bg: '#F8FAFC', accent: '#1E40AF', selected: false },
+    { bg: '#FDFCFB', accent: '#1B2B44' },
+    { bg: '#FDFBF7', accent: '#D4A373' },
+    { bg: '#F8FAFC', accent: '#1E40AF' },
 ];
+
+const DEFAULT_THEME = 1;
 
 const courtCalendarHighlights = [
     'Hearing Date Tracking',
@@ -52,10 +54,7 @@ const courtCalendarHighlights = [
 
 const courtCalendarWeekdays = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
-const courtCalendarDays = Array.from({ length: 42 }, (_, i) => {
-    const day = i - 4;
-    return day >= 1 && day <= 31 ? day : null;
-});
+const courtCalendarDays = Array.from({ length: 42 }, (_, i) => (i > 4 && i < 36 ? i - 4 : null));
 
 const courtCalendarEvents: Record<number, { case: string; time: string }> = {
     11: { case: 'State v. Sharma — Hearing', time: '10:30 AM' },
@@ -99,7 +98,7 @@ function CountUpStat({ label, value }: { label: string; value: number }) {
 
     return (
         <div
-            className="flex-1 p-4 rounded-xl bg-muted border border-border transition-transform duration-300 ease-out hover:scale-105 hover:z-10"
+            className="flex-1 p-4 rounded-xl bg-muted border border-border hover-pop hover:scale-105"
             onMouseEnter={handleEnter}
             onMouseLeave={handleLeave}
         >
@@ -112,8 +111,7 @@ function CountUpStat({ label, value }: { label: string; value: number }) {
 export function HomeClient({ professionals }: HomeClientProps) {
     const { toast } = useToast();
     const router = useRouter();
-    const defaultThemeIndex = websiteThemes.findIndex((t) => t.selected);
-    const [hoveredThemeIndex, setHoveredThemeIndex] = useState(defaultThemeIndex);
+    const [hoveredThemeIndex, setHoveredThemeIndex] = useState(DEFAULT_THEME);
     const activeTheme = websiteThemes[hoveredThemeIndex];
 
     useEffect(() => {
@@ -229,14 +227,14 @@ export function HomeClient({ professionals }: HomeClientProps) {
                                         <div
                                             key={i}
                                             onMouseEnter={() => setHoveredThemeIndex(i)}
-                                            onMouseLeave={() => setHoveredThemeIndex(defaultThemeIndex)}
-                                            className="w-1/3 h-24 rounded-lg border relative overflow-hidden transition-transform duration-300 ease-out hover:scale-110 hover:z-10"
-                                            style={{ background: theme.bg, borderColor: theme.selected ? theme.accent : undefined, borderWidth: theme.selected ? 2 : 1 }}
+                                            onMouseLeave={() => setHoveredThemeIndex(DEFAULT_THEME)}
+                                            className="w-1/3 h-24 rounded-lg border relative overflow-hidden hover-pop hover:scale-110"
+                                            style={{ background: theme.bg, borderColor: i === DEFAULT_THEME ? theme.accent : undefined, borderWidth: i === DEFAULT_THEME ? 2 : 1 }}
                                         >
                                             <div className="absolute top-0 w-full h-4" style={{ background: theme.accent }} />
                                             <div className="absolute inset-x-2 top-8 h-2 rounded-sm opacity-20" style={{ background: theme.accent }} />
                                             <div className="absolute inset-x-4 top-12 h-1.5 rounded-sm opacity-10" style={{ background: theme.accent }} />
-                                            {theme.selected && (
+                                            {i === DEFAULT_THEME && (
                                                 <div className="absolute bottom-2 right-2 w-4 h-4 rounded-full bg-accent flex items-center justify-center">
                                                     <CheckCircle2 className="w-2.5 h-2.5 text-white" />
                                                 </div>
@@ -255,22 +253,18 @@ export function HomeClient({ professionals }: HomeClientProps) {
                                         <div className="ml-4 w-1/2 h-4 bg-card rounded-sm" />
                                     </div>
                                     <div className="flex-1 flex flex-col items-center justify-center gap-2 px-4">
-                                        <div
-                                            style={{ animationDelay: '0ms', borderColor: activeTheme.accent, backgroundColor: `${activeTheme.accent}1A` }}
-                                            className="w-8 h-8 rounded-full border mb-1 transition-colors duration-500 group-hover:animate-fade-in"
-                                        />
-                                        <div
-                                            style={{ animationDelay: '80ms', backgroundColor: activeTheme.accent }}
-                                            className="w-1/2 h-4 rounded-sm transition-colors duration-500 group-hover:animate-fade-in"
-                                        />
-                                        <div
-                                            style={{ animationDelay: '160ms', backgroundColor: `${activeTheme.accent}80` }}
-                                            className="w-1/3 h-2 rounded-sm transition-colors duration-500 group-hover:animate-fade-in"
-                                        />
-                                        <div
-                                            style={{ animationDelay: '240ms', backgroundColor: activeTheme.accent }}
-                                            className="w-24 h-6 rounded-full mt-2 transition-colors duration-500 group-hover:animate-fade-in"
-                                        />
+                                        {[
+                                            { cls: 'w-8 h-8 rounded-full border mb-1', bg: `${activeTheme.accent}1A` },
+                                            { cls: 'w-1/2 h-4 rounded-sm', bg: activeTheme.accent },
+                                            { cls: 'w-1/3 h-2 rounded-sm', bg: `${activeTheme.accent}80` },
+                                            { cls: 'w-24 h-6 rounded-full mt-2', bg: activeTheme.accent },
+                                        ].map(({ cls, bg }, i) => (
+                                            <div
+                                                key={i}
+                                                style={{ animationDelay: `${i * 80}ms`, backgroundColor: bg, borderColor: activeTheme.accent }}
+                                                className={`${cls} transition-colors duration-500 group-hover:animate-fade-in`}
+                                            />
+                                        ))}
                                     </div>
                                 </div>
                             </div>
@@ -394,7 +388,7 @@ export function HomeClient({ professionals }: HomeClientProps) {
                                         <div
                                             key={label}
                                             style={{ animationDelay: `${i * 120}ms` }}
-                                            className="p-4 rounded-xl border border-border bg-secondary/40 flex flex-col gap-3 transition-transform duration-300 ease-out hover:scale-105 hover:z-10 group-hover:animate-fade-in"
+                                            className="p-4 rounded-xl border border-border bg-secondary/40 flex flex-col gap-3 hover-pop hover:scale-105 group-hover:animate-fade-in"
                                         >
                                             <div className="w-9 h-9 rounded-lg bg-primary text-primary-foreground flex items-center justify-center">
                                                 <Icon className="w-4 h-4" />
@@ -453,7 +447,7 @@ export function HomeClient({ professionals }: HomeClientProps) {
                                         return (
                                             <div
                                                 key={i}
-                                                className={`group/day relative flex items-center justify-center rounded-lg text-xs transition-transform duration-300 ease-out ${day ? 'hover:scale-110 hover:z-10' : ''} ${event ? 'bg-primary text-primary-foreground font-semibold hover:animate-highlight-glow' : day ? 'text-foreground hover:bg-secondary/60' : ''}`}
+                                                className={`group/day relative flex items-center justify-center rounded-lg text-xs hover-pop ${day ? 'hover:scale-110' : ''} ${event ? 'bg-primary text-primary-foreground font-semibold hover:animate-highlight-glow' : day ? 'text-foreground hover:bg-secondary/60' : ''}`}
                                             >
                                                 {day}
                                                 {event && (
@@ -565,18 +559,17 @@ export function HomeClient({ professionals }: HomeClientProps) {
                         <div className="w-full lg:w-1/2">
                             <div className="group relative w-full aspect-[4/3] rounded-2xl border border-border bg-card p-6 shadow-card flex gap-4">
                                 <div className="w-1/4 h-full bg-muted rounded-lg border border-border flex flex-col p-3 gap-3">
-                                    <div style={{ animationDelay: '0ms' }} className="w-full h-2 bg-primary/20 rounded origin-left group-hover:animate-fade-in" />
-                                    <div style={{ animationDelay: '80ms' }} className="w-3/4 h-2 bg-primary/20 rounded origin-left group-hover:animate-fade-in" />
-                                    <div style={{ animationDelay: '160ms' }} className="w-full h-2 bg-primary/20 rounded origin-left group-hover:animate-fade-in" />
-                                    <div style={{ animationDelay: '240ms' }} className="w-1/2 h-2 bg-primary/20 rounded origin-left group-hover:animate-fade-in" />
+                                    {['w-full', 'w-3/4', 'w-full', 'w-1/2'].map((w, i) => (
+                                        <div key={i} style={{ animationDelay: `${i * 80}ms` }} className={`${w} h-2 bg-primary/20 rounded origin-left group-hover:animate-fade-in`} />
+                                    ))}
                                 </div>
                                 <div className="w-3/4 flex flex-col gap-4">
                                     <div className="flex gap-4">
-                                        <div className="flex-1 h-20 bg-background border border-border rounded-lg p-3 transition-transform duration-300 ease-out hover:scale-105 hover:z-10">
+                                        <div className="flex-1 h-20 bg-background border border-border rounded-lg p-3 hover-pop hover:scale-105">
                                             <div className="w-1/2 h-2 bg-muted-foreground/15 rounded mb-3" />
                                             <div className="w-1/4 h-6 bg-primary rounded" />
                                         </div>
-                                        <div className="flex-1 h-20 bg-background border border-border rounded-lg p-3 transition-transform duration-300 ease-out hover:scale-105 hover:z-10">
+                                        <div className="flex-1 h-20 bg-background border border-border rounded-lg p-3 hover-pop hover:scale-105">
                                             <div className="w-1/2 h-2 bg-muted-foreground/15 rounded mb-3" />
                                             <div className="w-1/4 h-6 bg-accent rounded" />
                                         </div>

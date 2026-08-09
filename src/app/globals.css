@@ -147,6 +147,9 @@
   .shadow-card {
     box-shadow: 0 2px 12px -2px hsl(215 50% 23% / 0.08);
   }
+  .hover-pop {
+    @apply transition-transform duration-300 ease-out hover:z-10;
+  }
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }

@@ -3,8 +3,8 @@
   "configurations": [
     {
       "name": "wokil-frontend-dev",
-      "runtimeExecutable": "sh",
-      "runtimeArgs": ["-c", "WATCHPACK_POLLING=true pnpm dev --webpack"],
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["dev"],
       "port": 3000,
       "autoPort": true
     }
