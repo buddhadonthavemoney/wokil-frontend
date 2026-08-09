@@ -1,7 +1,7 @@
 import type { LawyerProfile as ApiLawyerProfile } from '@/generated/wokil-api';
 import type { LawyerProfile } from '@/types/lawyer';
 
-const THEMES = ['classic', 'modern', 'minimal', 'executive', 'legal-craft'] as const;
+const THEMES = ['classic', 'executive', 'legal-craft'] as const;
 type Theme = LawyerProfile['themeSelection']['theme'];
 
 function toTheme(theme: string | undefined, fallback: Theme): Theme {

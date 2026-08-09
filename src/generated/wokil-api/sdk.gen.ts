@@ -2,7 +2,7 @@
 
 import { type Client, type ClientMeta, formDataBodySerializer, type Options as Options2, type RequestResult, type ServerSentEventsResult, type TDataShape } from './client';
 import { client } from './client.gen';
-import type { CheckDomainAvailabilityData, CheckDomainAvailabilityErrors, CheckDomainAvailabilityResponses, CreateFormData, CreateFormErrors, CreateFormResponses, CreateGaPropertyData, CreateGaPropertyErrors, CreateGaPropertyResponses, CreateSiteData, CreateSiteErrors, CreateSiteResponses, DeleteSiteData, DeleteSiteErrors, DeleteSiteResponses, DeploySiteData, DeploySiteErrors, DeploySiteResponses, GetProfileData, GetProfileErrors, GetProfileResponses, GetPublicDirectoryData, GetPublicDirectoryErrors, GetPublicDirectoryResponses, GetSiteAnalyticsData, GetSiteAnalyticsErrors, GetSiteAnalyticsResponses, GetVerificationRecordsData, GetVerificationRecordsErrors, GetVerificationRecordsResponses, GoogleCallbackData, GoogleCallbackErrors, GoogleCallbackResponses, GoogleLoginData, GoogleLoginResponses, ListFormsData, ListFormsErrors, ListFormsResponses, ListSitesData, ListSitesErrors, ListSitesResponses, ListSubmissionsData, ListSubmissionsErrors, ListSubmissionsResponses, ListThemesData, ListThemesErrors, ListThemesResponses, ListUsersData, ListUsersErrors, ListUsersResponses, PreviewSiteData, PreviewSiteErrors, PreviewSiteResponses, SaveProfileData, SaveProfileErrors, SaveProfileResponses, StreamDeployStatusData, StreamDeployStatusErrors, StreamDeployStatusResponse, StreamDeployStatusResponses, SubmitFormData, SubmitFormErrors, SubmitFormResponses, UpdateProfileVisibilityData, UpdateProfileVisibilityErrors, UpdateProfileVisibilityResponses, UploadFileData, UploadFileErrors, UploadFileResponses, VerifyDnsData, VerifyDnsErrors, VerifyDnsResponses } from './types.gen';
+import type { CheckDomainAvailabilityData, CheckDomainAvailabilityErrors, CheckDomainAvailabilityResponses, CreateFormData, CreateFormErrors, CreateFormResponses, CreateGaPropertyData, CreateGaPropertyErrors, CreateGaPropertyResponses, CreateSiteData, CreateSiteErrors, CreateSiteResponses, DeleteSiteData, DeleteSiteErrors, DeleteSiteResponses, DeploySiteData, DeploySiteErrors, DeploySiteResponses, GetProfileData, GetProfileErrors, GetProfileResponses, GetPublicDirectoryData, GetPublicDirectoryErrors, GetPublicDirectoryResponses, GetSiteAnalyticsData, GetSiteAnalyticsErrors, GetSiteAnalyticsResponses, GetVerificationRecordsData, GetVerificationRecordsErrors, GetVerificationRecordsResponses, GoogleCallbackData, GoogleCallbackErrors, GoogleCallbackResponses, GoogleLoginData, GoogleLoginResponses, ListFormsData, ListFormsErrors, ListFormsResponses, ListSitesData, ListSitesErrors, ListSitesResponses, ListSubmissionsData, ListSubmissionsErrors, ListSubmissionsResponses, ListThemesData, ListThemesErrors, ListThemesResponses, ListUsersData, ListUsersErrors, ListUsersResponses, SaveProfileData, SaveProfileErrors, SaveProfileResponses, StreamDeployStatusData, StreamDeployStatusErrors, StreamDeployStatusResponse, StreamDeployStatusResponses, SubmitFormData, SubmitFormErrors, SubmitFormResponses, UpdateProfileVisibilityData, UpdateProfileVisibilityErrors, UpdateProfileVisibilityResponses, UploadFileData, UploadFileErrors, UploadFileResponses, VerifyDnsData, VerifyDnsErrors, VerifyDnsResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -41,7 +41,7 @@ export const listUsers = <ThrowOnError extends boolean = false>(options?: Option
 export const getPublicDirectory = <ThrowOnError extends boolean = false>(options?: Options<GetPublicDirectoryData, ThrowOnError>): RequestResult<GetPublicDirectoryResponses, GetPublicDirectoryErrors, ThrowOnError> => (options?.client ?? client).get<GetPublicDirectoryResponses, GetPublicDirectoryErrors, ThrowOnError>({ url: '/api/public/people', ...options });
 
 /**
- * List available theme ids
+ * List active themes
  */
 export const listThemes = <ThrowOnError extends boolean = false>(options?: Options<ListThemesData, ThrowOnError>): RequestResult<ListThemesResponses, ListThemesErrors, ThrowOnError> => (options?.client ?? client).get<ListThemesResponses, ListThemesErrors, ThrowOnError>({ url: '/api/themes', ...options });
 
@@ -185,15 +185,6 @@ export const checkDomainAvailability = <ThrowOnError extends boolean = false>(op
         'Content-Type': 'application/json',
         ...options.headers
     }
-});
-
-/**
- * Render the site preview HTML
- */
-export const previewSite = <ThrowOnError extends boolean = false>(options?: Options<PreviewSiteData, ThrowOnError>): RequestResult<PreviewSiteResponses, PreviewSiteErrors, ThrowOnError> => (options?.client ?? client).get<PreviewSiteResponses, PreviewSiteErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/sites/preview',
-    ...options
 });
 
 /**

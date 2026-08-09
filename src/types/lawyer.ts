@@ -26,7 +26,7 @@ export interface LawyerProfile {
     linkedIn?: string;
   };
   themeSelection: {
-    theme: 'classic' | 'modern' | 'minimal' | 'executive' | 'legal-craft';
+    theme: 'classic' | 'executive' | 'legal-craft';
   };
   subdomainSelection: {
     subdomain: string;

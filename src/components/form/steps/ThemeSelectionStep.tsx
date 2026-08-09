@@ -16,18 +16,6 @@ const themes = [
     preview: { bg: 'bg-[#1B2B44]', accent: 'bg-[#C5A059]' }
   },
   {
-    id: 'modern',
-    name: 'Modern Professional',
-    description: 'Sleek, dark, and tech-forward for the modern era.',
-    preview: { bg: 'bg-slate-950', accent: 'bg-blue-500' }
-  },
-  {
-    id: 'minimal',
-    name: 'Pure Minimal',
-    description: 'Strip away the noise with a focus on pure typography.',
-    preview: { bg: 'bg-white border-border', accent: 'bg-primary' }
-  },
-  {
     id: 'executive',
     name: 'Executive Suite',
     description: 'Institutional excellence for corporate and prestige law.',

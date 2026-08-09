@@ -101,6 +101,7 @@ function DashboardContent() {
   });
 
   useEffect(() => {
+    if (!searchParams) return;
     const showInfo = searchParams.get('showInfoModal');
     if (showInfo) {
       setShowInfoModal(true);
@@ -121,6 +122,7 @@ function DashboardContent() {
   const [activeDeployment, setActiveDeployment] = useState(false);
 
   useEffect(() => {
+    if (!searchParams) return;
     const isDeploying = searchParams.get('deploying');
     if (isDeploying === 'true') {
       setActiveDeployment(true);

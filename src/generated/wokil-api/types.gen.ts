@@ -43,6 +43,14 @@ export type PublicDirectoryResponse = {
     meta: PublicDirectoryMeta;
 };
 
+export type Theme = {
+    id: string;
+    name: string;
+    description: NullString;
+    thumbnail_url: NullString;
+    category: 'individual';
+};
+
 export type Submission = {
     id: number;
     form_id: number;
@@ -149,7 +157,7 @@ export type Site = {
     id: number;
     domain: string;
     reference: string;
-    status: 'deployed' | 'requested' | 'link_pending';
+    status: 'deployed' | 'requested' | 'link_pending' | 'failed';
     type: 'subdomain' | 'external';
     created_at: string;
     updated_at: string;
@@ -344,9 +352,9 @@ export type ListThemesError = ListThemesErrors[keyof ListThemesErrors];
 
 export type ListThemesResponses = {
     /**
-     * Theme ids (null when none found)
+     * Active themes, ordered by sort_order (null when none found)
      */
-    200: Array<string> | null;
+    200: Array<Theme> | null;
 };
 
 export type ListThemesResponse = ListThemesResponses[keyof ListThemesResponses];
@@ -743,6 +751,10 @@ export type VerifyDnsErrors = {
      */
     401: string;
     /**
+     * Rate limited; retry after the interval in the Retry-After header
+     */
+    429: string;
+    /**
      * Internal server error
      */
     500: string;
@@ -791,35 +803,6 @@ export type CheckDomainAvailabilityResponses = {
 };
 
 export type CheckDomainAvailabilityResponse = CheckDomainAvailabilityResponses[keyof CheckDomainAvailabilityResponses];
-
-export type PreviewSiteData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/sites/preview';
-};
-
-export type PreviewSiteErrors = {
-    /**
-     * Missing or invalid bearer token
-     */
-    401: string;
-    /**
-     * Internal server error
-     */
-    500: string;
-};
-
-export type PreviewSiteError = PreviewSiteErrors[keyof PreviewSiteErrors];
-
-export type PreviewSiteResponses = {
-    /**
-     * Rendered HTML
-     */
-    200: string;
-};
-
-export type PreviewSiteResponse = PreviewSiteResponses[keyof PreviewSiteResponses];
 
 export type DeploySiteData = {
     body?: never;

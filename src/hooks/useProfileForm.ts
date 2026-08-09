@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { LawyerProfile } from '@/types/lawyer';
-import { getProfile, saveProfile, deploySite, previewSite } from '@/generated/wokil-api';
+import { getProfile, saveProfile, deploySite } from '@/generated/wokil-api';
 import { useToast } from '@/hooks/use-toast';
 import { toLawyerProfile } from '@/lib/lawyer-profile-adapter';
 
@@ -190,15 +190,6 @@ export function useProfileForm() {
     }
   }, [profile, toast]);
 
-  const fetchPreview = useCallback(async () => {
-    try {
-      return (await previewSite({ throwOnError: true })).data;
-    } catch (err) {
-      console.error("Failed to fetch preview:", err);
-      return "";
-    }
-  }, []);
-
   const resetProfile = useCallback(() => {
     setProfile({
       id: profile.id, // Keep the same ID so we overwrite the same record if saved
@@ -247,7 +238,6 @@ export function useProfileForm() {
     prevStep,
     goToStep,
     publishProfile,
-    fetchPreview,
     saveProfileData,
     setProfile,
     resetProfile,
