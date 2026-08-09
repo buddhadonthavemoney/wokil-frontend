@@ -1,5 +1,5 @@
 import { LawyerProfile } from '@/types/lawyer';
-import { Phone, Mail, MapPin, Clock, Globe, Linkedin, Scale, UserCheck, MessageCircle, Wallet } from 'lucide-react';
+import { Phone, Mail, MapPin, Clock, Globe, Linkedin, Scale, UserCheck, MessageCircle, Wallet, Menu } from 'lucide-react';
 
 interface ClassicThemeProps {
   profile: LawyerProfile;
@@ -73,9 +73,9 @@ export function ClassicTheme({ profile }: ClassicThemeProps) {
       {/* Nav */}
       <nav className="sticky top-0 z-50 bg-[#1B2B44]/95 backdrop-blur-md border-b border-white/5">
         <div className="container mx-auto px-6 h-16 flex items-center justify-between gap-6">
-          <a href="#top" className="flex items-center gap-2 font-heading font-bold text-white tracking-tight shrink-0">
-            <Scale className="w-5 h-5 text-[#C5A059]" />
-            <span className="truncate max-w-[40vw] @md:max-w-none">{lawFirmName || fullName}</span>
+          <a href="#top" className="flex items-center gap-2 min-w-0 font-heading font-bold text-white tracking-tight">
+            <Scale className="w-5 h-5 text-[#C5A059] shrink-0" />
+            <span className="truncate">{lawFirmName || fullName}</span>
           </a>
           <div className="hidden @lg:flex items-center gap-8 text-sm font-medium text-white/60">
             <a href="#about" className="hover:text-white transition-colors">About</a>
@@ -83,17 +83,31 @@ export function ClassicTheme({ profile }: ClassicThemeProps) {
             <a href="#why" className="hover:text-white transition-colors">Why Work With Me</a>
             <a href="#faq" className="hover:text-white transition-colors">FAQ</a>
           </div>
-          <a href="#contact" className="px-4 @md:px-5 py-2.5 bg-[#C5A059] hover:bg-[#B18F4A] rounded-lg text-sm font-bold text-[#1B2B44] transition-colors shrink-0">
+          <a href="#contact" className="hidden @lg:block px-4 @md:px-5 py-2.5 bg-[#C5A059] hover:bg-[#B18F4A] rounded-lg text-sm font-bold text-[#1B2B44] transition-colors shrink-0">
             Request Consultation
           </a>
+          <details className="@lg:hidden relative shrink-0">
+            <summary className="flex items-center justify-center w-9 h-9 rounded-lg text-white list-none cursor-pointer [&::-webkit-details-marker]:hidden">
+              <Menu className="w-5 h-5" />
+            </summary>
+            <div className="absolute right-0 top-full mt-2 w-56 bg-[#1B2B44] border border-white/10 rounded-xl shadow-2xl p-4 flex flex-col gap-3 text-sm font-medium text-white/70 z-50">
+              <a href="#about" className="hover:text-white transition-colors">About</a>
+              <a href="#practice-areas" className="hover:text-white transition-colors">Areas of Expertise</a>
+              <a href="#why" className="hover:text-white transition-colors">Why Work With Me</a>
+              <a href="#faq" className="hover:text-white transition-colors">FAQ</a>
+              <a href="#contact" className="mt-1 px-4 py-2.5 bg-[#C5A059] hover:bg-[#B18F4A] rounded-lg text-sm font-bold text-[#1B2B44] text-center transition-colors">
+                Request Consultation
+              </a>
+            </div>
+          </details>
         </div>
       </nav>
 
       {/* Hero Section */}
       <header id="top" className="bg-[#1B2B44] text-white relative overflow-hidden scroll-mt-16">
         <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]" />
-        <div className="container mx-auto px-6 py-20 @md:py-32 relative z-10">
-          <div className="flex flex-col @md:flex-row items-center gap-12 max-w-6xl mx-auto">
+        <div className="container mx-auto px-6 py-14 @md:py-32 relative z-10">
+          <div className="flex flex-col @md:flex-row items-center gap-8 @md:gap-12 max-w-6xl mx-auto">
             <div className="relative group">
               <div className="absolute -inset-1 bg-[#C5A059] rounded-full blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200" />
               {profilePhoto ? (
@@ -110,11 +124,11 @@ export function ClassicTheme({ profile }: ClassicThemeProps) {
             </div>
 
             <div className="text-center @md:text-left space-y-4">
-              <h1 className="font-heading text-5xl @md:text-7xl font-bold tracking-tight">
+              <h1 className="font-heading text-3xl @sm:text-4xl @md:text-6xl @lg:text-7xl font-bold tracking-tight">
                 {fullName}
               </h1>
               <div className="flex flex-col @md:flex-row @md:items-center gap-2 @md:gap-4">
-                <span className="text-[#C5A059] text-2xl font-medium font-heading">
+                <span className="text-[#C5A059] text-lg @sm:text-xl @md:text-2xl font-medium font-heading">
                   {professionalTitle}
                 </span>
                 {lawFirmName && (
@@ -135,7 +149,7 @@ export function ClassicTheme({ profile }: ClassicThemeProps) {
       <main className="container mx-auto px-6 py-20">
         <div className="grid @lg:grid-cols-12 gap-12 max-w-6xl mx-auto">
           {/* Main Content */}
-          <div className="@lg:col-span-8 space-y-12">
+          <div className="min-w-0 @lg:col-span-8 space-y-12">
             {/* About */}
             <section data-reveal id="about" className="scroll-mt-24 bg-white rounded-2xl p-10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-[#F0F0F0]">
               <h2 className="font-heading text-3xl font-bold text-[#1B2B44] mb-8 flex items-center gap-4">
@@ -245,7 +259,7 @@ export function ClassicTheme({ profile }: ClassicThemeProps) {
           </div>
 
           {/* Sidebar */}
-          <aside className="@lg:col-span-4 space-y-8">
+          <aside className="min-w-0 @lg:col-span-4 space-y-8">
             {/* Contact Card */}
             <div data-reveal id="contact" className="scroll-mt-24 bg-[#1B2B44] rounded-2xl p-8 shadow-2xl text-white">
               <h3 className="font-heading text-xl font-bold mb-8 text-[#C5A059] uppercase tracking-widest border-b border-white/10 pb-4">
