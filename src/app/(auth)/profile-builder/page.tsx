@@ -185,7 +185,7 @@ export default function ProfileBuilder() {
               onStepClick={goToStep}
             />
 
-            <div className="bg-card border-none rounded-xl p-6 md:p-8 shadow-premium animate-fade-in relative overflow-hidden min-h-[400px] max-h-[600px] flex flex-col">
+            <div className="bg-card border-none rounded-xl p-6 md:p-8 shadow-premium animate-fade-in relative overflow-hidden min-h-[400px] max-h-[calc(100vh-8rem)] flex flex-col">
               <div className="flex items-center justify-end gap-3 mb-4 shrink-0">
               <Button
                 variant="ghost"
@@ -208,11 +208,11 @@ export default function ProfileBuilder() {
                 Clear
               </Button>
             </div>
-            <div className="relative overflow-y-auto flex-1 no-scrollbar px-1.5">
+            <div className="relative overflow-y-auto flex-1 px-1.5">
               {renderCurrentStep()}
             </div>
 
-            <div className="mt-8 pt-6 border-t border-border/50 shrink-0">
+            <div className="shrink-0">
               <FormNavigation
                 currentStep={currentStep}
                 totalSteps={totalSteps}

@@ -95,30 +95,30 @@ export function ExecutiveTheme({ profile }: ExecutiveThemeProps) {
             <header id="top" className="bg-white border-b border-slate-200 scroll-mt-16">
                 <div className="container mx-auto px-6 py-12 @md:py-20">
                     <div className="flex flex-col @md:flex-row gap-10 @md:gap-16 items-center max-w-6xl mx-auto">
-                        <div className="flex-1 space-y-8 animate-in fade-in slide-in-from-left duration-700">
-                            <div className="space-y-4">
-                                <h2 className="text-blue-700 font-heading font-bold uppercase tracking-[0.25em] text-sm">
+                        <div className="flex-1 space-y-6 @md:space-y-8 text-center @md:text-left animate-in fade-in slide-in-from-left duration-700">
+                            <div className="space-y-3 @md:space-y-4">
+                                <h2 className="text-blue-700 font-heading font-bold uppercase tracking-[0.25em] text-xs @md:text-sm">
                                     {lawFirmName}
                                 </h2>
                                 <h1 className="text-3xl @sm:text-4xl @md:text-6xl @lg:text-7xl font-heading font-extrabold text-slate-900 tracking-tight leading-none">
                                     {fullName}
                                 </h1>
-                                <p className="text-lg @sm:text-xl @md:text-2xl text-slate-500 font-light max-w-2xl">
+                                <p className="text-base @sm:text-lg @md:text-2xl text-slate-500 font-light @md:max-w-2xl">
                                     {professionalTitle}
                                 </p>
                             </div>
 
-                            <div className="flex flex-wrap gap-4">
-                                <a href={`tel:${phoneNumber}`} className="px-10 py-4 bg-slate-900 text-white rounded-lg font-bold hover:bg-blue-700 transition-all shadow-xl shadow-slate-900/10">
+                            <div className="flex flex-wrap gap-3 @md:gap-4 justify-center @md:justify-start">
+                                <a href={`tel:${phoneNumber}`} className="px-6 @md:px-10 py-3 @md:py-4 bg-slate-900 text-white rounded-lg font-bold text-sm @md:text-base hover:bg-blue-700 transition-all shadow-xl shadow-slate-900/10">
                                     Request Consultation
                                 </a>
-                                <a href={`mailto:${email}`} className="px-10 py-4 border-2 border-slate-200 rounded-lg font-bold text-slate-700 hover:border-blue-700 hover:text-blue-700 transition-all">
+                                <a href={`mailto:${email}`} className="px-6 @md:px-10 py-3 @md:py-4 border-2 border-slate-200 rounded-lg font-bold text-sm @md:text-base text-slate-700 hover:border-blue-700 hover:text-blue-700 transition-all">
                                     Direct Correspondence
                                 </a>
                             </div>
                         </div>
 
-                        <div className="w-full @md:w-96 animate-in fade-in zoom-in duration-700">
+                        <div className="w-40 @sm:w-52 mx-auto @md:w-96 @md:mx-0 animate-in fade-in zoom-in duration-700">
                             <div className="relative group">
                                 <div className="absolute inset-0 bg-blue-700/5 rounded-2xl transform translate-x-4 translate-y-4 -z-10 transition-transform group-hover:translate-x-6 group-hover:translate-y-6" />
                                 {profilePhoto ? (
@@ -129,7 +129,7 @@ export function ExecutiveTheme({ profile }: ExecutiveThemeProps) {
                                     />
                                 ) : (
                                     <div className="w-full aspect-[4/5] bg-slate-200 rounded-2xl flex items-center justify-center shadow-2xl border border-white">
-                                        <Briefcase className="w-24 h-24 text-slate-400" />
+                                        <Briefcase className="w-12 h-12 @sm:w-16 @sm:h-16 @md:w-24 @md:h-24 text-slate-400" />
                                     </div>
                                 )}
                             </div>

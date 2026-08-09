@@ -114,11 +114,11 @@ export function ClassicTheme({ profile }: ClassicThemeProps) {
                 <img
                   src={profilePhoto}
                   alt={fullName}
-                  className="w-40 h-40 @md:w-56 @md:h-56 rounded-full object-cover border-4 border-[#C5A059] shadow-2xl relative"
+                  className="w-24 h-24 @sm:w-32 @sm:h-32 @md:w-56 @md:h-56 rounded-full object-cover border-4 border-[#C5A059] shadow-2xl relative"
                 />
               ) : (
-                <div className="w-40 h-40 @md:w-56 @md:h-56 rounded-full bg-[#2A3B54] flex items-center justify-center border-4 border-[#C5A059] shadow-2xl relative">
-                  <Scale className="w-20 h-20 text-[#C5A059]" />
+                <div className="w-24 h-24 @sm:w-32 @sm:h-32 @md:w-56 @md:h-56 rounded-full bg-[#2A3B54] flex items-center justify-center border-4 border-[#C5A059] shadow-2xl relative">
+                  <Scale className="w-12 h-12 @sm:w-16 @sm:h-16 @md:w-20 @md:h-20 text-[#C5A059]" />
                 </div>
               )}
             </div>
@@ -134,11 +134,11 @@ export function ClassicTheme({ profile }: ClassicThemeProps) {
                 {lawFirmName && (
                   <>
                     <span className="hidden @md:block w-1.5 h-1.5 rounded-full bg-white/20" />
-                    <span className="text-white/80 text-xl font-light italic">{lawFirmName}</span>
+                    <span className="text-white/80 text-base @sm:text-lg @md:text-xl font-light italic">{lawFirmName}</span>
                   </>
                 )}
               </div>
-              <p className="text-white/60 text-lg uppercase tracking-[0.2em] font-medium pt-2">
+              <p className="text-white/60 text-xs @sm:text-sm @md:text-lg uppercase tracking-[0.2em] font-medium pt-2">
                 {yearsOfExperience}+ Years of Practice
               </p>
             </div>
