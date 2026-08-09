@@ -14,11 +14,12 @@ import {
     Search,
     Phone,
     MapPin,
+    BookOpen,
 } from 'lucide-react';
 import { googleLogin } from '@/generated/wokil-api';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { PublicDirectoryResponse } from '@/generated/wokil-api';
 import { StructuredData } from '@/components/SEO/StructuredData';
 
@@ -36,12 +37,31 @@ const researchTopics = [
     },
 ];
 
+const websiteThemes = [
+    { bg: '#FDFCFB', accent: '#1B2B44', selected: false },
+    { bg: '#FDFBF7', accent: '#D4A373', selected: true },
+    { bg: '#F8FAFC', accent: '#1E40AF', selected: false },
+];
+
 const courtCalendarHighlights = [
     'Hearing Date Tracking',
     'Judge & Courtroom Assignments',
     'Calendar Sync (Google/Outlook)',
     'Deadlines & Reminders',
 ];
+
+const courtCalendarWeekdays = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+
+const courtCalendarDays = Array.from({ length: 42 }, (_, i) => {
+    const day = i - 4;
+    return day >= 1 && day <= 31 ? day : null;
+});
+
+const courtCalendarEvents: Record<number, { case: string; time: string }> = {
+    11: { case: 'State v. Sharma — Hearing', time: '10:30 AM' },
+    13: { case: 'Property Dispute — Filing', time: '5:00 PM' },
+    15: { case: 'Contract Review — Ch. 4', time: '2:00 PM' },
+};
 
 const businessCardHighlights = [
     'Instant vCard sharing and digital profile synchronization',
@@ -56,9 +76,45 @@ const backofficeHighlights = [
     'Client portal and secure messaging',
 ];
 
+function CountUpStat({ label, value }: { label: string; value: number }) {
+    const [count, setCount] = useState(value);
+    const frameRef = useRef<number | undefined>(undefined);
+
+    const handleEnter = () => {
+        const start = performance.now();
+        const duration = 800;
+        setCount(0);
+        const tick = (now: number) => {
+            const progress = Math.min((now - start) / duration, 1);
+            setCount(Math.round(value * (1 - Math.pow(1 - progress, 3))));
+            if (progress < 1) frameRef.current = requestAnimationFrame(tick);
+        };
+        frameRef.current = requestAnimationFrame(tick);
+    };
+
+    const handleLeave = () => {
+        if (frameRef.current) cancelAnimationFrame(frameRef.current);
+        setCount(value);
+    };
+
+    return (
+        <div
+            className="flex-1 p-4 rounded-xl bg-muted border border-border transition-transform duration-300 ease-out hover:scale-105 hover:z-10"
+            onMouseEnter={handleEnter}
+            onMouseLeave={handleLeave}
+        >
+            <div className="text-muted-foreground text-xs uppercase mb-1">{label}</div>
+            <div className="text-primary text-2xl font-heading font-semibold">{count.toLocaleString()}</div>
+        </div>
+    );
+}
+
 export function HomeClient({ professionals }: HomeClientProps) {
     const { toast } = useToast();
     const router = useRouter();
+    const defaultThemeIndex = websiteThemes.findIndex((t) => t.selected);
+    const [hoveredThemeIndex, setHoveredThemeIndex] = useState(defaultThemeIndex);
+    const activeTheme = websiteThemes[hoveredThemeIndex];
 
     useEffect(() => {
         if (typeof window !== 'undefined' && localStorage.getItem('token')) {
@@ -144,28 +200,6 @@ export function HomeClient({ professionals }: HomeClientProps) {
                             </p>
                         )}
                     </div>
-
-                    {/* Hero mockup */}
-                    <div className="relative w-full max-w-[1200px] mx-auto mt-20 rounded-xl border border-border bg-card p-3 shadow-card">
-                        <div className="w-full aspect-[16/9] rounded-lg bg-muted border border-border p-8 flex flex-col gap-6">
-                            <div className="flex items-center gap-4">
-                                <div className="w-16 h-16 rounded-full bg-muted-foreground/10 animate-pulse" />
-                                <div className="space-y-2 flex-1 max-w-xs">
-                                    <div className="h-4 w-1/2 bg-muted-foreground/10 rounded animate-pulse" />
-                                    <div className="h-3 w-1/3 bg-muted-foreground/10 rounded animate-pulse" />
-                                </div>
-                            </div>
-                            <div className="grid grid-cols-3 gap-6 flex-1">
-                                {[0, 1, 2].map((i) => (
-                                    <div key={i} className="rounded-lg bg-card border border-border p-4 space-y-3">
-                                        <div className="h-3 w-2/3 bg-muted-foreground/10 rounded animate-pulse" />
-                                        <div className="h-2 w-full bg-muted-foreground/10 rounded animate-pulse" />
-                                        <div className="h-2 w-5/6 bg-muted-foreground/10 rounded animate-pulse" />
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
                 </section>
 
                 {/* 1. Build Your Website in Minutes */}
@@ -189,32 +223,54 @@ export function HomeClient({ professionals }: HomeClientProps) {
                             </ul>
                         </div>
                         <div className="w-full lg:w-1/2">
-                            <div className="relative w-full aspect-[4/3] rounded-2xl border border-border bg-card p-6 shadow-card flex flex-col gap-4">
+                            <div className="group relative w-full aspect-[4/3] rounded-2xl border border-border bg-card p-6 shadow-card flex flex-col gap-4">
                                 <div className="flex gap-4">
-                                    <div className="w-1/3 h-24 bg-muted rounded-lg border border-border relative overflow-hidden">
-                                        <div className="absolute top-0 w-full h-4 bg-primary/10" />
-                                    </div>
-                                    <div className="w-1/3 h-24 bg-muted rounded-lg border-2 border-primary relative overflow-hidden">
-                                        <div className="absolute top-0 w-full h-4 bg-primary" />
-                                        <div className="absolute bottom-2 right-2 w-4 h-4 rounded-full bg-accent flex items-center justify-center">
-                                            <CheckCircle2 className="w-2.5 h-2.5 text-white" />
+                                    {websiteThemes.map((theme, i) => (
+                                        <div
+                                            key={i}
+                                            onMouseEnter={() => setHoveredThemeIndex(i)}
+                                            onMouseLeave={() => setHoveredThemeIndex(defaultThemeIndex)}
+                                            className="w-1/3 h-24 rounded-lg border relative overflow-hidden transition-transform duration-300 ease-out hover:scale-110 hover:z-10"
+                                            style={{ background: theme.bg, borderColor: theme.selected ? theme.accent : undefined, borderWidth: theme.selected ? 2 : 1 }}
+                                        >
+                                            <div className="absolute top-0 w-full h-4" style={{ background: theme.accent }} />
+                                            <div className="absolute inset-x-2 top-8 h-2 rounded-sm opacity-20" style={{ background: theme.accent }} />
+                                            <div className="absolute inset-x-4 top-12 h-1.5 rounded-sm opacity-10" style={{ background: theme.accent }} />
+                                            {theme.selected && (
+                                                <div className="absolute bottom-2 right-2 w-4 h-4 rounded-full bg-accent flex items-center justify-center">
+                                                    <CheckCircle2 className="w-2.5 h-2.5 text-white" />
+                                                </div>
+                                            )}
                                         </div>
-                                    </div>
-                                    <div className="w-1/3 h-24 bg-muted rounded-lg border border-border relative overflow-hidden">
-                                        <div className="absolute top-0 left-0 w-8 h-full bg-primary/10" />
-                                    </div>
+                                    ))}
                                 </div>
-                                <div className="flex-1 w-full bg-background rounded-lg border border-border overflow-hidden flex flex-col">
+                                <div
+                                    className="flex-1 w-full rounded-lg border border-border overflow-hidden flex flex-col transition-colors duration-500"
+                                    style={{ background: activeTheme.bg }}
+                                >
                                     <div className="h-8 w-full bg-muted border-b border-border flex items-center px-4 gap-2">
                                         <div className="w-2 h-2 rounded-full bg-destructive/50" />
                                         <div className="w-2 h-2 rounded-full bg-secondary" />
                                         <div className="w-2 h-2 rounded-full bg-accent/50" />
                                         <div className="ml-4 w-1/2 h-4 bg-card rounded-sm" />
                                     </div>
-                                    <div className="flex-1 p-4 flex flex-col gap-3">
-                                        <div className="w-1/3 h-4 bg-primary rounded-sm" />
-                                        <div className="w-full h-2 bg-muted-foreground/15 rounded-sm" />
-                                        <div className="w-5/6 h-2 bg-muted-foreground/15 rounded-sm" />
+                                    <div className="flex-1 flex flex-col items-center justify-center gap-2 px-4">
+                                        <div
+                                            style={{ animationDelay: '0ms', borderColor: activeTheme.accent, backgroundColor: `${activeTheme.accent}1A` }}
+                                            className="w-8 h-8 rounded-full border mb-1 transition-colors duration-500 group-hover:animate-fade-in"
+                                        />
+                                        <div
+                                            style={{ animationDelay: '80ms', backgroundColor: activeTheme.accent }}
+                                            className="w-1/2 h-4 rounded-sm transition-colors duration-500 group-hover:animate-fade-in"
+                                        />
+                                        <div
+                                            style={{ animationDelay: '160ms', backgroundColor: `${activeTheme.accent}80` }}
+                                            className="w-1/3 h-2 rounded-sm transition-colors duration-500 group-hover:animate-fade-in"
+                                        />
+                                        <div
+                                            style={{ animationDelay: '240ms', backgroundColor: activeTheme.accent }}
+                                            className="w-24 h-6 rounded-full mt-2 transition-colors duration-500 group-hover:animate-fade-in"
+                                        />
                                     </div>
                                 </div>
                             </div>
@@ -243,27 +299,44 @@ export function HomeClient({ professionals }: HomeClientProps) {
                             </ul>
                         </div>
                         <div className="w-full lg:w-1/2">
-                            <div className="relative w-full aspect-[4/3] rounded-2xl border border-border bg-card p-6 shadow-card flex flex-col">
+                            <div className="group relative w-full aspect-[4/3] rounded-2xl border border-border bg-card p-6 shadow-card flex flex-col">
                                 <div className="flex gap-4 mb-6">
-                                    <div className="flex-1 p-4 rounded-xl bg-muted border border-border">
-                                        <div className="text-muted-foreground text-xs uppercase mb-1">Total Visitors</div>
-                                        <div className="text-primary text-2xl font-heading font-semibold">2,481</div>
-                                    </div>
-                                    <div className="flex-1 p-4 rounded-xl bg-muted border border-border">
-                                        <div className="text-muted-foreground text-xs uppercase mb-1">Page Views</div>
-                                        <div className="text-primary text-2xl font-heading font-semibold">8,192</div>
-                                    </div>
+                                    <CountUpStat label="Total Views" value={2481} />
+                                    <CountUpStat label="Unique Visitors" value={1204} />
                                 </div>
-                                <div className="flex-1 bg-background rounded-xl border border-border p-4 flex items-end gap-2 relative overflow-hidden">
-                                    <div className="absolute top-4 left-4 text-muted-foreground text-xs uppercase">Traffic Overview</div>
-                                    <div className="w-full h-full flex items-end gap-2 pt-10">
-                                        {[30, 50, 40, 80, 60, 90, 45, 100, 70, 55].map((h, i) => (
-                                            <div
-                                                key={i}
-                                                className={`flex-1 rounded-t-sm ${h === 100 ? 'bg-accent shadow-[0_0_10px_rgba(197,160,89,0.5)]' : h === 80 ? 'bg-accent/60' : 'bg-primary/50'}`}
-                                                style={{ height: `${h}%` }}
+                                <div className="flex-1 bg-background rounded-xl border border-border p-4 flex gap-4 relative overflow-hidden">
+                                    <div className="flex-1 flex flex-col">
+                                        <div className="text-muted-foreground text-xs uppercase mb-2">Traffic Overview</div>
+                                        <svg viewBox="0 0 200 100" preserveAspectRatio="none" className="flex-1 w-full">
+                                            <defs>
+                                                <linearGradient id="homeTrafficFill" x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="0%" stopColor="var(--color-accent)" stopOpacity="0.35" />
+                                                    <stop offset="100%" stopColor="var(--color-accent)" stopOpacity="0" />
+                                                </linearGradient>
+                                            </defs>
+                                            <polyline
+                                                points="0,70 25,55 50,60 75,30 100,42 125,15 150,28 175,10 200,20"
+                                                fill="none"
+                                                stroke="var(--color-accent)"
+                                                strokeWidth="3"
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                style={{ strokeDasharray: 250 }}
+                                                className="group-hover:animate-draw-line"
                                             />
-                                        ))}
+                                            <polygon
+                                                points="0,70 25,55 50,60 75,30 100,42 125,15 150,28 175,10 200,20 200,100 0,100"
+                                                fill="url(#homeTrafficFill)"
+                                            />
+                                        </svg>
+                                    </div>
+                                    <div className="w-20 shrink-0 flex flex-col items-center justify-center gap-2">
+                                        <svg viewBox="0 0 36 36" className="w-16 h-16 rotate-[-90deg] transition-transform duration-700 ease-out group-hover:rotate-[270deg]">
+                                            <circle cx="18" cy="18" r="15.5" fill="none" stroke="var(--color-muted)" strokeWidth="5" />
+                                            <circle cx="18" cy="18" r="15.5" fill="none" stroke="var(--color-primary)" strokeWidth="5" strokeDasharray="97.4" strokeDashoffset="35" strokeLinecap="round" />
+                                            <circle cx="18" cy="18" r="15.5" fill="none" stroke="var(--color-accent)" strokeWidth="5" strokeDasharray="97.4" strokeDashoffset="72" strokeLinecap="round" />
+                                        </svg>
+                                        <span className="text-[9px] text-muted-foreground uppercase tracking-widest text-center">Sources</span>
                                     </div>
                                 </div>
                             </div>
@@ -278,7 +351,12 @@ export function HomeClient({ professionals }: HomeClientProps) {
                             <div className="w-12 h-12 rounded-lg bg-primary flex items-center justify-center text-primary-foreground shadow-sm">
                                 <Gavel className="w-5 h-5" />
                             </div>
-                            <h2 className="heading-section">Intelligent Legal Research Hub</h2>
+                            <div className="flex items-center gap-3">
+                                <h2 className="heading-section">Intelligent Legal Research Hub</h2>
+                                <span className="px-3 py-1 rounded-full bg-accent/10 border border-accent/30 text-accent text-[10px] font-semibold uppercase tracking-widest">
+                                    Coming Soon
+                                </span>
+                            </div>
                             <p className="text-lg text-muted-foreground leading-relaxed">
                                 Navigate Nepal&apos;s legal landscape with unprecedented speed. Our proprietary RAG (Retrieval-Augmented Generation) system allows natural language querying across critical legal texts.
                             </p>
@@ -292,22 +370,39 @@ export function HomeClient({ professionals }: HomeClientProps) {
                             </div>
                         </div>
                         <div className="w-full lg:w-1/2">
-                            <div className="relative w-full aspect-[4/3] rounded-2xl border border-border bg-card p-6 shadow-card flex flex-col">
-                                <div className="w-full h-12 rounded-lg bg-muted flex items-center px-4 mb-6 border border-border">
+                            <div className="group relative w-full aspect-[4/3] rounded-2xl border border-border bg-card p-6 shadow-card flex flex-col">
+                                <div className="w-full h-12 rounded-lg bg-background flex items-center px-4 mb-3 border border-border">
                                     <Search className="w-4 h-4 text-muted-foreground mr-3 shrink-0" />
-                                    <span className="text-sm text-muted-foreground truncate">Search &ldquo;Property rights under Muluki Civil Code...&rdquo;</span>
+                                    <span className="text-sm text-muted-foreground truncate inline-block overflow-hidden whitespace-nowrap align-middle w-full group-hover:animate-typewriter">Query the Constitution, Civil Code, or specific precedents...</span>
                                 </div>
-                                <div className="flex-1 flex flex-col gap-4">
-                                    <div className="w-full p-4 rounded-lg bg-secondary/60 border border-border border-l-4 border-l-accent">
-                                        <div className="w-1/3 h-3 bg-primary/20 rounded mb-3" />
-                                        <div className="w-full h-2 bg-muted-foreground/15 rounded mb-2" />
-                                        <div className="w-5/6 h-2 bg-muted-foreground/15 rounded" />
-                                    </div>
-                                    <div className="w-full p-4 rounded-lg bg-background border border-border opacity-70">
-                                        <div className="w-1/4 h-3 bg-primary/20 rounded mb-3" />
-                                        <div className="w-full h-2 bg-muted-foreground/15 rounded mb-2" />
-                                        <div className="w-3/4 h-2 bg-muted-foreground/15 rounded" />
-                                    </div>
+                                <div className="flex flex-wrap gap-2 mb-6">
+                                    {['Fundamental Rights', 'Muluki Civil Code 2074', 'Cyber Crime'].map((chip, i) => (
+                                        <span
+                                            key={chip}
+                                            style={{ animationDelay: `${i * 100}ms` }}
+                                            className="px-3 py-1.5 rounded-full border border-border bg-background text-[11px] text-muted-foreground group-hover:animate-fade-in"
+                                        >
+                                            {chip}
+                                        </span>
+                                    ))}
+                                </div>
+                                <div className="flex-1 grid grid-cols-2 gap-3">
+                                    {[
+                                        { icon: BookOpen, label: 'Constitution of Nepal' },
+                                        { icon: Gavel, label: 'Civil Law (Muluki)' },
+                                    ].map(({ icon: Icon, label }, i) => (
+                                        <div
+                                            key={label}
+                                            style={{ animationDelay: `${i * 120}ms` }}
+                                            className="p-4 rounded-xl border border-border bg-secondary/40 flex flex-col gap-3 transition-transform duration-300 ease-out hover:scale-105 hover:z-10 group-hover:animate-fade-in"
+                                        >
+                                            <div className="w-9 h-9 rounded-lg bg-primary text-primary-foreground flex items-center justify-center">
+                                                <Icon className="w-4 h-4" />
+                                            </div>
+                                            <span className="text-xs font-heading font-semibold text-foreground">{label}</span>
+                                            <div className="w-full h-1.5 bg-muted-foreground/15 rounded mt-auto" />
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
                         </div>
@@ -340,23 +435,36 @@ export function HomeClient({ professionals }: HomeClientProps) {
                             </ul>
                         </div>
                         <div className="w-full lg:w-1/2">
-                            <div className="relative w-full aspect-[4/3] rounded-2xl border border-border bg-card shadow-card p-6 flex flex-col gap-4">
-                                {[
-                                    { label: 'Mon, Aug 11', case: 'State v. Sharma — Hearing', time: '10:30 AM' },
-                                    { label: 'Wed, Aug 13', case: 'Property Dispute — Filing Deadline', time: '5:00 PM' },
-                                    { label: 'Fri, Aug 15', case: 'Contract Review — Chamber No. 4', time: '2:00 PM' },
-                                ].map((item) => (
-                                    <div key={item.case} className="flex items-center gap-4 p-4 rounded-lg bg-secondary/40 border border-border">
-                                        <div className="w-11 h-11 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                                            <CalendarClock className="w-5 h-5" />
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-xs uppercase tracking-widest text-accent font-semibold">{item.label}</p>
-                                            <p className="text-sm text-foreground font-medium truncate">{item.case}</p>
-                                        </div>
-                                        <span className="text-xs text-muted-foreground shrink-0">{item.time}</span>
-                                    </div>
-                                ))}
+                            <div className="relative w-full aspect-[4/3] rounded-2xl border border-border bg-card shadow-card p-6 flex flex-col gap-3">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-sm font-heading font-semibold text-primary">August 2026</span>
+                                    <span className="flex items-center gap-1.5 text-[10px] text-muted-foreground uppercase tracking-widest">
+                                        <span className="w-2 h-2 rounded-full bg-primary" /> Hearing
+                                    </span>
+                                </div>
+                                <div className="grid grid-cols-7 gap-1">
+                                    {courtCalendarWeekdays.map((d, i) => (
+                                        <div key={i} className="text-center text-[10px] font-semibold text-muted-foreground uppercase">{d}</div>
+                                    ))}
+                                </div>
+                                <div className="grid grid-cols-7 gap-1 flex-1">
+                                    {courtCalendarDays.map((day, i) => {
+                                        const event = day ? courtCalendarEvents[day] : undefined;
+                                        return (
+                                            <div
+                                                key={i}
+                                                className={`group/day relative flex items-center justify-center rounded-lg text-xs transition-transform duration-300 ease-out ${day ? 'hover:scale-110 hover:z-10' : ''} ${event ? 'bg-primary text-primary-foreground font-semibold hover:animate-highlight-glow' : day ? 'text-foreground hover:bg-secondary/60' : ''}`}
+                                            >
+                                                {day}
+                                                {event && (
+                                                    <div className="pointer-events-none absolute bottom-full mb-1 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-primary text-primary-foreground text-[10px] px-2 py-1 opacity-0 scale-95 transition-all duration-200 group-hover/day:opacity-100 group-hover/day:scale-100 shadow-lg z-20">
+                                                        {event.case} · {event.time}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -382,31 +490,48 @@ export function HomeClient({ professionals }: HomeClientProps) {
                                 ))}
                             </ul>
                         </div>
-                        <div className="w-full lg:w-1/2 flex justify-center">
-                            <div className="relative">
-                                <div className="w-80 h-48 bg-primary rounded-xl shadow-card border border-white/10 relative overflow-hidden transform -rotate-2 transition-transform hover:rotate-0 duration-500">
-                                    <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent" />
-                                    <div className="relative p-6 flex flex-col justify-between h-full">
-                                        <div>
-                                            <div className="text-primary-foreground text-lg font-heading font-semibold">
-                                                Sarah Jenkins <span className="text-accent text-xs align-middle">Esq.</span>
+                        <div className="w-full lg:w-1/2">
+                            <div className="relative w-full aspect-[4/3] rounded-2xl border border-border bg-secondary/40 p-6 shadow-card flex flex-col justify-center items-center overflow-hidden">
+                                <div className="group cursor-pointer relative w-[340px] h-[210px] mx-auto" style={{ perspective: '1200px' }}>
+                                    {/* Rear card — QR / tap-to-share */}
+                                    <div className="absolute inset-0 z-0 translate-x-4 rotate-3 scale-90 bg-primary rounded-xl shadow-lg border border-white/10 flex flex-col items-center justify-center p-6 transition-all duration-700 ease-out group-hover:translate-x-24 group-hover:rotate-6 group-hover:scale-95">
+                                        <div className="w-24 h-24 bg-white border border-border rounded-lg p-2 flex items-center justify-center mb-4">
+                                            <div className="w-full h-full bg-primary flex flex-wrap gap-[2px] p-[2px]">
+                                                <div className="w-1/2 h-[48%] bg-white" />
+                                                <div className="w-[48%] h-[48%] bg-primary" />
+                                                <div className="w-[48%] h-[48%] bg-primary" />
+                                                <div className="w-1/2 h-[48%] bg-white" />
                                             </div>
-                                            <div className="text-primary-foreground/50 text-[10px] uppercase tracking-widest">Managing Partner</div>
-                                            <div className="w-6 h-px bg-accent mt-2" />
                                         </div>
-                                        <div className="flex justify-between items-end">
-                                            <div className="text-primary-foreground/70 text-[10px] space-y-1">
-                                                <div className="flex items-center gap-1"><Phone className="w-3 h-3 text-accent" /> (555) 019-8234</div>
-                                                <div className="flex items-center gap-1"><MapPin className="w-3 h-3 text-accent" /> Kathmandu, Nepal</div>
+                                        <div className="text-primary-foreground text-sm font-heading font-semibold text-center">Tap to Share</div>
+                                        <div className="text-accent text-xs text-center mt-1">wokil.com.np/sarah-j</div>
+                                    </div>
+                                    {/* Middle card — depth filler */}
+                                    <div className="absolute inset-0 z-10 translate-x-2 rotate-1 scale-95 opacity-80 mix-blend-multiply bg-primary rounded-xl shadow-xl border border-white/10 p-6 transition-all duration-700 ease-out group-hover:translate-x-6 group-hover:rotate-2 group-hover:scale-100">
+                                        <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent rounded-xl" />
+                                    </div>
+                                    {/* Front card — profile details */}
+                                    <div className="absolute inset-0 z-20 origin-left bg-primary rounded-xl shadow-2xl border border-white/10 flex flex-col justify-between p-6 transition-all duration-700 ease-out group-hover:-translate-x-12 group-hover:-rotate-3 group-hover:scale-105">
+                                        <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent rounded-xl" />
+                                        <div className="relative z-20">
+                                            <div className="text-primary-foreground text-xl font-heading font-semibold">
+                                                Sarah Jenkins <span className="text-accent text-sm align-middle">Esq.</span>
                                             </div>
-                                            <div className="flex flex-col items-center opacity-60">
-                                                <Nfc className="w-5 h-5 text-primary-foreground" />
-                                                <span className="text-primary-foreground text-[8px] tracking-widest">TAP</span>
+                                            <div className="text-primary-foreground/60 text-[10px] uppercase tracking-widest">Managing Partner</div>
+                                            <div className="w-8 h-0.5 bg-accent mt-3" />
+                                        </div>
+                                        <div className="relative z-20 flex justify-between items-end mt-8">
+                                            <div className="text-primary-foreground/80 text-[10px] space-y-1.5">
+                                                <div className="flex items-center gap-1.5"><Phone className="w-3 h-3 text-accent" /> (555) 019-8234</div>
+                                                <div className="flex items-center gap-1.5"><MapPin className="w-3 h-3 text-accent" /> Kathmandu, Nepal</div>
+                                            </div>
+                                            <div className="flex flex-col items-center opacity-80">
+                                                <Nfc className="w-6 h-6 text-primary-foreground" />
+                                                <span className="text-primary-foreground text-[8px] tracking-widest mt-1">TAP</span>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                                <div className="absolute -bottom-4 -right-4 w-80 h-48 bg-card rounded-xl shadow-lg border border-border -z-10 transform rotate-3 opacity-80" />
                             </div>
                         </div>
                     </div>
@@ -419,7 +544,12 @@ export function HomeClient({ professionals }: HomeClientProps) {
                             <div className="w-12 h-12 rounded-lg bg-primary flex items-center justify-center text-primary-foreground shadow-sm">
                                 <Briefcase className="w-5 h-5" />
                             </div>
-                            <h2 className="heading-section">Firm Backoffice Software</h2>
+                            <div className="flex items-center gap-3">
+                                <h2 className="heading-section">Firm Backoffice Software</h2>
+                                <span className="px-3 py-1 rounded-full bg-accent/10 border border-accent/30 text-accent text-[10px] font-semibold uppercase tracking-widest">
+                                    Coming Soon
+                                </span>
+                            </div>
                             <p className="text-lg text-muted-foreground leading-relaxed">
                                 Streamline your practice with comprehensive management tools designed for modern law firms. Manage cases, client billing, and document automation from a single secure platform.
                             </p>
@@ -433,20 +563,20 @@ export function HomeClient({ professionals }: HomeClientProps) {
                             </ul>
                         </div>
                         <div className="w-full lg:w-1/2">
-                            <div className="relative w-full aspect-[4/3] rounded-2xl border border-border bg-card p-6 shadow-card flex gap-4">
+                            <div className="group relative w-full aspect-[4/3] rounded-2xl border border-border bg-card p-6 shadow-card flex gap-4">
                                 <div className="w-1/4 h-full bg-muted rounded-lg border border-border flex flex-col p-3 gap-3">
-                                    <div className="w-full h-2 bg-primary/20 rounded" />
-                                    <div className="w-3/4 h-2 bg-primary/20 rounded" />
-                                    <div className="w-full h-2 bg-primary/20 rounded" />
-                                    <div className="w-1/2 h-2 bg-primary/20 rounded" />
+                                    <div style={{ animationDelay: '0ms' }} className="w-full h-2 bg-primary/20 rounded origin-left group-hover:animate-fade-in" />
+                                    <div style={{ animationDelay: '80ms' }} className="w-3/4 h-2 bg-primary/20 rounded origin-left group-hover:animate-fade-in" />
+                                    <div style={{ animationDelay: '160ms' }} className="w-full h-2 bg-primary/20 rounded origin-left group-hover:animate-fade-in" />
+                                    <div style={{ animationDelay: '240ms' }} className="w-1/2 h-2 bg-primary/20 rounded origin-left group-hover:animate-fade-in" />
                                 </div>
                                 <div className="w-3/4 flex flex-col gap-4">
                                     <div className="flex gap-4">
-                                        <div className="flex-1 h-20 bg-background border border-border rounded-lg p-3">
+                                        <div className="flex-1 h-20 bg-background border border-border rounded-lg p-3 transition-transform duration-300 ease-out hover:scale-105 hover:z-10">
                                             <div className="w-1/2 h-2 bg-muted-foreground/15 rounded mb-3" />
                                             <div className="w-1/4 h-6 bg-primary rounded" />
                                         </div>
-                                        <div className="flex-1 h-20 bg-background border border-border rounded-lg p-3">
+                                        <div className="flex-1 h-20 bg-background border border-border rounded-lg p-3 transition-transform duration-300 ease-out hover:scale-105 hover:z-10">
                                             <div className="w-1/2 h-2 bg-muted-foreground/15 rounded mb-3" />
                                             <div className="w-1/4 h-6 bg-accent rounded" />
                                         </div>
