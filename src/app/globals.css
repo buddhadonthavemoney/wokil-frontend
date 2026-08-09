@@ -41,6 +41,8 @@
   --animate-fade-in: fade-in 0.4s ease-out;
   --animate-bounce-horizontal: bounce-horizontal 1s ease-in-out infinite;
   --animate-highlight-glow: highlight-glow 2s ease-in-out infinite;
+  --animate-draw-line: draw-line 1.2s ease-out forwards;
+  --animate-typewriter: typewriter 1.4s steps(40, end) forwards;
 
   @keyframes accordion-down {
     from { height: 0; }
@@ -62,6 +64,14 @@
   @keyframes bounce-horizontal {
     0%, 100% { transform: translateX(0) translateY(-50%); }
     50% { transform: translateX(-10px) translateY(-50%); }
+  }
+  @keyframes draw-line {
+    from { stroke-dashoffset: 250; }
+    to { stroke-dashoffset: 0; }
+  }
+  @keyframes typewriter {
+    from { width: 0; }
+    to { width: 100%; }
   }
 }
 
@@ -136,6 +146,9 @@
   }
   .shadow-card {
     box-shadow: 0 2px 12px -2px hsl(215 50% 23% / 0.08);
+  }
+  .hover-pop {
+    @apply transition-transform duration-300 ease-out hover:z-10;
   }
   .no-scrollbar::-webkit-scrollbar {
     display: none;

@@ -1,5 +1,5 @@
 import { LawyerProfile } from '@/types/lawyer';
-import { Phone, Mail, MapPin, Clock, Globe, Linkedin, Shield, Award, Briefcase, Scale, UserCheck, MessageCircle, Wallet } from 'lucide-react';
+import { Phone, Mail, MapPin, Clock, Globe, Linkedin, Shield, Award, Briefcase, Scale, UserCheck, MessageCircle, Wallet, Menu } from 'lucide-react';
 
 interface ExecutiveThemeProps {
     profile: LawyerProfile;
@@ -61,9 +61,9 @@ export function ExecutiveTheme({ profile }: ExecutiveThemeProps) {
             {/* Nav */}
             <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-200">
                 <div className="container mx-auto px-6 h-16 flex items-center justify-between gap-6">
-                    <a href="#top" className="flex items-center gap-2 font-heading font-bold text-slate-900 tracking-tight shrink-0">
-                        <Scale className="w-5 h-5 text-blue-700" />
-                        <span className="truncate max-w-[40vw] @md:max-w-none">{lawFirmName}</span>
+                    <a href="#top" className="flex items-center gap-2 min-w-0 font-heading font-bold text-slate-900 tracking-tight">
+                        <Scale className="w-5 h-5 text-blue-700 shrink-0" />
+                        <span className="truncate">{lawFirmName}</span>
                     </a>
                     <div className="hidden @lg:flex items-center gap-8 text-sm font-medium text-slate-500">
                         <a href="#about" className="hover:text-slate-900 transition-colors">Executive Summary</a>
@@ -71,40 +71,54 @@ export function ExecutiveTheme({ profile }: ExecutiveThemeProps) {
                         <a href="#why" className="hover:text-slate-900 transition-colors">Why Work With Me</a>
                         <a href="#faq" className="hover:text-slate-900 transition-colors">FAQ</a>
                     </div>
-                    <a href="#contact" className="px-4 @md:px-5 py-2.5 bg-slate-900 hover:bg-blue-700 rounded-lg text-sm font-bold text-white transition-colors shrink-0">
+                    <a href="#contact" className="hidden @lg:block px-4 @md:px-5 py-2.5 bg-slate-900 hover:bg-blue-700 rounded-lg text-sm font-bold text-white transition-colors shrink-0">
                         Request Consultation
                     </a>
+                    <details className="@lg:hidden relative shrink-0">
+                        <summary className="flex items-center justify-center w-9 h-9 rounded-lg text-slate-900 list-none cursor-pointer [&::-webkit-details-marker]:hidden">
+                            <Menu className="w-5 h-5" />
+                        </summary>
+                        <div className="absolute right-0 top-full mt-2 w-56 bg-white border border-slate-200 rounded-lg shadow-2xl p-4 flex flex-col gap-3 text-sm font-medium text-slate-500 z-50">
+                            <a href="#about" className="hover:text-slate-900 transition-colors">Executive Summary</a>
+                            <a href="#practice-areas" className="hover:text-slate-900 transition-colors">Practice Areas</a>
+                            <a href="#why" className="hover:text-slate-900 transition-colors">Why Work With Me</a>
+                            <a href="#faq" className="hover:text-slate-900 transition-colors">FAQ</a>
+                            <a href="#contact" className="mt-1 px-4 py-2.5 bg-slate-900 hover:bg-blue-700 rounded-lg text-sm font-bold text-white text-center transition-colors">
+                                Request Consultation
+                            </a>
+                        </div>
+                    </details>
                 </div>
             </nav>
 
             {/* Hero Header */}
             <header id="top" className="bg-white border-b border-slate-200 scroll-mt-16">
-                <div className="container mx-auto px-6 py-20">
-                    <div className="flex flex-col @md:flex-row gap-16 items-center max-w-6xl mx-auto">
-                        <div className="flex-1 space-y-8 animate-in fade-in slide-in-from-left duration-700">
-                            <div className="space-y-4">
-                                <h2 className="text-blue-700 font-heading font-bold uppercase tracking-[0.25em] text-sm">
+                <div className="container mx-auto px-6 py-12 @md:py-20">
+                    <div className="flex flex-col @md:flex-row gap-10 @md:gap-16 items-center max-w-6xl mx-auto">
+                        <div className="flex-1 space-y-6 @md:space-y-8 text-center @md:text-left animate-in fade-in slide-in-from-left duration-700">
+                            <div className="space-y-3 @md:space-y-4">
+                                <h2 className="text-blue-700 font-heading font-bold uppercase tracking-[0.25em] text-xs @md:text-sm">
                                     {lawFirmName}
                                 </h2>
-                                <h1 className="text-5xl @md:text-7xl font-heading font-extrabold text-slate-900 tracking-tight leading-none">
+                                <h1 className="text-3xl @sm:text-4xl @md:text-6xl @lg:text-7xl font-heading font-extrabold text-slate-900 tracking-tight leading-none">
                                     {fullName}
                                 </h1>
-                                <p className="text-2xl text-slate-500 font-light max-w-2xl">
+                                <p className="text-base @sm:text-lg @md:text-2xl text-slate-500 font-light @md:max-w-2xl">
                                     {professionalTitle}
                                 </p>
                             </div>
 
-                            <div className="flex flex-wrap gap-4">
-                                <a href={`tel:${phoneNumber}`} className="px-10 py-4 bg-slate-900 text-white rounded-lg font-bold hover:bg-blue-700 transition-all shadow-xl shadow-slate-900/10">
+                            <div className="flex flex-wrap gap-3 @md:gap-4 justify-center @md:justify-start">
+                                <a href={`tel:${phoneNumber}`} className="px-6 @md:px-10 py-3 @md:py-4 bg-slate-900 text-white rounded-lg font-bold text-sm @md:text-base hover:bg-blue-700 transition-all shadow-xl shadow-slate-900/10">
                                     Request Consultation
                                 </a>
-                                <a href={`mailto:${email}`} className="px-10 py-4 border-2 border-slate-200 rounded-lg font-bold text-slate-700 hover:border-blue-700 hover:text-blue-700 transition-all">
+                                <a href={`mailto:${email}`} className="px-6 @md:px-10 py-3 @md:py-4 border-2 border-slate-200 rounded-lg font-bold text-sm @md:text-base text-slate-700 hover:border-blue-700 hover:text-blue-700 transition-all">
                                     Direct Correspondence
                                 </a>
                             </div>
                         </div>
 
-                        <div className="w-full @md:w-96 animate-in fade-in zoom-in duration-700">
+                        <div className="w-40 @sm:w-52 mx-auto @md:w-96 @md:mx-0 animate-in fade-in zoom-in duration-700">
                             <div className="relative group">
                                 <div className="absolute inset-0 bg-blue-700/5 rounded-2xl transform translate-x-4 translate-y-4 -z-10 transition-transform group-hover:translate-x-6 group-hover:translate-y-6" />
                                 {profilePhoto ? (
@@ -115,7 +129,7 @@ export function ExecutiveTheme({ profile }: ExecutiveThemeProps) {
                                     />
                                 ) : (
                                     <div className="w-full aspect-[4/5] bg-slate-200 rounded-2xl flex items-center justify-center shadow-2xl border border-white">
-                                        <Briefcase className="w-24 h-24 text-slate-400" />
+                                        <Briefcase className="w-12 h-12 @sm:w-16 @sm:h-16 @md:w-24 @md:h-24 text-slate-400" />
                                     </div>
                                 )}
                             </div>
@@ -127,7 +141,7 @@ export function ExecutiveTheme({ profile }: ExecutiveThemeProps) {
             <main className="container mx-auto px-6 py-24 max-w-6xl">
                 <div className="grid @lg:grid-cols-3 gap-16">
                     {/* Main Profile col */}
-                    <div className="@lg:col-span-2 space-y-24">
+                    <div className="min-w-0 @lg:col-span-2 space-y-24">
                         <section data-reveal id="about" className="scroll-mt-24 space-y-8">
                             <div className="flex items-center gap-4">
                                 <div className="w-12 h-1 bg-blue-700" />
@@ -211,7 +225,7 @@ export function ExecutiveTheme({ profile }: ExecutiveThemeProps) {
                     </div>
 
                     {/* Institutional Sidebar */}
-                    <aside className="space-y-10">
+                    <aside className="min-w-0 space-y-10">
                         <div data-reveal id="contact" className="scroll-mt-24 bg-white border-2 border-slate-900 p-8 rounded-2xl space-y-10 shadow-2xl">
                             <h4 className="font-heading font-bold text-xl uppercase tracking-widest border-b-2 border-slate-100 pb-4">
                                 Contact Office

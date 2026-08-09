@@ -185,7 +185,7 @@ export default function ProfileBuilder() {
               onStepClick={goToStep}
             />
 
-            <div className="bg-white border-none rounded-3xl p-6 md:p-8 shadow-premium animate-fade-in relative overflow-hidden min-h-[400px] max-h-[600px] flex flex-col">
+            <div className="bg-card border-none rounded-xl p-6 md:p-8 shadow-premium animate-fade-in relative overflow-hidden min-h-[400px] max-h-[calc(100vh-8rem)] flex flex-col">
               <div className="flex items-center justify-end gap-3 mb-4 shrink-0">
               <Button
                 variant="ghost"
@@ -208,11 +208,11 @@ export default function ProfileBuilder() {
                 Clear
               </Button>
             </div>
-            <div className="relative overflow-y-auto flex-1 no-scrollbar px-1.5">
+            <div className="relative overflow-y-auto flex-1 px-1.5">
               {renderCurrentStep()}
             </div>
 
-            <div className="mt-8 pt-6 border-t border-border/50 shrink-0">
+            <div className="shrink-0">
               <FormNavigation
                 currentStep={currentStep}
                 totalSteps={totalSteps}
@@ -282,9 +282,9 @@ export default function ProfileBuilder() {
               <div className="h-[46px] w-[3px] bg-gray-800 absolute -start-[17px] top-[178px] rounded-s-lg"></div>
               <div className="h-[64px] w-[3px] bg-gray-800 absolute -end-[17px] top-[142px] rounded-e-lg"></div>
               
-              <div className="rounded-[2rem] overflow-hidden w-full h-full bg-white dark:bg-gray-800 relative z-10">
+              <div className="rounded-[2rem] overflow-hidden w-full h-full bg-card dark:bg-gray-800 relative z-10">
                  {!hasBasicInfo ? (
-                   <div className="w-full h-full flex flex-col items-center justify-center bg-white p-8 text-center space-y-4 animate-fade-in">
+                   <div className="w-full h-full flex flex-col items-center justify-center bg-card p-8 text-center space-y-4 animate-fade-in">
                       <div className="w-16 h-16 bg-primary/5 rounded-2xl flex items-center justify-center mb-2">
                         <Sparkles className="w-8 h-8 text-primary opacity-40" />
                       </div>
