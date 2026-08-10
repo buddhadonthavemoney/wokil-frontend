@@ -150,6 +150,28 @@ export type Timeline = {
     experience?: Array<TimelineEntry>;
 };
 
+/**
+ * A heading plus a paragraph — one "Why Work With Me" reason or one "How It Works" step.
+ */
+export type ContentBlock = {
+    title: string;
+    description: string;
+};
+
+export type FaqItem = {
+    question: string;
+    answer: string;
+};
+
+/**
+ * Marketing copy the themes render in their "Why Work With Me", "How It Works" and FAQ sections. Every list is optional — the themes fall back to their own default copy when one is empty, so a profile that never sets this renders as it always did. Process-step numbers are not stored; the themes derive them from position.
+ */
+export type SiteContent = {
+    valuePoints?: Array<ContentBlock>;
+    processSteps?: Array<ContentBlock>;
+    faqs?: Array<FaqItem>;
+};
+
 export type LawyerProfile = {
     basicInformation?: BasicInformation;
     contactInformation?: ContactInformation;
@@ -159,6 +181,7 @@ export type LawyerProfile = {
     subdomainSelection?: SubdomainSelection;
     themeSelection?: ThemeSelection;
     timeline?: Timeline;
+    siteContent?: SiteContent;
     googleAnalyticsId?: string;
     isPublic?: boolean;
     /**
@@ -255,6 +278,7 @@ export type LawyerProfileWritable = {
     subdomainSelection?: SubdomainSelection;
     themeSelection?: ThemeSelection;
     timeline?: Timeline;
+    siteContent?: SiteContent;
     googleAnalyticsId?: string;
     isPublic?: boolean;
     showPicture?: boolean;
