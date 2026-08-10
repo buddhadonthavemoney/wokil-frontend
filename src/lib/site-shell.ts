@@ -180,6 +180,34 @@ export function buildShell({ bodyHtml, profile, css }: ShellOptions): string {
 
     <script>
       (function () {
+        // Collapse a [data-nav] bar to its hamburger the moment its row stops
+        // fitting, rather than at a guessed breakpoint: drop the flag, measure,
+        // re-apply. Long firm names are what actually blow the layout, and they
+        // vary per profile, so a fixed width can't get this right.
+        const navs = document.querySelectorAll("[data-nav]");
+        if (!navs.length) return;
+
+        const fit = (nav) => {
+          nav.removeAttribute("data-collapsed");
+          const row = nav.firstElementChild || nav;
+          if (row.scrollWidth > row.clientWidth + 1) nav.setAttribute("data-collapsed", "");
+        };
+        const fitAll = () => navs.forEach(fit);
+
+        fitAll();
+        if ("ResizeObserver" in window) {
+          const ro = new ResizeObserver(fitAll);
+          navs.forEach((nav) => ro.observe(nav));
+        } else {
+          window.addEventListener("resize", fitAll);
+        }
+        // Web fonts land after first paint and change the measured width.
+        if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitAll);
+      })();
+    </script>
+
+    <script>
+      (function () {
         const revealEls = document.querySelectorAll("[data-reveal]");
         if (!revealEls.length) return;
 

@@ -7,11 +7,13 @@ import { buildShell } from '@/lib/site-shell';
 import { ClassicTheme } from '@/components/preview/themes/ClassicTheme';
 import { ExecutiveTheme } from '@/components/preview/themes/ExecutiveTheme';
 import { LegalCraftTheme } from '@/components/preview/themes/LegalCraftTheme';
+import { CorporateEliteTheme } from '@/components/preview/themes/CorporateEliteTheme';
 
 const THEME_COMPONENTS: Record<string, (props: { profile: LawyerProfile }) => React.ReactElement> = {
   classic: ClassicTheme,
   executive: ExecutiveTheme,
   'legal-craft': LegalCraftTheme,
+  'corporate-elite': CorporateEliteTheme,
 };
 
 // Compiled once at frontend build time (pnpm run build:theme-css), read once at

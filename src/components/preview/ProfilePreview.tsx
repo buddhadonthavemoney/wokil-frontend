@@ -2,6 +2,7 @@ import { LawyerProfile } from '@/types/lawyer';
 import { ClassicTheme } from './themes/ClassicTheme';
 import { ExecutiveTheme } from './themes/ExecutiveTheme';
 import { LegalCraftTheme } from './themes/LegalCraftTheme';
+import { CorporateEliteTheme } from './themes/CorporateEliteTheme';
 import { ComponentType, useEffect, useRef } from 'react';
 
 interface ProfilePreviewProps {
@@ -13,6 +14,7 @@ const THEME_COMPONENTS: Record<string, ComponentType<{ profile: LawyerProfile }>
   classic: ClassicTheme,
   executive: ExecutiveTheme,
   'legal-craft': LegalCraftTheme,
+  'corporate-elite': CorporateEliteTheme,
 };
 
 // Renders the actual production theme component directly — no server round
@@ -59,6 +61,31 @@ export function ProfilePreview({ profile, zoom = 1 }: ProfilePreviewProps) {
     revealEls.forEach((el) => observer.observe(el));
     return () => observer.disconnect();
   }, [Theme, profile]);
+
+  // Same overflow-driven nav collapse the published site gets from the
+  // [data-nav] script in site-shell.ts — this preview is the one place the
+  // theme markup hydrates, so it needs its own copy to behave identically.
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const navs = container.querySelectorAll<HTMLElement>('[data-nav]');
+    if (!navs.length) return;
+
+    const fitAll = () => {
+      navs.forEach((nav) => {
+        nav.removeAttribute('data-collapsed');
+        const row = (nav.firstElementChild as HTMLElement) ?? nav;
+        if (row.scrollWidth > row.clientWidth + 1) nav.setAttribute('data-collapsed', '');
+      });
+    };
+
+    fitAll();
+    const ro = new ResizeObserver(fitAll);
+    navs.forEach((nav) => ro.observe(nav));
+    document.fonts?.ready.then(fitAll);
+    return () => ro.disconnect();
+  }, [Theme, profile, zoom]);
 
   return (
     <div ref={containerRef} className="@container w-full h-full overflow-auto bg-white no-scrollbar">
