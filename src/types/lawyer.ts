@@ -6,9 +6,9 @@
  * Sambat years alike, and nothing sorts or compares them.
  */
 export interface TimelineEntry {
-  title: string;
-  organization: string;
-  startYear: string;
+  title?: string;
+  organization?: string;
+  startYear?: string;
   endYear?: string;
   /** Renders 'Present' in the themes; endYear is ignored when true. */
   current?: boolean;

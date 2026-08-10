@@ -13,9 +13,7 @@ interface TimelineEntryListProps {
   icon: React.ReactNode;
   /** Row labels differ per section — 'Degree' vs 'Role', 'Institution' vs 'Organization'. */
   titleLabel: string;
-  titlePlaceholder: string;
   organizationLabel: string;
-  organizationPlaceholder: string;
   addLabel: string;
   entries: TimelineEntry[];
   onChange: (entries: TimelineEntry[]) => void;
@@ -35,9 +33,7 @@ export function TimelineEntryList({
   description,
   icon,
   titleLabel,
-  titlePlaceholder,
   organizationLabel,
-  organizationPlaceholder,
   addLabel,
   entries,
   onChange,
@@ -75,8 +71,7 @@ export function TimelineEntryList({
                 <Label htmlFor={`${label}-title-${index}`}>{titleLabel}</Label>
                 <Input
                   id={`${label}-title-${index}`}
-                  placeholder={titlePlaceholder}
-                  value={entry.title}
+                  value={entry.title ?? ''}
                   onChange={(e) => updateEntry(index, { title: e.target.value })}
                 />
               </div>
@@ -84,8 +79,7 @@ export function TimelineEntryList({
                 <Label htmlFor={`${label}-org-${index}`}>{organizationLabel}</Label>
                 <Input
                   id={`${label}-org-${index}`}
-                  placeholder={organizationPlaceholder}
-                  value={entry.organization}
+                  value={entry.organization ?? ''}
                   onChange={(e) => updateEntry(index, { organization: e.target.value })}
                 />
               </div>
@@ -97,7 +91,7 @@ export function TimelineEntryList({
                 <Input
                   id={`${label}-start-${index}`}
                   placeholder="2014"
-                  value={entry.startYear}
+                  value={entry.startYear ?? ''}
                   onChange={(e) => updateEntry(index, { startYear: e.target.value })}
                 />
               </div>

@@ -26,9 +26,7 @@ export function TimelineStep({ profile, onUpdate }: TimelineStepProps) {
         description="Degrees, diplomas and bar admissions, most recent first."
         icon={<GraduationCap className="w-4 h-4 text-muted-foreground" />}
         titleLabel="Degree or Qualification"
-        titlePlaceholder="e.g., LL.B."
         organizationLabel="Institution"
-        organizationPlaceholder="e.g., Tribhuvan University"
         addLabel="Add education"
         entries={timeline.education}
         onChange={(education) => onUpdate({ education })}
@@ -41,9 +39,7 @@ export function TimelineStep({ profile, onUpdate }: TimelineStepProps) {
         description="Firms and roles, most recent first."
         icon={<Briefcase className="w-4 h-4 text-muted-foreground" />}
         titleLabel="Role"
-        titlePlaceholder="e.g., Senior Associate"
         organizationLabel="Firm or Organization"
-        organizationPlaceholder="e.g., Hamlin, Hamlin & McGill"
         addLabel="Add experience"
         entries={timeline.experience}
         onChange={(experience) => onUpdate({ experience })}

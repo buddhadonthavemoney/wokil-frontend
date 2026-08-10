@@ -1,5 +1,5 @@
 import { LawyerProfile, TimelineEntry, formatTimelineRange } from '@/types/lawyer';
-import { Phone, Mail, MapPin, Clock, Globe, Linkedin, Scale, UserCheck, MessageCircle, Wallet, Menu, GraduationCap, Briefcase } from 'lucide-react';
+import { Phone, Mail, MapPin, Clock, Globe, Linkedin, Scale, UserCheck, MessageCircle, Wallet, Menu, GraduationCap, Briefcase, type LucideIcon } from 'lucide-react';
 
 interface ClassicThemeProps {
   profile: LawyerProfile;
@@ -34,7 +34,7 @@ const PROCESS_STEPS = [
 ];
 
 /** Vertical rail of career-history rows, in the Classic navy/gold palette. */
-function TimelineRail({ icon: Icon, title, entries }: { icon: typeof GraduationCap; title: string; entries: TimelineEntry[] }) {
+function TimelineRail({ icon: Icon, title, entries }: { icon: LucideIcon; title: string; entries: TimelineEntry[] }) {
   if (entries.length === 0) return null;
 
   return (

@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { LawyerProfile } from '@/types/lawyer';
 import { getProfile, saveProfile, deploySite } from '@/generated/wokil-api';
 import { useToast } from '@/hooks/use-toast';
-import { toLawyerProfile } from '@/lib/lawyer-profile-adapter';
+import { createBlankLawyerProfile, toLawyerProfile } from '@/lib/lawyer-profile-adapter';
 
 const generateSlug = (name: string): string => {
   return name
@@ -15,43 +15,10 @@ const generateId = (): string => {
   return 'profile-' + Date.now() + '-' + Math.random().toString(36).substring(2, 9);
 };
 
-const initialProfile: Omit<LawyerProfile, 'id' | 'slug'> = {
-  basicInformation: {
-    fullName: '',
-    professionalTitle: '',
-    lawFirmName: '',
-    yearsOfExperience: 0,
-  },
-  practiceDetails: {
-    areasOfPractice: [],
-    jurisdictions: [],
-  },
-  contactInformation: {
-    phoneNumber: '',
-    email: '',
-    officeAddress: '',
-  },
-  professionalProfile: {
-    bio: '',
-    officeHours: '',
-    profilePhoto: '',
-  },
-  onlinePresence: {
-    website: '',
-    linkedIn: '',
-  },
-  timeline: {
-    education: [],
-    experience: [],
-  },
-  themeSelection: {
-    theme: 'classic',
-  },
-  subdomainSelection: {
-    subdomain: '',
-  },
-  isPublished: false,
-};
+// Same blank profile the adapter falls back to. Every optional field it omits
+// (lawFirmName, profilePhoto, website, linkedIn) is already guarded with `|| ''`
+// at its input, so the steps stay controlled.
+const initialProfile = createBlankLawyerProfile();
 
 export function useProfileForm() {
   const totalSteps = 7;
@@ -60,11 +27,7 @@ export function useProfileForm() {
 
   // Check if we're editing an existing profile
   const [profile, setProfile] = useState<LawyerProfile>(() => {
-    return {
-      id: generateId(),
-      slug: '',
-      ...initialProfile,
-    } as LawyerProfile;
+    return { ...initialProfile, id: generateId() };
   });
 
   const [currentStep, setCurrentStep] = useState(1);
@@ -195,12 +158,11 @@ export function useProfileForm() {
   }, [profile, toast]);
 
   const resetProfile = useCallback(() => {
-    setProfile({
-      id: profile.id, // Keep the same ID so we overwrite the same record if saved
-      slug: '',
-      ...initialProfile,
-    } as LawyerProfile);
-    
+    // Spread first: initialProfile now carries id/slug, so keeping the existing
+    // id (to overwrite the same record if saved) means overriding after it.
+    setProfile({ ...initialProfile, id: profile.id });
+
+
     toast({
       title: "Selection Cleared",
       description: "All entered data has been removed.",
