@@ -113,19 +113,19 @@ export function LegalCraftTheme({ profile }: LegalCraftThemeProps) {
             </nav>
 
             {/* Hero Section */}
-            <header id="top" className="relative pt-16 pb-20 @md:pt-24 @md:pb-32 overflow-hidden border-b border-[#E5E5E5] scroll-mt-16">
+            <header id="top" className="relative pt-8 pb-10 @sm:pt-16 @sm:pb-20 @md:pt-24 @md:pb-32 overflow-hidden border-b border-[#E5E5E5] scroll-mt-16 min-h-[calc(100cqh-4rem)] flex flex-col justify-center">
                 <div className="absolute top-0 right-0 w-1/3 h-full bg-[#3C2A21]/[0.02] -skew-x-12 transform translate-x-1/2" />
                 <div className="container mx-auto px-6 relative">
-                    <div className="max-w-5xl mx-auto flex flex-col items-center text-center space-y-10">
-                        <div className="flex items-center gap-6 animate-in fade-in slide-in-from-top duration-700">
-                            <span className="h-px w-12 bg-[#D4A373]" />
-                            <div className="w-16 h-16 rounded-full border border-[#D4A373] flex items-center justify-center">
-                                <Gavel className="w-8 h-8 text-[#D4A373]" />
+                    <div className="max-w-5xl mx-auto flex flex-col items-center text-center space-y-6 @sm:space-y-10">
+                        <div className="flex items-center gap-4 @sm:gap-6 animate-in fade-in slide-in-from-top duration-700">
+                            <span className="h-px w-8 @sm:w-12 bg-[#D4A373]" />
+                            <div className="w-10 h-10 @sm:w-16 @sm:h-16 rounded-full border border-[#D4A373] flex items-center justify-center">
+                                <Gavel className="w-5 h-5 @sm:w-8 @sm:h-8 text-[#D4A373]" />
                             </div>
-                            <span className="h-px w-12 bg-[#D4A373]" />
+                            <span className="h-px w-8 @sm:w-12 bg-[#D4A373]" />
                         </div>
 
-                        <div className="space-y-6 animate-in fade-in duration-1000">
+                        <div className="space-y-3 @sm:space-y-6 animate-in fade-in duration-1000">
                             <h1 className="text-4xl @sm:text-5xl @md:text-7xl @lg:text-8xl font-heading font-bold text-[#1A120B] leading-tight tracking-tight">
                                 {fullName}
                             </h1>
@@ -141,15 +141,15 @@ export function LegalCraftTheme({ profile }: LegalCraftThemeProps) {
                             </div>
                         </div>
 
-                        <div className="flex flex-wrap justify-center gap-6 mt-12">
-                            <a href={`tel:${phoneNumber}`} className="group relative px-12 py-5 overflow-hidden rounded-sm font-bold text-white tracking-widest uppercase transition-all">
+                        <div className="flex flex-wrap justify-center gap-3 @sm:gap-6 mt-2 @sm:mt-12">
+                            <a href={`tel:${phoneNumber}`} className="group relative px-6 py-3 @sm:px-12 @sm:py-5 overflow-hidden rounded-sm font-bold text-white text-xs @sm:text-base tracking-wide @sm:tracking-widest uppercase transition-all">
                                 <div className="absolute inset-0 bg-[#3C2A21] group-hover:bg-[#1A120B] transition-colors" />
-                                <span className="relative flex items-center gap-3">
-                                    <Phone className="w-4 h-4" />
+                                <span className="relative flex items-center gap-2 @sm:gap-3 whitespace-nowrap">
+                                    <Phone className="w-4 h-4 shrink-0" />
                                     Request Interview
                                 </span>
                             </a>
-                            <a href={`mailto:${email}`} className="px-12 py-5 border-2 border-[#3C2A21] rounded-sm font-bold text-[#3C2A21] tracking-widest uppercase hover:bg-[#3C2A21] hover:text-white transition-all transform hover:-translate-y-1">
+                            <a href={`mailto:${email}`} className="px-6 py-3 @sm:px-12 @sm:py-5 border-2 border-[#3C2A21] rounded-sm font-bold text-[#3C2A21] text-xs @sm:text-base tracking-wide @sm:tracking-widest uppercase hover:bg-[#3C2A21] hover:text-white transition-all transform hover:-translate-y-1 whitespace-nowrap">
                                 Correspondence
                             </a>
                         </div>

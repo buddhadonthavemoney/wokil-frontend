@@ -3,6 +3,7 @@ import { ClassicTheme } from './themes/ClassicTheme';
 import { ExecutiveTheme } from './themes/ExecutiveTheme';
 import { LegalCraftTheme } from './themes/LegalCraftTheme';
 import { CorporateEliteTheme } from './themes/CorporateEliteTheme';
+import { SwissInstitutionalTheme } from './themes/SwissInstitutionalTheme';
 import { ComponentType, useEffect, useRef } from 'react';
 
 interface ProfilePreviewProps {
@@ -15,6 +16,7 @@ const THEME_COMPONENTS: Record<string, ComponentType<{ profile: LawyerProfile }>
   executive: ExecutiveTheme,
   'legal-craft': LegalCraftTheme,
   'corporate-elite': CorporateEliteTheme,
+  'swiss-institutional': SwissInstitutionalTheme,
 };
 
 // Renders the actual production theme component directly — no server round
@@ -88,7 +90,12 @@ export function ProfilePreview({ profile, zoom = 1 }: ProfilePreviewProps) {
   }, [Theme, profile, zoom]);
 
   return (
-    <div ref={containerRef} className="@container w-full h-full overflow-auto bg-white no-scrollbar">
+    // container-type: size (not just @container's default inline-size) so
+    // `cqh` resolves against this box's real height — themes use
+    // min-h-[100cqh] on their hero to fill exactly one "screen": this box's
+    // height here, or (per the CSS spec's no-container fallback) the real
+    // viewport on a published site where no @container wrapper exists at all.
+    <div ref={containerRef} className="@container [container-type:size] w-full h-full overflow-auto bg-white no-scrollbar">
       <div
         className="origin-top-left"
         style={{

@@ -89,12 +89,14 @@ export function CorporateEliteTheme({ profile }: CorporateEliteThemeProps) {
             {/* Collapse is measured, not guessed at a breakpoint: the [data-nav]
                 script (site-shell for published sites, ProfilePreview in the
                 dashboard) compares the row's scroll width to its box and sets
-                data-collapsed when the links no longer fit — so a long firm name
-                pushes the nav to the hamburger instead of getting truncated.
-                With no JS the full row renders, which is the pre-existing look. */}
+                data-collapsed when the links/CTA no longer fit next to the firm
+                name, hiding them behind the hamburger. The firm name itself never
+                triggers that — it truncates with an ellipsis and expands back to
+                the full name on hover instead. With no JS the full row renders,
+                which is the pre-existing look. */}
             <nav data-nav className="group/nav sticky top-0 z-50 bg-[#faf9f8]/95 backdrop-blur-md border-b border-[#c5c6ce]/40">
                 <div className="container mx-auto px-6 h-20 flex items-center justify-between gap-6">
-                    <a href="#top" className="shrink-0 whitespace-nowrap font-heading font-bold text-xl @md:text-2xl text-[#05162e] tracking-tight">
+                    <a href="#top" className="block flex-1 min-w-0 truncate hover:whitespace-normal hover:overflow-visible font-heading font-bold text-xl @md:text-2xl text-[#05162e] tracking-tight">
                         {lawFirmName}
                     </a>
                     <div className="flex items-center gap-6 text-[12px] font-semibold uppercase tracking-[0.1em] text-[#44474d] group-data-[collapsed]/nav:hidden">
@@ -128,7 +130,7 @@ export function CorporateEliteTheme({ profile }: CorporateEliteThemeProps) {
 
             <main>
                 {/* Hero */}
-                <section id="top" className="container mx-auto max-w-[1280px] px-6 py-16 @md:py-20 grid grid-cols-1 @md:grid-cols-2 gap-10 items-center scroll-mt-24">
+                <section id="top" className="container mx-auto max-w-[1280px] px-6 pt-4 pb-8 @sm:pt-6 @md:py-20 grid grid-cols-1 @md:grid-cols-2 gap-10 items-start @md:items-center scroll-mt-24 min-h-[calc(100cqh-5rem)]">
                     <div>
                         {yearsOfExperience > 0 && (
                             <span className="inline-block mb-4 px-3 py-1 rounded-full border border-[#05162e]/20 bg-[#1b2b44]/10 text-[12px] font-semibold uppercase tracking-[0.1em] text-[#05162e]">
@@ -142,13 +144,13 @@ export function CorporateEliteTheme({ profile }: CorporateEliteThemeProps) {
                             {professionalTitle}{basicInformation.lawFirmName ? ` at ${basicInformation.lawFirmName}` : ''}
                         </div>
                         {bio && (
-                            <p className="text-lg leading-relaxed text-[#44474d] max-w-xl mb-10 line-clamp-4">{bio}</p>
+                            <p className="text-lg leading-relaxed text-[#44474d] max-w-xl mb-10 line-clamp-4 hover:line-clamp-none">{bio}</p>
                         )}
                         <a href="#contact" className="inline-block px-6 py-3 rounded-lg bg-[#05162e] text-white text-[12px] font-semibold uppercase tracking-[0.1em] hover:opacity-90 transition-opacity shadow-[0_4px_12px_rgba(27,43,68,0.08)]">
                             Book a Consultation
                         </a>
                     </div>
-                    <div className="relative h-[400px] @md:h-[560px] rounded-lg overflow-hidden bg-[#eeeeed] shadow-[0_4px_12px_rgba(27,43,68,0.08)]">
+                    <div className="hidden @md:block relative h-[560px] rounded-lg overflow-hidden bg-[#eeeeed] shadow-[0_4px_12px_rgba(27,43,68,0.08)]">
                         {profilePhoto ? (
                             <img src={profilePhoto} alt={fullName} className="absolute inset-0 w-full h-full object-cover" />
                         ) : (

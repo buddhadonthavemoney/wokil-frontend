@@ -32,6 +32,12 @@ const themes = [
     name: 'Corporate Elite',
     description: 'Institutional navy with one unified career-and-education timeline.',
     preview: { bg: 'bg-[#faf9f8]', accent: 'bg-[#05162E]' }
+  },
+  {
+    id: 'swiss-institutional',
+    name: 'Swiss Institutional',
+    description: 'Grid-driven precision with a faint baseline texture, navy on off-white.',
+    preview: { bg: 'bg-[#f9f9f9]', accent: 'bg-[#05162e]' }
   }
 ];
 

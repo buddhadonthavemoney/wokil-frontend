@@ -112,7 +112,7 @@ export function ClassicTheme({ profile }: ClassicThemeProps) {
       </nav>
 
       {/* Hero Section */}
-      <header id="top" className="bg-[#1B2B44] text-white relative overflow-hidden scroll-mt-16">
+      <header id="top" className="bg-[#1B2B44] text-white relative overflow-hidden scroll-mt-16 min-h-[calc(100cqh-4rem)] flex flex-col justify-center">
         <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]" />
         <div className="container mx-auto px-6 py-14 @md:py-32 relative z-10">
           <div className="flex flex-col @md:flex-row items-center gap-8 @md:gap-12 max-w-6xl mx-auto">
