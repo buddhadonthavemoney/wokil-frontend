@@ -1,5 +1,5 @@
-import { LawyerProfile } from '@/types/lawyer';
-import { Phone, Mail, MapPin, Clock, Globe, Linkedin, Shield, Award, Briefcase, Scale, UserCheck, MessageCircle, Wallet, Menu } from 'lucide-react';
+import { LawyerProfile, TimelineEntry, formatTimelineRange } from '@/types/lawyer';
+import { Phone, Mail, MapPin, Clock, Globe, Linkedin, Shield, Award, Briefcase, Scale, UserCheck, MessageCircle, Wallet, Menu, GraduationCap } from 'lucide-react';
 
 interface ExecutiveThemeProps {
     profile: LawyerProfile;
@@ -21,14 +21,46 @@ const PROCESS_STEPS = [
     { step: '03', title: 'Representation', description: 'Your matter is handled from filing through resolution, with regular updates along the way.' },
 ];
 
+/** Vertical rail of career-history rows, in the Executive slate/blue palette. */
+function TimelineRail({ icon: Icon, title, entries }: { icon: typeof GraduationCap; title: string; entries: TimelineEntry[] }) {
+    if (entries.length === 0) return null;
+
+    return (
+        <div className="space-y-6">
+            <h4 className="font-heading font-bold text-lg text-slate-900 uppercase tracking-widest flex items-center gap-3">
+                <Icon className="w-5 h-5 text-blue-700" />
+                {title}
+            </h4>
+            <ol className="border-l border-slate-200 pl-8 space-y-8">
+                {entries.map((entry, index) => (
+                    <li key={index} className="relative">
+                        <span className="absolute -left-[37px] top-2 w-3 h-3 rounded-full bg-blue-700 ring-4 ring-slate-50" />
+                        <p className="font-heading font-bold text-xl text-slate-900 leading-snug">{entry.title}</p>
+                        <p className="text-slate-600 text-lg font-light">{entry.organization}</p>
+                        <p className="text-xs font-bold uppercase tracking-widest text-blue-700 mt-1">{formatTimelineRange(entry)}</p>
+                        {entry.description && (
+                            <p className="text-slate-500 leading-relaxed mt-3">{entry.description}</p>
+                        )}
+                    </li>
+                ))}
+            </ol>
+        </div>
+    );
+}
+
 export function ExecutiveTheme({ profile }: ExecutiveThemeProps) {
     const {
         basicInformation,
         practiceDetails,
         contactInformation,
         professionalProfile,
-        onlinePresence
+        onlinePresence,
+        timeline
     } = profile;
+
+    const education = timeline?.education ?? [];
+    const experience = timeline?.experience ?? [];
+    const hasTimeline = education.length > 0 || experience.length > 0;
 
     const fullName = basicInformation.fullName || 'Professional Advocate';
     const professionalTitle = basicInformation.professionalTitle || 'Principal Attorney';
@@ -68,6 +100,7 @@ export function ExecutiveTheme({ profile }: ExecutiveThemeProps) {
                     <div className="hidden @lg:flex items-center gap-8 text-sm font-medium text-slate-500">
                         <a href="#about" className="hover:text-slate-900 transition-colors">Executive Summary</a>
                         <a href="#practice-areas" className="hover:text-slate-900 transition-colors">Practice Areas</a>
+                        {hasTimeline && <a href="#timeline" className="hover:text-slate-900 transition-colors">Timeline</a>}
                         <a href="#why" className="hover:text-slate-900 transition-colors">Why Work With Me</a>
                         <a href="#faq" className="hover:text-slate-900 transition-colors">FAQ</a>
                     </div>
@@ -81,6 +114,7 @@ export function ExecutiveTheme({ profile }: ExecutiveThemeProps) {
                         <div className="absolute right-0 top-full mt-2 w-56 bg-white border border-slate-200 rounded-lg shadow-2xl p-4 flex flex-col gap-3 text-sm font-medium text-slate-500 z-50">
                             <a href="#about" className="hover:text-slate-900 transition-colors">Executive Summary</a>
                             <a href="#practice-areas" className="hover:text-slate-900 transition-colors">Practice Areas</a>
+                        {hasTimeline && <a href="#timeline" className="hover:text-slate-900 transition-colors">Timeline</a>}
                             <a href="#why" className="hover:text-slate-900 transition-colors">Why Work With Me</a>
                             <a href="#faq" className="hover:text-slate-900 transition-colors">FAQ</a>
                             <a href="#contact" className="mt-1 px-4 py-2.5 bg-slate-900 hover:bg-blue-700 rounded-lg text-sm font-bold text-white text-center transition-colors">
@@ -188,6 +222,19 @@ export function ExecutiveTheme({ profile }: ExecutiveThemeProps) {
                                 ))}
                             </div>
                         </section>
+
+                        {hasTimeline && (
+                            <section data-reveal id="timeline" className="scroll-mt-24 space-y-12">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-12 h-1 bg-blue-700" />
+                                    <h3 className="font-heading font-bold text-3xl text-slate-900 tracking-tight">Timeline</h3>
+                                </div>
+                                <div className="space-y-12">
+                                    <TimelineRail icon={Briefcase} title="Experience" entries={experience} />
+                                    <TimelineRail icon={GraduationCap} title="Education" entries={education} />
+                                </div>
+                            </section>
+                        )}
 
                         <section data-reveal className="space-y-12">
                             <div className="flex items-center gap-4">

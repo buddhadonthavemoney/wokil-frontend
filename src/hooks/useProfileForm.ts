@@ -40,6 +40,10 @@ const initialProfile: Omit<LawyerProfile, 'id' | 'slug'> = {
     website: '',
     linkedIn: '',
   },
+  timeline: {
+    education: [],
+    experience: [],
+  },
   themeSelection: {
     theme: 'classic',
   },
@@ -50,7 +54,7 @@ const initialProfile: Omit<LawyerProfile, 'id' | 'slug'> = {
 };
 
 export function useProfileForm() {
-  const totalSteps = 6;
+  const totalSteps = 7;
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
 
@@ -209,10 +213,11 @@ export function useProfileForm() {
       'practiceDetails',
       'contactInformation',
       'professionalProfile',
+      'timeline',
       'onlinePresence',
       'subdomainSelection'
     ];
-    
+
     const key = stepKeys[currentStep - 1];
     if (key) {
       setProfile(prev => ({

@@ -11,6 +11,7 @@ import { BasicInfoStep } from '@/components/form/steps/BasicInfoStep';
 import { PracticeDetailsStep } from '@/components/form/steps/PracticeDetailsStep';
 import { ContactInfoStep } from '@/components/form/steps/ContactInfoStep';
 import { ProfessionalProfileStep } from '@/components/form/steps/ProfessionalProfileStep';
+import { TimelineStep } from '@/components/form/steps/TimelineStep';
 import { OnlinePresenceStep } from '@/components/form/steps/OnlinePresenceStep';
 import { SubdomainSelectionStep } from '@/components/form/steps/SubdomainSelectionStep';
 import { ThemeSelector } from '@/components/form/ThemeSelector';
@@ -30,6 +31,7 @@ const STEP_NAMES = [
   'Practice',
   'Contact',
   'Profile',
+  'Timeline',
   'Online',
   'Subdomain',
 ];
@@ -58,6 +60,39 @@ const SAUL_GOODMAN_DATA = {
   onlinePresence: {
     website: "https://bettercallsaul.com",
     linkedIn: "https://linkedin.com/in/saulgoodman",
+  },
+  timeline: {
+    education: [
+      {
+        title: "Juris Doctor",
+        organization: "University of American Samoa",
+        startYear: "1993",
+        endYear: "1996",
+        description: "Correspondence programme, completed while working full time in the mailroom at HHM.",
+      },
+    ],
+    experience: [
+      {
+        title: "Mailroom Clerk",
+        organization: "Hamlin, Hamlin & McGill",
+        startYear: "1992",
+        endYear: "1996",
+      },
+      {
+        title: "Solo Practitioner",
+        organization: "James M. McGill, Esq.",
+        startYear: "1997",
+        endYear: "2002",
+        description: "Elder law and public defence work, run out of the back of a nail salon.",
+      },
+      {
+        title: "Name Partner",
+        organization: "Goodman, Goodman & McGill",
+        startYear: "2002",
+        current: true,
+        description: "Criminal defence, personal injury and bankruptcy for clients across New Mexico.",
+      },
+    ],
   },
   themeSelection: {
     theme: "classic" as const,
@@ -88,10 +123,11 @@ export default function ProfileBuilder() {
       'practiceDetails',
       'contactInformation',
       'professionalProfile',
+      'timeline',
       'onlinePresence',
       'subdomainSelection'
     ];
-    
+
     const key = stepKeys[currentStep - 1];
     if (key) {
       setProfile(prev => ({
@@ -135,8 +171,10 @@ export default function ProfileBuilder() {
       case 4:
         return <ProfessionalProfileStep profile={profile} onUpdate={(fields) => updateNestedProfile('professionalProfile', fields)} />;
       case 5:
-        return <OnlinePresenceStep profile={profile} onUpdate={(fields) => updateNestedProfile('onlinePresence', fields)} />;
+        return <TimelineStep profile={profile} onUpdate={(fields) => updateNestedProfile('timeline', fields)} />;
       case 6:
+        return <OnlinePresenceStep profile={profile} onUpdate={(fields) => updateNestedProfile('onlinePresence', fields)} />;
+      case 7:
         return <SubdomainSelectionStep profile={profile} onUpdate={(fields) => updateNestedProfile('subdomainSelection', fields)} />;
       default:
         return null;

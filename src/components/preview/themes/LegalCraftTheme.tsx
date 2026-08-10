@@ -1,5 +1,5 @@
-import { LawyerProfile } from '@/types/lawyer';
-import { Phone, Mail, MapPin, Clock, Globe, Linkedin, Scale, BookOpen, PenTool as Pen, Gavel, UserCheck, MessageCircle, Wallet, Menu } from 'lucide-react';
+import { LawyerProfile, TimelineEntry, formatTimelineRange } from '@/types/lawyer';
+import { Phone, Mail, MapPin, Clock, Globe, Linkedin, Scale, BookOpen, PenTool as Pen, Gavel, UserCheck, MessageCircle, Wallet, Menu, GraduationCap, Briefcase } from 'lucide-react';
 
 interface LegalCraftThemeProps {
     profile: LawyerProfile;
@@ -21,14 +21,45 @@ const PROCESS_STEPS = [
     { step: '03', title: 'Representation', description: 'Your matter is handled from filing through resolution, with regular updates along the way.' },
 ];
 
+/** Vertical rail of career-history rows, in the LegalCraft cream/tan palette. */
+function TimelineRail({ icon: Icon, title, entries }: { icon: typeof GraduationCap; title: string; entries: TimelineEntry[] }) {
+    if (entries.length === 0) return null;
+
+    return (
+        <div className="space-y-8">
+            <h4 className="font-heading text-lg font-bold text-[#1A120B] uppercase tracking-[0.2em] flex items-center gap-3">
+                <Icon className="w-5 h-5 text-[#D4A373]" />
+                {title}
+            </h4>
+            <ol className="space-y-6">
+                {entries.map((entry, index) => (
+                    <li key={index} className="p-8 bg-[#F5F2ED] border-l-4 border-[#D4A373]">
+                        <p className="text-xs uppercase tracking-[0.3em] font-bold text-[#3C2A21]/50 mb-3">{formatTimelineRange(entry)}</p>
+                        <h5 className="text-xl font-bold text-[#1A120B] font-heading">{entry.title}</h5>
+                        <p className="text-[#3C2A21]/70 italic font-heading">{entry.organization}</p>
+                        {entry.description && (
+                            <p className="text-sm text-[#3C2A21]/70 leading-relaxed mt-4">{entry.description}</p>
+                        )}
+                    </li>
+                ))}
+            </ol>
+        </div>
+    );
+}
+
 export function LegalCraftTheme({ profile }: LegalCraftThemeProps) {
     const {
         basicInformation,
         practiceDetails,
         contactInformation,
         professionalProfile,
-        onlinePresence
+        onlinePresence,
+        timeline
     } = profile;
+
+    const education = timeline?.education ?? [];
+    const experience = timeline?.experience ?? [];
+    const hasTimeline = education.length > 0 || experience.length > 0;
 
     const fullName = basicInformation.fullName || 'Your Name';
     const professionalTitle = basicInformation.professionalTitle || 'Barrister & solicitor';
@@ -71,6 +102,7 @@ export function LegalCraftTheme({ profile }: LegalCraftThemeProps) {
                     <div className="hidden @lg:flex items-center gap-8 text-sm font-medium text-[#3C2A21]/60">
                         <a href="#about" className="hover:text-[#1A120B] transition-colors">Philosophy</a>
                         <a href="#practice-areas" className="hover:text-[#1A120B] transition-colors">Expertise</a>
+                        {hasTimeline && <a href="#timeline" className="hover:text-[#1A120B] transition-colors">Timeline</a>}
                         <a href="#why" className="hover:text-[#1A120B] transition-colors">Why Work With Me</a>
                         <a href="#faq" className="hover:text-[#1A120B] transition-colors">FAQ</a>
                     </div>
@@ -84,6 +116,7 @@ export function LegalCraftTheme({ profile }: LegalCraftThemeProps) {
                         <div className="absolute right-0 top-full mt-2 w-56 bg-[#FDFBF7] border border-[#E5E5E5] rounded-sm shadow-2xl p-4 flex flex-col gap-3 text-sm font-medium text-[#3C2A21]/70 z-50">
                             <a href="#about" className="hover:text-[#1A120B] transition-colors">Philosophy</a>
                             <a href="#practice-areas" className="hover:text-[#1A120B] transition-colors">Expertise</a>
+                        {hasTimeline && <a href="#timeline" className="hover:text-[#1A120B] transition-colors">Timeline</a>}
                             <a href="#why" className="hover:text-[#1A120B] transition-colors">Why Work With Me</a>
                             <a href="#faq" className="hover:text-[#1A120B] transition-colors">FAQ</a>
                             <a href="#contact" className="mt-1 px-4 py-2.5 bg-[#3C2A21] hover:bg-[#1A120B] rounded-sm text-sm font-bold text-white tracking-wide uppercase text-center transition-colors">
@@ -167,6 +200,19 @@ export function LegalCraftTheme({ profile }: LegalCraftThemeProps) {
                                             <h4 className="text-xl font-bold text-[#1A120B] font-heading">{area}</h4>
                                         </div>
                                     ))}
+                                </div>
+                            </section>
+                        )}
+
+                        {hasTimeline && (
+                            <section data-reveal id="timeline" className="scroll-mt-24">
+                                <h3 className="font-heading text-2xl font-bold text-[#1A120B] mb-10 flex items-center gap-4 uppercase tracking-wider">
+                                    <Pen className="w-6 h-6 text-[#D4A373]" />
+                                    Timeline
+                                </h3>
+                                <div className="space-y-12">
+                                    <TimelineRail icon={Briefcase} title="Experience" entries={experience} />
+                                    <TimelineRail icon={GraduationCap} title="Education" entries={education} />
                                 </div>
                             </section>
                         )}
