@@ -51,6 +51,10 @@ function normalizeProfile(input: Partial<LawyerProfile>): LawyerProfile {
     onlinePresence: {
       ...input.onlinePresence,
     },
+    timeline: {
+      education: input.timeline?.education ?? [],
+      experience: input.timeline?.experience ?? [],
+    },
     themeSelection: {
       theme: input.themeSelection?.theme ?? 'classic',
     },

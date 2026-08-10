@@ -1,3 +1,25 @@
+/**
+ * One row of career history — a degree or a job. Both use the same shape; only
+ * the labels differ in the UI.
+ *
+ * Years are strings, not numbers: profiles carry '2014', '2014-15' and Bikram
+ * Sambat years alike, and nothing sorts or compares them.
+ */
+export interface TimelineEntry {
+  title?: string;
+  organization?: string;
+  startYear?: string;
+  endYear?: string;
+  /** Renders 'Present' in the themes; endYear is ignored when true. */
+  current?: boolean;
+  description?: string;
+}
+
+/** '2010 — 2014', '2019 — Present', or just '2010' when no end is given. */
+export function formatTimelineRange({ startYear, endYear, current }: TimelineEntry): string {
+  return [startYear, current ? 'Present' : endYear].filter(Boolean).join(' — ');
+}
+
 export interface LawyerProfile {
   id: string;
   basicInformation: {
@@ -24,6 +46,10 @@ export interface LawyerProfile {
   onlinePresence: {
     website?: string;
     linkedIn?: string;
+  };
+  timeline: {
+    education: TimelineEntry[];
+    experience: TimelineEntry[];
   };
   themeSelection: {
     theme: 'classic' | 'executive' | 'legal-craft';

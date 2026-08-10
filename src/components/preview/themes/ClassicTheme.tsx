@@ -1,5 +1,5 @@
-import { LawyerProfile } from '@/types/lawyer';
-import { Phone, Mail, MapPin, Clock, Globe, Linkedin, Scale, UserCheck, MessageCircle, Wallet, Menu } from 'lucide-react';
+import { LawyerProfile, TimelineEntry, formatTimelineRange } from '@/types/lawyer';
+import { Phone, Mail, MapPin, Clock, Globe, Linkedin, Scale, UserCheck, MessageCircle, Wallet, Menu, GraduationCap, Briefcase, type LucideIcon } from 'lucide-react';
 
 interface ClassicThemeProps {
   profile: LawyerProfile;
@@ -33,14 +33,46 @@ const PROCESS_STEPS = [
   { step: '03', title: 'Representation', description: 'Your matter is handled from filing through resolution, with regular updates along the way.' },
 ];
 
+/** Vertical rail of career-history rows, in the Classic navy/gold palette. */
+function TimelineRail({ icon: Icon, title, entries }: { icon: LucideIcon; title: string; entries: TimelineEntry[] }) {
+  if (entries.length === 0) return null;
+
+  return (
+    <div className="space-y-6">
+      <h3 className="font-heading text-lg font-bold text-[#1B2B44] uppercase tracking-widest flex items-center gap-3">
+        <Icon className="w-5 h-5 text-[#C5A059]" />
+        {title}
+      </h3>
+      <ol className="border-l-2 border-[#EDF0F5] pl-6 space-y-8">
+        {entries.map((entry, index) => (
+          <li key={index} className="relative">
+            <span className="absolute -left-[31px] top-1.5 w-3 h-3 rounded-full bg-[#C5A059] ring-4 ring-[#FDFCFB]" />
+            <p className="font-heading text-xl font-bold text-[#1B2B44] leading-snug">{entry.title}</p>
+            <p className="text-[#4A4A4A] text-lg font-light">{entry.organization}</p>
+            <p className="text-xs font-bold uppercase tracking-widest text-[#C5A059] mt-1">{formatTimelineRange(entry)}</p>
+            {entry.description && (
+              <p className="text-[#4A4A4A] leading-relaxed mt-3">{entry.description}</p>
+            )}
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+}
+
 export function ClassicTheme({ profile }: ClassicThemeProps) {
   const {
     basicInformation,
     practiceDetails,
     contactInformation,
     professionalProfile,
-    onlinePresence
+    onlinePresence,
+    timeline
   } = profile;
+
+  const education = timeline?.education ?? [];
+  const experience = timeline?.experience ?? [];
+  const hasTimeline = education.length > 0 || experience.length > 0;
 
   const fullName = basicInformation.fullName || 'Your Name';
   const professionalTitle = basicInformation.professionalTitle || 'Barrister & Solicitor';
@@ -80,6 +112,7 @@ export function ClassicTheme({ profile }: ClassicThemeProps) {
           <div className="hidden @lg:flex items-center gap-8 text-sm font-medium text-white/60">
             <a href="#about" className="hover:text-white transition-colors">About</a>
             <a href="#practice-areas" className="hover:text-white transition-colors">Areas of Expertise</a>
+            {hasTimeline && <a href="#timeline" className="hover:text-white transition-colors">Timeline</a>}
             <a href="#why" className="hover:text-white transition-colors">Why Work With Me</a>
             <a href="#faq" className="hover:text-white transition-colors">FAQ</a>
           </div>
@@ -93,6 +126,7 @@ export function ClassicTheme({ profile }: ClassicThemeProps) {
             <div className="absolute right-0 top-full mt-2 w-56 bg-[#1B2B44] border border-white/10 rounded-xl shadow-2xl p-4 flex flex-col gap-3 text-sm font-medium text-white/70 z-50">
               <a href="#about" className="hover:text-white transition-colors">About</a>
               <a href="#practice-areas" className="hover:text-white transition-colors">Areas of Expertise</a>
+              {hasTimeline && <a href="#timeline" className="hover:text-white transition-colors">Timeline</a>}
               <a href="#why" className="hover:text-white transition-colors">Why Work With Me</a>
               <a href="#faq" className="hover:text-white transition-colors">FAQ</a>
               <a href="#contact" className="mt-1 px-4 py-2.5 bg-[#C5A059] hover:bg-[#B18F4A] rounded-lg text-sm font-bold text-[#1B2B44] text-center transition-colors">
@@ -198,6 +232,20 @@ export function ClassicTheme({ profile }: ClassicThemeProps) {
                       {jurisdiction}
                     </span>
                   ))}
+                </div>
+              </section>
+            )}
+
+            {/* Timeline */}
+            {hasTimeline && (
+              <section data-reveal id="timeline" className="scroll-mt-24 bg-white rounded-2xl p-10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-[#F0F0F0]">
+                <h2 className="font-heading text-3xl font-bold text-[#1B2B44] mb-8 flex items-center gap-4">
+                  <span className="w-10 h-[2px] bg-[#C5A059]" />
+                  Timeline
+                </h2>
+                <div className="space-y-12">
+                  <TimelineRail icon={Briefcase} title="Experience" entries={experience} />
+                  <TimelineRail icon={GraduationCap} title="Education" entries={education} />
                 </div>
               </section>
             )}
@@ -339,6 +387,7 @@ export function ClassicTheme({ profile }: ClassicThemeProps) {
             <ul className="space-y-2 text-sm text-white/60">
               <li><a href="#about" className="hover:text-white transition-colors">About</a></li>
               <li><a href="#practice-areas" className="hover:text-white transition-colors">Areas of Expertise</a></li>
+              {hasTimeline && <li><a href="#timeline" className="hover:text-white transition-colors">Timeline</a></li>}
               <li><a href="#why" className="hover:text-white transition-colors">Why Work With Me</a></li>
               <li><a href="#faq" className="hover:text-white transition-colors">FAQ</a></li>
               <li><a href="#contact" className="hover:text-white transition-colors">Contact</a></li>

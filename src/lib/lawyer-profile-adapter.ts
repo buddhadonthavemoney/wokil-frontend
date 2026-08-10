@@ -31,6 +31,10 @@ export function createBlankLawyerProfile(): LawyerProfile {
       officeHours: '',
     },
     onlinePresence: {},
+    timeline: {
+      education: [],
+      experience: [],
+    },
     themeSelection: {
       theme: 'classic',
     },
@@ -78,6 +82,12 @@ export function toLawyerProfile(
       deploymentURL: data.professionalProfile?.deploymentURL ?? '',
     },
     onlinePresence: { ...existing.onlinePresence, ...data.onlinePresence },
+    timeline: {
+      // Spelled out per-list rather than spread: the API omits empty arrays, and
+      // a plain spread would let a cleared list survive via `existing`.
+      education: data.timeline?.education ?? existing.timeline.education,
+      experience: data.timeline?.experience ?? existing.timeline.experience,
+    },
     themeSelection: {
       ...existing.themeSelection,
       ...data.themeSelection,

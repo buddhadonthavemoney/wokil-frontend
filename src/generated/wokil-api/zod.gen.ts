@@ -108,6 +108,26 @@ export const zThemeSelection = z.object({
     theme: z.string().optional()
 });
 
+/**
+ * One row of career history — a degree or a job. Both use the same shape; only the labels differ in the UI.
+ */
+export const zTimelineEntry = z.object({
+    title: z.string().optional(),
+    organization: z.string().optional(),
+    startYear: z.string().optional(),
+    endYear: z.string().optional(),
+    current: z.boolean().optional(),
+    description: z.string().optional()
+});
+
+/**
+ * LinkedIn-style career history rendered by the themes.
+ */
+export const zTimeline = z.object({
+    education: z.array(zTimelineEntry).optional(),
+    experience: z.array(zTimelineEntry).optional()
+});
+
 export const zLawyerProfile = z.object({
     basicInformation: zBasicInformation.optional(),
     contactInformation: zContactInformation.optional(),
@@ -116,6 +136,7 @@ export const zLawyerProfile = z.object({
     onlinePresence: zOnlinePresence.optional(),
     subdomainSelection: zSubdomainSelection.optional(),
     themeSelection: zThemeSelection.optional(),
+    timeline: zTimeline.optional(),
     googleAnalyticsId: z.string().optional(),
     isPublic: z.boolean().optional(),
     isPublished: z.boolean().readonly().optional(),
@@ -199,6 +220,7 @@ export const zLawyerProfileWritable = z.object({
     onlinePresence: zOnlinePresence.optional(),
     subdomainSelection: zSubdomainSelection.optional(),
     themeSelection: zThemeSelection.optional(),
+    timeline: zTimeline.optional(),
     googleAnalyticsId: z.string().optional(),
     isPublic: z.boolean().optional(),
     showPicture: z.boolean().optional(),
