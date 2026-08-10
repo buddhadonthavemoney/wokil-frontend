@@ -32,9 +32,16 @@
   --color-card: hsl(var(--card));
   --color-card-foreground: hsl(var(--card-foreground));
 
+  /* Radius scale from the Wokil design system (Stitch): 0.25rem on controls,
+     0.5rem on cards, 0.75rem on large containers, full only on pills. The
+     xl/2xl/3xl overrides cap Tailwind's much rounder defaults (0.75/1/1.5rem)
+     so a `rounded-3xl` card in an older page can't drift off the scale. */
+  --radius-sm: 0.125rem;
+  --radius-md: 0.25rem;
   --radius-lg: var(--radius);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-sm: calc(var(--radius) - 4px);
+  --radius-xl: 0.75rem;
+  --radius-2xl: 0.75rem;
+  --radius-3xl: 0.75rem;
 
   --animate-accordion-down: accordion-down 0.2s ease-out;
   --animate-accordion-up: accordion-up 0.2s ease-out;
@@ -96,7 +103,7 @@
     --border: 220 13% 91%;
     --input: 220 13% 91%;
     --ring: 39 48% 56%;
-    --radius: 0.75rem;
+    --radius: 0.5rem;
   }
 
   .dark {
