@@ -73,7 +73,7 @@ export function PracticeDetailsStep({ profile, onUpdate }: PracticeDetailsStepPr
         </div>
 
         <div className="space-y-3">
-          <Label htmlFor="jurisdictions">Jurisdictions Served (Courts)</Label>
+          <Label htmlFor="jurisdictions">Courts</Label>
           <CourtSelector 
             selectedCourts={practiceDetails.jurisdictions || []}
             onSelect={toggleJurisdiction}

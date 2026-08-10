@@ -195,7 +195,7 @@ export function ClassicTheme({ profile }: ClassicThemeProps) {
               <section data-reveal className="bg-white rounded-2xl p-10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-[#F0F0F0]">
                 <h2 className="font-heading text-3xl font-bold text-[#1B2B44] mb-8 flex items-center gap-4">
                   <span className="w-10 h-[2px] bg-[#C5A059]" />
-                  Jurisdictions
+                  Courts
                 </h2>
                 <div className="flex flex-wrap gap-4">
                   {jurisdictions.map((jurisdiction) => (
