@@ -55,6 +55,8 @@ function normalizeProfile(input: Partial<LawyerProfile>): LawyerProfile {
       education: input.timeline?.education ?? [],
       experience: input.timeline?.experience ?? [],
     },
+    // Left undefined when absent so the themes fall back to their defaults.
+    siteContent: input.siteContent,
     themeSelection: {
       theme: input.themeSelection?.theme ?? 'classic',
     },

@@ -1,37 +1,13 @@
-import { LawyerProfile, TimelineEntry, formatTimelineRange } from '@/types/lawyer';
+import { LawyerProfile, TimelineEntry, formatTimelineRange, resolveSiteContent } from '@/types/lawyer';
 import { Phone, Mail, MapPin, Clock, Globe, Linkedin, Scale, UserCheck, MessageCircle, Wallet, Menu, GraduationCap, Briefcase, type LucideIcon } from 'lucide-react';
 
 interface ClassicThemeProps {
   profile: LawyerProfile;
 }
 
-// Generic value-proposition copy, not claims specific to any one attorney —
-// placeholder content until the data model grows fields for this. Safe to
-// ship as-is: it's boilerplate common on solo/boutique practice sites, not
-// a factual assertion about the particular attorney.
-const VALUE_POINTS = [
-  {
-    icon: UserCheck,
-    title: 'Direct Access',
-    description: "You'll work with me personally throughout your matter — not handed off to a rotating cast of associates.",
-  },
-  {
-    icon: MessageCircle,
-    title: 'Clear Communication',
-    description: 'Plain-language updates at every stage, so you always know where your case stands.',
-  },
-  {
-    icon: Wallet,
-    title: 'Transparent Fees',
-    description: 'Fee structures are discussed upfront during your consultation — no surprises on your invoice.',
-  },
-];
-
-const PROCESS_STEPS = [
-  { step: '01', title: 'Initial Consultation', description: 'We discuss the facts of your matter, your goals, and whether representation makes sense.' },
-  { step: '02', title: 'Case Strategy', description: 'A tailored plan is built around your case, timeline, and desired outcome.' },
-  { step: '03', title: 'Representation', description: 'Your matter is handled from filing through resolution, with regular updates along the way.' },
-];
+// Value points are free text, so there's no icon to store per entry — cycle
+// through these by position instead.
+const VALUE_ICONS = [UserCheck, MessageCircle, Wallet];
 
 /** Vertical rail of career-history rows, in the Classic navy/gold palette. */
 function TimelineRail({ icon: Icon, title, entries }: { icon: LucideIcon; title: string; entries: TimelineEntry[] }) {
@@ -93,12 +69,10 @@ export function ClassicTheme({ profile }: ClassicThemeProps) {
   const website = onlinePresence.website;
   const linkedIn = onlinePresence.linkedIn;
 
-  const faqs = [
-    { q: 'Do you offer an initial consultation?', a: `Yes — use the contact details below to schedule a consultation with ${fullName}.` },
-    { q: 'What areas do you practice in?', a: jurisdictions.length > 0 ? `Admitted to practice in ${jurisdictions.join(', ')}. See Areas of Expertise above for matters handled.` : 'See Areas of Expertise above for the specific matters handled.' },
-    { q: 'What are your office hours?', a: officeHours || 'Office hours are available by appointment — contact the office to schedule a time.' },
-    { q: 'How do I get started?', a: 'Call or email using the details below, or use the "Request Consultation" button at the top of the page.' },
-  ];
+  const { valuePoints, processSteps, faqs } = resolveSiteContent(profile, {
+      expertiseSection: 'Areas of Expertise',
+      cta: 'Request Consultation',
+  });
 
   return (
     <div className="min-h-screen bg-[#FDFCFB] font-body text-[#1A1A1A]">
@@ -257,7 +231,9 @@ export function ClassicTheme({ profile }: ClassicThemeProps) {
                 Why Work With Me
               </h2>
               <div className="grid grid-cols-1 @md:grid-cols-3 gap-6">
-                {VALUE_POINTS.map(({ icon: Icon, title, description }) => (
+                {valuePoints.map(({ title, description }, i) => {
+                    const Icon = VALUE_ICONS[i % VALUE_ICONS.length];
+                    return (
                   <div key={title} className="p-6 bg-[#F8F9FB] rounded-xl border border-[#EDF0F5]">
                     <div className="w-10 h-10 rounded-lg bg-[#C5A059]/10 flex items-center justify-center mb-4">
                       <Icon className="w-5 h-5 text-[#C5A059]" />
@@ -265,7 +241,8 @@ export function ClassicTheme({ profile }: ClassicThemeProps) {
                     <h3 className="font-heading font-bold text-[#1B2B44] mb-2">{title}</h3>
                     <p className="text-[#4A4A4A] text-sm leading-relaxed">{description}</p>
                   </div>
-                ))}
+                    );
+                })}
               </div>
             </section>
 
@@ -276,9 +253,9 @@ export function ClassicTheme({ profile }: ClassicThemeProps) {
                 How It Works
               </h2>
               <div className="grid grid-cols-1 @md:grid-cols-3 gap-6">
-                {PROCESS_STEPS.map(({ step, title, description }) => (
-                  <div key={step} className="p-6 bg-[#F8F9FB] rounded-xl border border-[#EDF0F5]">
-                    <span className="block font-heading font-black text-3xl text-[#C5A059]/40 mb-3">{step}</span>
+                {processSteps.map(({ title, description }, i) => (
+                  <div key={title} className="p-6 bg-[#F8F9FB] rounded-xl border border-[#EDF0F5]">
+                    <span className="block font-heading font-black text-3xl text-[#C5A059]/40 mb-3">{String(i + 1).padStart(2, '0')}</span>
                     <h3 className="font-heading font-bold text-[#1B2B44] mb-2">{title}</h3>
                     <p className="text-[#4A4A4A] text-sm leading-relaxed">{description}</p>
                   </div>
@@ -293,13 +270,13 @@ export function ClassicTheme({ profile }: ClassicThemeProps) {
                 Frequently Asked Questions
               </h2>
               <div className="divide-y divide-[#F0F0F0]">
-                {faqs.map(({ q, a }) => (
-                  <details key={q} className="group py-5">
+                {faqs.map(({ question, answer }) => (
+                  <details key={question} className="group py-5">
                     <summary className="flex items-center justify-between cursor-pointer list-none text-lg font-semibold text-[#1B2B44]">
-                      {q}
+                      {question}
                       <span className="text-[#C5A059] text-xl transition-transform group-open:rotate-45 shrink-0 ml-4">+</span>
                     </summary>
-                    <p className="mt-3 text-[#4A4A4A] leading-relaxed">{a}</p>
+                    <p className="mt-3 text-[#4A4A4A] leading-relaxed">{answer}</p>
                   </details>
                 ))}
               </div>

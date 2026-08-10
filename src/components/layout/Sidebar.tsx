@@ -16,6 +16,7 @@ import {
   Building2,
   Gavel,
   CalendarDays,
+  ClipboardList,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -176,6 +177,9 @@ export default function Sidebar() {
             </div>
             <div onClick={handleNavClick}>
               <NavLink icon={<User className="w-5 h-5" />} label="Profile" path="/profile-builder" isActive={pathname === '/profile-builder'} />
+            </div>
+            <div onClick={handleNavClick}>
+              <NavLink icon={<ClipboardList className="w-5 h-5" />} label="Profile Details" path="/profile-details" isActive={pathname === '/profile-details'} />
             </div>
           </NavSection>
 
