@@ -38,7 +38,7 @@ export function ProgressIndicator({ currentStep, totalSteps, steps, onStepClick 
                   "w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold transition-all duration-500 ease-out",
                   isCompleted && "bg-primary text-primary-foreground shadow-lg shadow-primary/20 scale-100 group-hover:scale-110",
                   isCurrent && "bg-primary text-primary-foreground shadow-xl shadow-primary/30 ring-[6px] ring-primary/10 scale-110",
-                  !isCompleted && !isCurrent && "bg-white border border-border text-muted-foreground/60 shadow-sm group-hover:border-primary/50 group-hover:text-primary group-hover:scale-110"
+                  !isCompleted && !isCurrent && "bg-card border border-border text-muted-foreground/60 shadow-sm group-hover:border-primary/50 group-hover:text-primary group-hover:scale-110"
                 )}
                 style={{ fontFamily: 'Outfit, sans-serif' }}
               >

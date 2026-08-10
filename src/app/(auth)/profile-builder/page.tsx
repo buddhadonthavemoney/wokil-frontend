@@ -11,6 +11,7 @@ import { BasicInfoStep } from '@/components/form/steps/BasicInfoStep';
 import { PracticeDetailsStep } from '@/components/form/steps/PracticeDetailsStep';
 import { ContactInfoStep } from '@/components/form/steps/ContactInfoStep';
 import { ProfessionalProfileStep } from '@/components/form/steps/ProfessionalProfileStep';
+import { TimelineStep } from '@/components/form/steps/TimelineStep';
 import { OnlinePresenceStep } from '@/components/form/steps/OnlinePresenceStep';
 import { SubdomainSelectionStep } from '@/components/form/steps/SubdomainSelectionStep';
 import { ThemeSelector } from '@/components/form/ThemeSelector';
@@ -30,6 +31,7 @@ const STEP_NAMES = [
   'Practice',
   'Contact',
   'Profile',
+  'Timeline',
   'Online',
   'Subdomain',
 ];
@@ -58,6 +60,39 @@ const SAUL_GOODMAN_DATA = {
   onlinePresence: {
     website: "https://bettercallsaul.com",
     linkedIn: "https://linkedin.com/in/saulgoodman",
+  },
+  timeline: {
+    education: [
+      {
+        title: "Juris Doctor",
+        organization: "University of American Samoa",
+        startYear: "1993",
+        endYear: "1996",
+        description: "Correspondence programme, completed while working full time in the mailroom at HHM.",
+      },
+    ],
+    experience: [
+      {
+        title: "Mailroom Clerk",
+        organization: "Hamlin, Hamlin & McGill",
+        startYear: "1992",
+        endYear: "1996",
+      },
+      {
+        title: "Solo Practitioner",
+        organization: "James M. McGill, Esq.",
+        startYear: "1997",
+        endYear: "2002",
+        description: "Elder law and public defence work, run out of the back of a nail salon.",
+      },
+      {
+        title: "Name Partner",
+        organization: "Goodman, Goodman & McGill",
+        startYear: "2002",
+        current: true,
+        description: "Criminal defence, personal injury and bankruptcy for clients across New Mexico.",
+      },
+    ],
   },
   themeSelection: {
     theme: "classic" as const,
@@ -88,10 +123,11 @@ export default function ProfileBuilder() {
       'practiceDetails',
       'contactInformation',
       'professionalProfile',
+      'timeline',
       'onlinePresence',
       'subdomainSelection'
     ];
-    
+
     const key = stepKeys[currentStep - 1];
     if (key) {
       setProfile(prev => ({
@@ -135,8 +171,10 @@ export default function ProfileBuilder() {
       case 4:
         return <ProfessionalProfileStep profile={profile} onUpdate={(fields) => updateNestedProfile('professionalProfile', fields)} />;
       case 5:
-        return <OnlinePresenceStep profile={profile} onUpdate={(fields) => updateNestedProfile('onlinePresence', fields)} />;
+        return <TimelineStep profile={profile} onUpdate={(fields) => updateNestedProfile('timeline', fields)} />;
       case 6:
+        return <OnlinePresenceStep profile={profile} onUpdate={(fields) => updateNestedProfile('onlinePresence', fields)} />;
+      case 7:
         return <SubdomainSelectionStep profile={profile} onUpdate={(fields) => updateNestedProfile('subdomainSelection', fields)} />;
       default:
         return null;
@@ -185,7 +223,7 @@ export default function ProfileBuilder() {
               onStepClick={goToStep}
             />
 
-            <div className="bg-white border-none rounded-3xl p-6 md:p-8 shadow-premium animate-fade-in relative overflow-hidden min-h-[400px] max-h-[600px] flex flex-col">
+            <div className="bg-card border-none rounded-xl p-6 md:p-8 shadow-premium animate-fade-in relative overflow-hidden min-h-[400px] max-h-[calc(100vh-8rem)] flex flex-col">
               <div className="flex items-center justify-end gap-3 mb-4 shrink-0">
               <Button
                 variant="ghost"
@@ -208,11 +246,11 @@ export default function ProfileBuilder() {
                 Clear
               </Button>
             </div>
-            <div className="relative overflow-y-auto flex-1 no-scrollbar px-1.5">
+            <div className="relative overflow-y-auto flex-1 px-1.5">
               {renderCurrentStep()}
             </div>
 
-            <div className="mt-8 pt-6 border-t border-border/50 shrink-0">
+            <div className="shrink-0">
               <FormNavigation
                 currentStep={currentStep}
                 totalSteps={totalSteps}
@@ -282,9 +320,9 @@ export default function ProfileBuilder() {
               <div className="h-[46px] w-[3px] bg-gray-800 absolute -start-[17px] top-[178px] rounded-s-lg"></div>
               <div className="h-[64px] w-[3px] bg-gray-800 absolute -end-[17px] top-[142px] rounded-e-lg"></div>
               
-              <div className="rounded-[2rem] overflow-hidden w-full h-full bg-white dark:bg-gray-800 relative z-10">
+              <div className="rounded-[2rem] overflow-hidden w-full h-full bg-card dark:bg-gray-800 relative z-10">
                  {!hasBasicInfo ? (
-                   <div className="w-full h-full flex flex-col items-center justify-center bg-white p-8 text-center space-y-4 animate-fade-in">
+                   <div className="w-full h-full flex flex-col items-center justify-center bg-card p-8 text-center space-y-4 animate-fade-in">
                       <div className="w-16 h-16 bg-primary/5 rounded-2xl flex items-center justify-center mb-2">
                         <Sparkles className="w-8 h-8 text-primary opacity-40" />
                       </div>

@@ -27,7 +27,7 @@ export function ThemeSelector({ themes, currentTheme, onThemeSelect, isLoading }
         <Button
           variant="outline"
           size="sm"
-          className="h-9 rounded-full px-4 border-border/50 bg-white hover:bg-white/80 shadow-sm gap-2 transition-all hover:scale-105 pr-3"
+          className="h-9 rounded-full px-4 border-border/50 bg-card hover:bg-card/80 shadow-sm gap-2 transition-all hover:scale-105 pr-3"
         >
           <Palette className="w-3.5 h-3.5 text-muted-foreground" />
           <span className="text-[10px] font-bold uppercase tracking-wider text-foreground">

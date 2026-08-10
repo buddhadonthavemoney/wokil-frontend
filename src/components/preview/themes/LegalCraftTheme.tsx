@@ -1,5 +1,5 @@
-import { LawyerProfile } from '@/types/lawyer';
-import { Phone, Mail, MapPin, Clock, Globe, Linkedin, Scale, BookOpen, PenTool as Pen, Gavel, UserCheck, MessageCircle, Wallet } from 'lucide-react';
+import { LawyerProfile, TimelineEntry, formatTimelineRange } from '@/types/lawyer';
+import { Phone, Mail, MapPin, Clock, Globe, Linkedin, Scale, BookOpen, PenTool as Pen, Gavel, UserCheck, MessageCircle, Wallet, Menu, GraduationCap, Briefcase, type LucideIcon } from 'lucide-react';
 
 interface LegalCraftThemeProps {
     profile: LawyerProfile;
@@ -21,14 +21,45 @@ const PROCESS_STEPS = [
     { step: '03', title: 'Representation', description: 'Your matter is handled from filing through resolution, with regular updates along the way.' },
 ];
 
+/** Vertical rail of career-history rows, in the LegalCraft cream/tan palette. */
+function TimelineRail({ icon: Icon, title, entries }: { icon: LucideIcon; title: string; entries: TimelineEntry[] }) {
+    if (entries.length === 0) return null;
+
+    return (
+        <div className="space-y-8">
+            <h4 className="font-heading text-lg font-bold text-[#1A120B] uppercase tracking-[0.2em] flex items-center gap-3">
+                <Icon className="w-5 h-5 text-[#D4A373]" />
+                {title}
+            </h4>
+            <ol className="space-y-6">
+                {entries.map((entry, index) => (
+                    <li key={index} className="p-8 bg-[#F5F2ED] border-l-4 border-[#D4A373]">
+                        <p className="text-xs uppercase tracking-[0.3em] font-bold text-[#3C2A21]/50 mb-3">{formatTimelineRange(entry)}</p>
+                        <h5 className="text-xl font-bold text-[#1A120B] font-heading">{entry.title}</h5>
+                        <p className="text-[#3C2A21]/70 italic font-heading">{entry.organization}</p>
+                        {entry.description && (
+                            <p className="text-sm text-[#3C2A21]/70 leading-relaxed mt-4">{entry.description}</p>
+                        )}
+                    </li>
+                ))}
+            </ol>
+        </div>
+    );
+}
+
 export function LegalCraftTheme({ profile }: LegalCraftThemeProps) {
     const {
         basicInformation,
         practiceDetails,
         contactInformation,
         professionalProfile,
-        onlinePresence
+        onlinePresence,
+        timeline
     } = profile;
+
+    const education = timeline?.education ?? [];
+    const experience = timeline?.experience ?? [];
+    const hasTimeline = education.length > 0 || experience.length > 0;
 
     const fullName = basicInformation.fullName || 'Your Name';
     const professionalTitle = basicInformation.professionalTitle || 'Barrister & solicitor';
@@ -64,24 +95,40 @@ export function LegalCraftTheme({ profile }: LegalCraftThemeProps) {
             {/* Nav */}
             <nav className="sticky top-0 z-50 bg-[#FDFBF7]/90 backdrop-blur-md border-b border-[#E5E5E5]">
                 <div className="container mx-auto px-6 h-16 flex items-center justify-between gap-6">
-                    <a href="#top" className="flex items-center gap-2 font-heading font-bold text-[#1A120B] tracking-tight shrink-0">
-                        <Gavel className="w-5 h-5 text-[#D4A373]" />
-                        <span className="truncate max-w-[40vw] @md:max-w-none">{lawFirmName || fullName}</span>
+                    <a href="#top" className="flex items-center gap-2 min-w-0 font-heading font-bold text-[#1A120B] tracking-tight">
+                        <Gavel className="w-5 h-5 text-[#D4A373] shrink-0" />
+                        <span className="truncate">{lawFirmName || fullName}</span>
                     </a>
                     <div className="hidden @lg:flex items-center gap-8 text-sm font-medium text-[#3C2A21]/60">
                         <a href="#about" className="hover:text-[#1A120B] transition-colors">Philosophy</a>
                         <a href="#practice-areas" className="hover:text-[#1A120B] transition-colors">Expertise</a>
+                        {hasTimeline && <a href="#timeline" className="hover:text-[#1A120B] transition-colors">Timeline</a>}
                         <a href="#why" className="hover:text-[#1A120B] transition-colors">Why Work With Me</a>
                         <a href="#faq" className="hover:text-[#1A120B] transition-colors">FAQ</a>
                     </div>
-                    <a href="#contact" className="px-4 @md:px-5 py-2.5 bg-[#3C2A21] hover:bg-[#1A120B] rounded-sm text-sm font-bold text-white tracking-wide uppercase transition-colors shrink-0">
+                    <a href="#contact" className="hidden @lg:block px-4 @md:px-5 py-2.5 bg-[#3C2A21] hover:bg-[#1A120B] rounded-sm text-sm font-bold text-white tracking-wide uppercase transition-colors shrink-0">
                         Request Interview
                     </a>
+                    <details className="@lg:hidden relative shrink-0">
+                        <summary className="flex items-center justify-center w-9 h-9 rounded-sm text-[#1A120B] list-none cursor-pointer [&::-webkit-details-marker]:hidden">
+                            <Menu className="w-5 h-5" />
+                        </summary>
+                        <div className="absolute right-0 top-full mt-2 w-56 bg-[#FDFBF7] border border-[#E5E5E5] rounded-sm shadow-2xl p-4 flex flex-col gap-3 text-sm font-medium text-[#3C2A21]/70 z-50">
+                            <a href="#about" className="hover:text-[#1A120B] transition-colors">Philosophy</a>
+                            <a href="#practice-areas" className="hover:text-[#1A120B] transition-colors">Expertise</a>
+                        {hasTimeline && <a href="#timeline" className="hover:text-[#1A120B] transition-colors">Timeline</a>}
+                            <a href="#why" className="hover:text-[#1A120B] transition-colors">Why Work With Me</a>
+                            <a href="#faq" className="hover:text-[#1A120B] transition-colors">FAQ</a>
+                            <a href="#contact" className="mt-1 px-4 py-2.5 bg-[#3C2A21] hover:bg-[#1A120B] rounded-sm text-sm font-bold text-white tracking-wide uppercase text-center transition-colors">
+                                Request Interview
+                            </a>
+                        </div>
+                    </details>
                 </div>
             </nav>
 
             {/* Hero Section */}
-            <header id="top" className="relative pt-24 pb-32 overflow-hidden border-b border-[#E5E5E5] scroll-mt-16">
+            <header id="top" className="relative pt-16 pb-20 @md:pt-24 @md:pb-32 overflow-hidden border-b border-[#E5E5E5] scroll-mt-16">
                 <div className="absolute top-0 right-0 w-1/3 h-full bg-[#3C2A21]/[0.02] -skew-x-12 transform translate-x-1/2" />
                 <div className="container mx-auto px-6 relative">
                     <div className="max-w-5xl mx-auto flex flex-col items-center text-center space-y-10">
@@ -94,11 +141,11 @@ export function LegalCraftTheme({ profile }: LegalCraftThemeProps) {
                         </div>
 
                         <div className="space-y-6 animate-in fade-in duration-1000">
-                            <h1 className="text-6xl @md:text-8xl font-heading font-bold text-[#1A120B] leading-tight tracking-tight">
+                            <h1 className="text-4xl @sm:text-5xl @md:text-7xl @lg:text-8xl font-heading font-bold text-[#1A120B] leading-tight tracking-tight">
                                 {fullName}
                             </h1>
                             <div className="flex flex-col items-center gap-2">
-                                <span className="text-2xl @md:text-3xl font-heading italic text-[#D4A373] font-medium">
+                                <span className="text-lg @sm:text-xl @md:text-2xl @lg:text-3xl font-heading italic text-[#D4A373] font-medium">
                                     {professionalTitle}
                                 </span>
                                 {lawFirmName && (
@@ -128,7 +175,7 @@ export function LegalCraftTheme({ profile }: LegalCraftThemeProps) {
             <main className="container mx-auto px-6 py-24 max-w-6xl">
                 <div className="grid @lg:grid-cols-12 gap-20">
                     {/* Detailed Bio */}
-                    <div data-reveal id="about" className="scroll-mt-24 @lg:col-span-12 space-y-12 mb-12">
+                    <div data-reveal id="about" className="scroll-mt-24 min-w-0 @lg:col-span-12 space-y-12 mb-12">
                         <div className="flex flex-col items-center text-center space-y-8 max-w-4xl mx-auto">
                             <h2 className="font-heading text-4xl font-bold text-[#1A120B]">Professional Philosophy</h2>
                             <div className="h-1.5 w-24 bg-[#D4A373] rounded-full" />
@@ -139,7 +186,7 @@ export function LegalCraftTheme({ profile }: LegalCraftThemeProps) {
                     </div>
 
                     {/* Core Expertise */}
-                    <div className="@lg:col-span-8 space-y-16">
+                    <div className="min-w-0 @lg:col-span-8 space-y-16">
                         {areasOfPractice.length > 0 && (
                             <section data-reveal id="practice-areas" className="scroll-mt-24">
                                 <h3 className="font-heading text-2xl font-bold text-[#1A120B] mb-10 flex items-center gap-4 uppercase tracking-wider">
@@ -153,6 +200,19 @@ export function LegalCraftTheme({ profile }: LegalCraftThemeProps) {
                                             <h4 className="text-xl font-bold text-[#1A120B] font-heading">{area}</h4>
                                         </div>
                                     ))}
+                                </div>
+                            </section>
+                        )}
+
+                        {hasTimeline && (
+                            <section data-reveal id="timeline" className="scroll-mt-24">
+                                <h3 className="font-heading text-2xl font-bold text-[#1A120B] mb-10 flex items-center gap-4 uppercase tracking-wider">
+                                    <Pen className="w-6 h-6 text-[#D4A373]" />
+                                    Timeline
+                                </h3>
+                                <div className="space-y-12">
+                                    <TimelineRail icon={Briefcase} title="Experience" entries={experience} />
+                                    <TimelineRail icon={GraduationCap} title="Education" entries={education} />
                                 </div>
                             </section>
                         )}
@@ -224,7 +284,7 @@ export function LegalCraftTheme({ profile }: LegalCraftThemeProps) {
                     </div>
 
                     {/* Sidebar */}
-                    <div className="@lg:col-span-4 space-y-12">
+                    <div className="min-w-0 @lg:col-span-4 space-y-12">
                         <div data-reveal className="relative p-1 bg-gradient-to-br from-[#D4A373] to-[#3C2A21] rounded-sm shadow-2xl">
                             {profilePhoto ? (
                                 <img src={profilePhoto} alt={fullName} className="w-full aspect-square object-cover" />

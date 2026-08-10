@@ -3,7 +3,20 @@
 import { useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { Scale, LayoutDashboard, User, Globe, Settings, LogOut, IdCard, Menu, X } from 'lucide-react';
+import {
+  Scale,
+  LayoutDashboard,
+  User,
+  Globe,
+  Settings,
+  LogOut,
+  IdCard,
+  Menu,
+  X,
+  Building2,
+  Gavel,
+  CalendarDays,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface NavLinkProps {
@@ -19,15 +32,15 @@ function NavLink({ icon, label, path, isActive }: NavLinkProps) {
       href={path}
       prefetch={true}
       className={`
-        w-full flex items-center gap-3 px-4 py-2.5 rounded-lg
+        w-full flex items-center gap-3 px-4 py-2.5 rounded-lg border-r-2
         transition-all duration-200 font-medium text-sm
-        ${isActive 
-          ? 'bg-primary/10 text-primary' 
-          : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+        ${isActive
+          ? 'bg-secondary text-accent font-semibold border-accent'
+          : 'text-muted-foreground border-transparent hover:bg-muted hover:text-foreground'
         }
       `}
     >
-      <span className={isActive ? 'text-primary' : 'text-muted-foreground'}>
+      <span className={isActive ? 'text-accent' : 'text-muted-foreground'}>
         {icon}
       </span>
       <span>{label}</span>
@@ -35,18 +48,52 @@ function NavLink({ icon, label, path, isActive }: NavLinkProps) {
   );
 }
 
+interface ComingSoonLinkProps {
+  icon: React.ReactNode;
+  label: string;
+  path: string;
+  isActive: boolean;
+}
+
+function ComingSoonLink({ icon, label, path, isActive }: ComingSoonLinkProps) {
+  return (
+    <Link
+      href={path}
+      prefetch={true}
+      title="Coming soon"
+      className={`
+        w-full flex items-center gap-3 px-4 py-2.5 rounded-lg border-r-2
+        transition-all duration-200 text-sm font-medium
+        ${isActive
+          ? 'bg-secondary text-accent font-semibold border-accent'
+          : 'text-muted-foreground/70 border-transparent hover:bg-muted hover:text-foreground'
+        }
+      `}
+    >
+      <span className={isActive ? 'text-accent' : 'text-muted-foreground/70'}>{icon}</span>
+      <span className="flex-1">{label}</span>
+      <span className="text-[9px] font-bold uppercase tracking-widest text-accent border border-accent/40 rounded px-1.5 py-0.5">
+        Soon
+      </span>
+    </Link>
+  );
+}
+
+function NavSection({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="mb-4">
+      <p className="px-4 mb-1.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-widest">
+        {label}
+      </p>
+      <div className="flex flex-col gap-1">{children}</div>
+    </div>
+  );
+}
+
 export default function Sidebar() {
   const router = useRouter();
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-  const navItems = [
-    { icon: <LayoutDashboard className="w-5 h-5" />, label: 'Dashboard', path: '/dashboard' },
-    { icon: <User className="w-5 h-5" />, label: 'Profile', path: '/profile-builder' },
-    { icon: <Globe className="w-5 h-5" />, label: 'Sites', path: '/sites' },
-    { icon: <IdCard className="w-5 h-5" />, label: 'Business Cards', path: '/business-cards' },
-    { icon: <Settings className="w-5 h-5" />, label: 'Settings', path: '/settings' },
-  ];
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -61,7 +108,7 @@ export default function Sidebar() {
     <>
       {/* Mobile Header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-card border-b border-border px-4 py-3 flex items-center justify-between">
-        <Link 
+        <Link
           href="/dashboard"
           prefetch={true}
           className="flex items-center gap-3 cursor-pointer"
@@ -85,7 +132,7 @@ export default function Sidebar() {
 
       {/* Mobile Menu Overlay */}
       {isMobileMenuOpen && (
-        <div 
+        <div
           className="lg:hidden fixed inset-0 bg-black/50 z-40 mt-[57px]"
           onClick={() => setIsMobileMenuOpen(false)}
         />
@@ -102,7 +149,7 @@ export default function Sidebar() {
       `}>
         {/* Logo Section - Hidden on mobile, shown on desktop */}
         <div className="hidden lg:block p-6 border-b border-border">
-          <Link 
+          <Link
             href="/dashboard"
             prefetch={true}
             className="flex items-center gap-3 cursor-pointer group"
@@ -122,17 +169,42 @@ export default function Sidebar() {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-          {navItems.map((item) => (
-            <div key={item.path} onClick={handleNavClick}>
-              <NavLink
-                icon={item.icon}
-                label={item.label}
-                path={item.path}
-                isActive={pathname === item.path}
-              />
+        <nav className="flex-1 px-4 pt-4 overflow-y-auto">
+          <NavSection label="General">
+            <div onClick={handleNavClick}>
+              <NavLink icon={<LayoutDashboard className="w-5 h-5" />} label="Dashboard" path="/dashboard" isActive={pathname === '/dashboard'} />
             </div>
-          ))}
+            <div onClick={handleNavClick}>
+              <NavLink icon={<User className="w-5 h-5" />} label="Profile" path="/profile-builder" isActive={pathname === '/profile-builder'} />
+            </div>
+          </NavSection>
+
+          <NavSection label="Management">
+            <div onClick={handleNavClick}>
+              <NavLink icon={<Globe className="w-5 h-5" />} label="Sites" path="/sites" isActive={pathname === '/sites'} />
+            </div>
+            <div onClick={handleNavClick}>
+              <ComingSoonLink icon={<Building2 className="w-5 h-5" />} label="Firm Dashboard" path="/firm-dashboard" isActive={pathname === '/firm-dashboard'} />
+            </div>
+            <div onClick={handleNavClick}>
+              <NavLink icon={<IdCard className="w-5 h-5" />} label="Business Cards" path="/business-cards" isActive={pathname === '/business-cards'} />
+            </div>
+          </NavSection>
+
+          <NavSection label="Tools">
+            <div onClick={handleNavClick}>
+              <ComingSoonLink icon={<Gavel className="w-5 h-5" />} label="Legal Research" path="/legal-research" isActive={pathname === '/legal-research'} />
+            </div>
+            <div onClick={handleNavClick}>
+              <ComingSoonLink icon={<CalendarDays className="w-5 h-5" />} label="Court Calendar" path="/court-calendar" isActive={pathname === '/court-calendar'} />
+            </div>
+          </NavSection>
+
+          <NavSection label="Settings">
+            <div onClick={handleNavClick}>
+              <NavLink icon={<Settings className="w-5 h-5" />} label="Settings" path="/settings" isActive={pathname === '/settings'} />
+            </div>
+          </NavSection>
         </nav>
 
         {/* Logout Button */}

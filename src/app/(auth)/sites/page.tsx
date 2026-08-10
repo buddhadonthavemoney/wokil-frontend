@@ -1,6 +1,6 @@
 'use client';
 
-import { Globe, ExternalLink, Edit, IdCard, Loader2, CheckCircle2, ShieldCheck, Plus, Clock, Link as LinkIcon, Trash2, Copy, AlertCircle } from 'lucide-react';
+import { Globe, ExternalLink, Edit, IdCard, Loader2, ShieldCheck, Plus, Trash2, Copy, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -8,6 +8,7 @@ import { getProfile, listSites, createSite, deleteSite, verifyDns, getVerificati
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 import { useState, useEffect, useRef } from 'react';
 import {
   Dialog,
@@ -272,48 +273,42 @@ export default function Sites() {
     return `https://${domain}`;
   };
 
+  const statusConfig: Record<string, { label: string; dot: string; className: string }> = {
+    deployed: { label: 'Live', dot: 'bg-emerald-500', className: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+    requested: { label: 'Requested', dot: 'bg-blue-500', className: 'bg-blue-50 text-blue-700 border-blue-200' },
+    link_pending: { label: 'Link Pending', dot: 'bg-amber-500', className: 'bg-amber-50 text-amber-700 border-amber-200' },
+  };
+
   const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'deployed':
-        return (
-          <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-100 flex items-center gap-1 py-1 px-3">
-            <CheckCircle2 className="w-3.5 h-3.5" />
-            <span className="text-[10px] font-bold uppercase tracking-wider">Live</span>
-          </Badge>
-        );
-      case 'requested':
-        return (
-          <Badge variant="secondary" className="bg-blue-50 text-blue-700 border-blue-100 flex items-center gap-1 py-1 px-3">
-            <Clock className="w-3.5 h-3.5" />
-            <span className="text-[10px] font-bold uppercase tracking-wider">Requested</span>
-          </Badge>
-        );
-      case 'link_pending':
-        return (
-          <Badge variant="secondary" className="bg-yellow-50 text-yellow-700 border-yellow-100 flex items-center gap-1 py-1 px-3">
-            <LinkIcon className="w-3.5 h-3.5" />
-            <span className="text-[10px] font-bold uppercase tracking-wider">Link Pending</span>
-          </Badge>
-        );
-      default:
-        return null;
-    }
+    const config = statusConfig[status];
+    if (!config) return null;
+    return (
+      <Badge
+        variant="outline"
+        className={cn(
+          'gap-1.5 py-1 px-2.5 font-bold uppercase tracking-wider text-[10px] rounded-full',
+          config.className,
+        )}
+      >
+        <span className={cn('w-1.5 h-1.5 rounded-full', config.dot)} />
+        {config.label}
+      </Badge>
+    );
   };
 
   return (
-    <div className="min-h-screen bg-[hsl(210,20%,98%)]/50 pb-20">
+    <div className="min-h-screen bg-background pb-20">
       <main className="container mx-auto px-6 py-8 max-w-7xl">
-        <div className="flex flex-col gap-12">
-          
-          <PageHeader 
+        <div className="flex flex-col gap-10">
+
+          <PageHeader
             icon={<Globe />}
             title="Sites Management"
             description="Manage and monitor your professional published websites."
-            className="mb-12"
           />
 
           {(!sites || sites.length === 0) ? (
-            <div className="bg-white border-2 border-dashed border-border rounded-3xl p-12 text-center shadow-none">
+            <div className="bg-card border-2 border-dashed border-border rounded-xl p-12 text-center shadow-none">
               <div className="w-16 h-16 bg-muted flex items-center justify-center mx-auto mb-6 rounded-full">
                 <Globe className="w-8 h-8 text-muted-foreground" />
               </div>
@@ -331,9 +326,9 @@ export default function Sites() {
               {sites.map((site) => {
                 const isDeletingThisSite = deleteSiteMutation.isPending && deleteSiteMutation.variables === site.domain;
                 return (
-                <Card key={site.reference} className="border-none shadow-premium bg-white overflow-hidden group rounded-3xl relative">
+                <Card key={site.reference} className="border-none shadow-premium bg-card overflow-hidden group rounded-xl relative">
                   {isDeletingThisSite && (
-                    <div className="absolute inset-0 z-10 bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center gap-3 animate-in fade-in duration-200">
+                    <div className="absolute inset-0 z-10 bg-card/80 backdrop-blur-sm flex flex-col items-center justify-center gap-3 animate-in fade-in duration-200">
                       <Loader2 className="w-7 h-7 animate-spin text-destructive" />
                       <span className="text-xs font-semibold text-muted-foreground">Deleting site...</span>
                     </div>
@@ -341,7 +336,7 @@ export default function Sites() {
                   <div className="aspect-video bg-muted relative overflow-hidden">
                     {/* Mock Site Preview Backdrop */}
                     <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-accent/5 flex items-center justify-center">
-                      <div className="p-3 bg-white rounded-2xl shadow-xl transition-transform group-hover:scale-110 border border-primary/10">
+                      <div className="p-3 bg-card rounded-2xl shadow-xl transition-transform group-hover:scale-110 border border-primary/10">
                           <QRCode 
                             value={getPublicUrl(site.domain)} 
                             size={100}
@@ -376,7 +371,7 @@ export default function Sites() {
                               <Button 
                                   variant="ghost" 
                                   size="icon" 
-                                  className="h-8 w-8 hover:bg-white shadow-sm"
+                                  className="h-8 w-8 hover:bg-card shadow-sm"
                                   onClick={() => window.open(getPublicUrl(site.domain), '_blank')}
                               >
                                   <ExternalLink className="w-3.5 h-3.5" />
@@ -439,11 +434,11 @@ export default function Sites() {
 
               {/* Add New Site Card */}
               <Card 
-                className="border-2 border-dashed border-border/60 bg-muted/2 shadow-none overflow-hidden group rounded-3xl hover:border-primary/30 hover:bg-muted/5 transition-all flex flex-col items-center justify-center p-8 gap-6 min-h-[440px] cursor-pointer"
+                className="border-2 border-dashed border-border/60 bg-muted/2 shadow-none overflow-hidden group rounded-xl hover:border-primary/30 hover:bg-muted/5 transition-all flex flex-col items-center justify-center p-8 gap-6 min-h-[440px] cursor-pointer"
                 onClick={() => setIsCreateDialogOpen(true)}
               >
                 <div className="flex flex-col items-center gap-4">
-                    <div className="w-20 h-20 rounded-3xl bg-primary/5 flex items-center justify-center group-hover:bg-primary/10 transition-all duration-500 group-hover:scale-110 shadow-sm border border-primary/5">
+                    <div className="w-20 h-20 rounded-xl bg-primary/5 flex items-center justify-center group-hover:bg-primary/10 transition-all duration-500 group-hover:scale-110 shadow-sm border border-primary/5">
                         <Plus className="w-10 h-10 text-primary/30 group-hover:text-primary transition-colors" />
                     </div>
                 </div>
@@ -564,14 +559,14 @@ export default function Sites() {
             {verificationRecords?.map((record, index) => (
               <div key={index} className="p-4 bg-muted/30 rounded-xl border border-border/50 space-y-3">
                 <div className="flex items-center justify-between">
-                  <Badge variant="outline" className="bg-white font-mono text-[10px] uppercase">{record.type}</Badge>
+                  <Badge variant="outline" className="bg-card font-mono text-[10px] uppercase">{record.type}</Badge>
                 </div>
                 
                 <div className="grid gap-4">
                   <div className="space-y-1">
                     <Label className="text-[10px] uppercase text-muted-foreground font-bold">Host / Name</Label>
                     <div className="flex items-center gap-2">
-                      <code className="flex-1 p-2 bg-white rounded-lg border border-border/50 text-[10px] font-mono break-all">
+                      <code className="flex-1 p-2 bg-card rounded-lg border border-border/50 text-[10px] font-mono break-all">
                         {record.name}
                       </code>
                       <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => copyToClipboard(record.name)}>
@@ -583,7 +578,7 @@ export default function Sites() {
                   <div className="space-y-1">
                     <Label className="text-[10px] uppercase text-muted-foreground font-bold">Value / Points to</Label>
                     <div className="flex items-center gap-2">
-                      <code className="flex-1 p-2 bg-white rounded-lg border border-border/50 text-[10px] font-mono break-all">
+                      <code className="flex-1 p-2 bg-card rounded-lg border border-border/50 text-[10px] font-mono break-all">
                         {record.value}
                       </code>
                       <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => copyToClipboard(record.value)}>

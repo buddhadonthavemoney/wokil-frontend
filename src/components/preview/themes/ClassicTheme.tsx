@@ -1,5 +1,5 @@
-import { LawyerProfile } from '@/types/lawyer';
-import { Phone, Mail, MapPin, Clock, Globe, Linkedin, Scale, UserCheck, MessageCircle, Wallet } from 'lucide-react';
+import { LawyerProfile, TimelineEntry, formatTimelineRange } from '@/types/lawyer';
+import { Phone, Mail, MapPin, Clock, Globe, Linkedin, Scale, UserCheck, MessageCircle, Wallet, Menu, GraduationCap, Briefcase, type LucideIcon } from 'lucide-react';
 
 interface ClassicThemeProps {
   profile: LawyerProfile;
@@ -33,14 +33,46 @@ const PROCESS_STEPS = [
   { step: '03', title: 'Representation', description: 'Your matter is handled from filing through resolution, with regular updates along the way.' },
 ];
 
+/** Vertical rail of career-history rows, in the Classic navy/gold palette. */
+function TimelineRail({ icon: Icon, title, entries }: { icon: LucideIcon; title: string; entries: TimelineEntry[] }) {
+  if (entries.length === 0) return null;
+
+  return (
+    <div className="space-y-6">
+      <h3 className="font-heading text-lg font-bold text-[#1B2B44] uppercase tracking-widest flex items-center gap-3">
+        <Icon className="w-5 h-5 text-[#C5A059]" />
+        {title}
+      </h3>
+      <ol className="border-l-2 border-[#EDF0F5] pl-6 space-y-8">
+        {entries.map((entry, index) => (
+          <li key={index} className="relative">
+            <span className="absolute -left-[31px] top-1.5 w-3 h-3 rounded-full bg-[#C5A059] ring-4 ring-[#FDFCFB]" />
+            <p className="font-heading text-xl font-bold text-[#1B2B44] leading-snug">{entry.title}</p>
+            <p className="text-[#4A4A4A] text-lg font-light">{entry.organization}</p>
+            <p className="text-xs font-bold uppercase tracking-widest text-[#C5A059] mt-1">{formatTimelineRange(entry)}</p>
+            {entry.description && (
+              <p className="text-[#4A4A4A] leading-relaxed mt-3">{entry.description}</p>
+            )}
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+}
+
 export function ClassicTheme({ profile }: ClassicThemeProps) {
   const {
     basicInformation,
     practiceDetails,
     contactInformation,
     professionalProfile,
-    onlinePresence
+    onlinePresence,
+    timeline
   } = profile;
+
+  const education = timeline?.education ?? [];
+  const experience = timeline?.experience ?? [];
+  const hasTimeline = education.length > 0 || experience.length > 0;
 
   const fullName = basicInformation.fullName || 'Your Name';
   const professionalTitle = basicInformation.professionalTitle || 'Barrister & Solicitor';
@@ -73,58 +105,74 @@ export function ClassicTheme({ profile }: ClassicThemeProps) {
       {/* Nav */}
       <nav className="sticky top-0 z-50 bg-[#1B2B44]/95 backdrop-blur-md border-b border-white/5">
         <div className="container mx-auto px-6 h-16 flex items-center justify-between gap-6">
-          <a href="#top" className="flex items-center gap-2 font-heading font-bold text-white tracking-tight shrink-0">
-            <Scale className="w-5 h-5 text-[#C5A059]" />
-            <span className="truncate max-w-[40vw] @md:max-w-none">{lawFirmName || fullName}</span>
+          <a href="#top" className="flex items-center gap-2 min-w-0 font-heading font-bold text-white tracking-tight">
+            <Scale className="w-5 h-5 text-[#C5A059] shrink-0" />
+            <span className="truncate">{lawFirmName || fullName}</span>
           </a>
           <div className="hidden @lg:flex items-center gap-8 text-sm font-medium text-white/60">
             <a href="#about" className="hover:text-white transition-colors">About</a>
             <a href="#practice-areas" className="hover:text-white transition-colors">Areas of Expertise</a>
+            {hasTimeline && <a href="#timeline" className="hover:text-white transition-colors">Timeline</a>}
             <a href="#why" className="hover:text-white transition-colors">Why Work With Me</a>
             <a href="#faq" className="hover:text-white transition-colors">FAQ</a>
           </div>
-          <a href="#contact" className="px-4 @md:px-5 py-2.5 bg-[#C5A059] hover:bg-[#B18F4A] rounded-lg text-sm font-bold text-[#1B2B44] transition-colors shrink-0">
+          <a href="#contact" className="hidden @lg:block px-4 @md:px-5 py-2.5 bg-[#C5A059] hover:bg-[#B18F4A] rounded-lg text-sm font-bold text-[#1B2B44] transition-colors shrink-0">
             Request Consultation
           </a>
+          <details className="@lg:hidden relative shrink-0">
+            <summary className="flex items-center justify-center w-9 h-9 rounded-lg text-white list-none cursor-pointer [&::-webkit-details-marker]:hidden">
+              <Menu className="w-5 h-5" />
+            </summary>
+            <div className="absolute right-0 top-full mt-2 w-56 bg-[#1B2B44] border border-white/10 rounded-xl shadow-2xl p-4 flex flex-col gap-3 text-sm font-medium text-white/70 z-50">
+              <a href="#about" className="hover:text-white transition-colors">About</a>
+              <a href="#practice-areas" className="hover:text-white transition-colors">Areas of Expertise</a>
+              {hasTimeline && <a href="#timeline" className="hover:text-white transition-colors">Timeline</a>}
+              <a href="#why" className="hover:text-white transition-colors">Why Work With Me</a>
+              <a href="#faq" className="hover:text-white transition-colors">FAQ</a>
+              <a href="#contact" className="mt-1 px-4 py-2.5 bg-[#C5A059] hover:bg-[#B18F4A] rounded-lg text-sm font-bold text-[#1B2B44] text-center transition-colors">
+                Request Consultation
+              </a>
+            </div>
+          </details>
         </div>
       </nav>
 
       {/* Hero Section */}
       <header id="top" className="bg-[#1B2B44] text-white relative overflow-hidden scroll-mt-16">
         <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]" />
-        <div className="container mx-auto px-6 py-20 @md:py-32 relative z-10">
-          <div className="flex flex-col @md:flex-row items-center gap-12 max-w-6xl mx-auto">
+        <div className="container mx-auto px-6 py-14 @md:py-32 relative z-10">
+          <div className="flex flex-col @md:flex-row items-center gap-8 @md:gap-12 max-w-6xl mx-auto">
             <div className="relative group">
               <div className="absolute -inset-1 bg-[#C5A059] rounded-full blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200" />
               {profilePhoto ? (
                 <img
                   src={profilePhoto}
                   alt={fullName}
-                  className="w-40 h-40 @md:w-56 @md:h-56 rounded-full object-cover border-4 border-[#C5A059] shadow-2xl relative"
+                  className="w-24 h-24 @sm:w-32 @sm:h-32 @md:w-56 @md:h-56 rounded-full object-cover border-4 border-[#C5A059] shadow-2xl relative"
                 />
               ) : (
-                <div className="w-40 h-40 @md:w-56 @md:h-56 rounded-full bg-[#2A3B54] flex items-center justify-center border-4 border-[#C5A059] shadow-2xl relative">
-                  <Scale className="w-20 h-20 text-[#C5A059]" />
+                <div className="w-24 h-24 @sm:w-32 @sm:h-32 @md:w-56 @md:h-56 rounded-full bg-[#2A3B54] flex items-center justify-center border-4 border-[#C5A059] shadow-2xl relative">
+                  <Scale className="w-12 h-12 @sm:w-16 @sm:h-16 @md:w-20 @md:h-20 text-[#C5A059]" />
                 </div>
               )}
             </div>
 
             <div className="text-center @md:text-left space-y-4">
-              <h1 className="font-heading text-5xl @md:text-7xl font-bold tracking-tight">
+              <h1 className="font-heading text-3xl @sm:text-4xl @md:text-6xl @lg:text-7xl font-bold tracking-tight">
                 {fullName}
               </h1>
               <div className="flex flex-col @md:flex-row @md:items-center gap-2 @md:gap-4">
-                <span className="text-[#C5A059] text-2xl font-medium font-heading">
+                <span className="text-[#C5A059] text-lg @sm:text-xl @md:text-2xl font-medium font-heading">
                   {professionalTitle}
                 </span>
                 {lawFirmName && (
                   <>
                     <span className="hidden @md:block w-1.5 h-1.5 rounded-full bg-white/20" />
-                    <span className="text-white/80 text-xl font-light italic">{lawFirmName}</span>
+                    <span className="text-white/80 text-base @sm:text-lg @md:text-xl font-light italic">{lawFirmName}</span>
                   </>
                 )}
               </div>
-              <p className="text-white/60 text-lg uppercase tracking-[0.2em] font-medium pt-2">
+              <p className="text-white/60 text-xs @sm:text-sm @md:text-lg uppercase tracking-[0.2em] font-medium pt-2">
                 {yearsOfExperience}+ Years of Practice
               </p>
             </div>
@@ -135,7 +183,7 @@ export function ClassicTheme({ profile }: ClassicThemeProps) {
       <main className="container mx-auto px-6 py-20">
         <div className="grid @lg:grid-cols-12 gap-12 max-w-6xl mx-auto">
           {/* Main Content */}
-          <div className="@lg:col-span-8 space-y-12">
+          <div className="min-w-0 @lg:col-span-8 space-y-12">
             {/* About */}
             <section data-reveal id="about" className="scroll-mt-24 bg-white rounded-2xl p-10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-[#F0F0F0]">
               <h2 className="font-heading text-3xl font-bold text-[#1B2B44] mb-8 flex items-center gap-4">
@@ -184,6 +232,20 @@ export function ClassicTheme({ profile }: ClassicThemeProps) {
                       {jurisdiction}
                     </span>
                   ))}
+                </div>
+              </section>
+            )}
+
+            {/* Timeline */}
+            {hasTimeline && (
+              <section data-reveal id="timeline" className="scroll-mt-24 bg-white rounded-2xl p-10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-[#F0F0F0]">
+                <h2 className="font-heading text-3xl font-bold text-[#1B2B44] mb-8 flex items-center gap-4">
+                  <span className="w-10 h-[2px] bg-[#C5A059]" />
+                  Timeline
+                </h2>
+                <div className="space-y-12">
+                  <TimelineRail icon={Briefcase} title="Experience" entries={experience} />
+                  <TimelineRail icon={GraduationCap} title="Education" entries={education} />
                 </div>
               </section>
             )}
@@ -245,7 +307,7 @@ export function ClassicTheme({ profile }: ClassicThemeProps) {
           </div>
 
           {/* Sidebar */}
-          <aside className="@lg:col-span-4 space-y-8">
+          <aside className="min-w-0 @lg:col-span-4 space-y-8">
             {/* Contact Card */}
             <div data-reveal id="contact" className="scroll-mt-24 bg-[#1B2B44] rounded-2xl p-8 shadow-2xl text-white">
               <h3 className="font-heading text-xl font-bold mb-8 text-[#C5A059] uppercase tracking-widest border-b border-white/10 pb-4">
@@ -325,6 +387,7 @@ export function ClassicTheme({ profile }: ClassicThemeProps) {
             <ul className="space-y-2 text-sm text-white/60">
               <li><a href="#about" className="hover:text-white transition-colors">About</a></li>
               <li><a href="#practice-areas" className="hover:text-white transition-colors">Areas of Expertise</a></li>
+              {hasTimeline && <li><a href="#timeline" className="hover:text-white transition-colors">Timeline</a></li>}
               <li><a href="#why" className="hover:text-white transition-colors">Why Work With Me</a></li>
               <li><a href="#faq" className="hover:text-white transition-colors">FAQ</a></li>
               <li><a href="#contact" className="hover:text-white transition-colors">Contact</a></li>

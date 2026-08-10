@@ -118,6 +118,38 @@ export type ThemeSelection = {
     theme?: string;
 };
 
+/**
+ * One row of career history — a degree or a job. Both use the same shape; only the labels differ in the UI.
+ */
+export type TimelineEntry = {
+    /**
+     * Degree or job title, e.g. "LL.B." or "Senior Associate".
+     */
+    title?: string;
+    /**
+     * University or firm.
+     */
+    organization?: string;
+    /**
+     * Free text, not a date. Profiles carry "2014", "2014-15" and Bikram Sambat years alike, and nothing sorts or compares them.
+     */
+    startYear?: string;
+    endYear?: string;
+    /**
+     * Renders "Present"; endYear is ignored when true.
+     */
+    current?: boolean;
+    description?: string;
+};
+
+/**
+ * LinkedIn-style career history rendered by the themes.
+ */
+export type Timeline = {
+    education?: Array<TimelineEntry>;
+    experience?: Array<TimelineEntry>;
+};
+
 export type LawyerProfile = {
     basicInformation?: BasicInformation;
     contactInformation?: ContactInformation;
@@ -126,6 +158,7 @@ export type LawyerProfile = {
     onlinePresence?: OnlinePresence;
     subdomainSelection?: SubdomainSelection;
     themeSelection?: ThemeSelection;
+    timeline?: Timeline;
     googleAnalyticsId?: string;
     isPublic?: boolean;
     /**
@@ -221,6 +254,7 @@ export type LawyerProfileWritable = {
     onlinePresence?: OnlinePresence;
     subdomainSelection?: SubdomainSelection;
     themeSelection?: ThemeSelection;
+    timeline?: Timeline;
     googleAnalyticsId?: string;
     isPublic?: boolean;
     showPicture?: boolean;
