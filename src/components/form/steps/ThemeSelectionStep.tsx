@@ -26,6 +26,18 @@ const themes = [
     name: 'Legal Craft',
     description: 'Artisan heritage with a focus on trust and detail.',
     preview: { bg: 'bg-[#FDFBF7]', accent: 'bg-[#D4A373]' }
+  },
+  {
+    id: 'corporate-elite',
+    name: 'Corporate Elite',
+    description: 'Institutional navy with one unified career-and-education timeline.',
+    preview: { bg: 'bg-[#faf9f8]', accent: 'bg-[#05162E]' }
+  },
+  {
+    id: 'swiss-institutional',
+    name: 'Swiss Institutional',
+    description: 'Grid-driven precision with a faint baseline texture, navy on off-white.',
+    preview: { bg: 'bg-[#f9f9f9]', accent: 'bg-[#05162e]' }
   }
 ];
 

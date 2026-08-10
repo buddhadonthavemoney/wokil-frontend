@@ -45,12 +45,15 @@ const SAUL_GOODMAN_DATA = {
   },
   practiceDetails: {
     areasOfPractice: ["Criminal Defense", "Personal Injury", "Bankruptcy"],
-    jurisdictions: ["New Mexico", "Federal Courts"],
+    // Must come from COURT_CATEGORIES — the Practice Details step only lets you
+    // pick courts from that list, so free-text sample values were unreachable
+    // state the user could never reproduce.
+    jurisdictions: ["Supreme Court of Nepal", "High Court Patan", "Kathmandu District Court"],
   },
   contactInformation: {
-    phoneNumber: "(505) 503-4455",
+    phoneNumber: "+977 1 503 4455",
     email: "saul@bettercallsaul.com",
-    officeAddress: "160 San Juan Blvd, Albuquerque, NM 87102",
+    officeAddress: "160 Kamaladi Marg, Kathmandu 44600",
   },
   professionalProfile: {
     bio: "Did you know that you have rights? The Constitution says you do, and so do I. I believe that until proven guilty, every man, woman, and child in this country is innocent. Better call Saul!",
@@ -90,7 +93,7 @@ const SAUL_GOODMAN_DATA = {
         organization: "Goodman, Goodman & McGill",
         startYear: "2002",
         current: true,
-        description: "Criminal defence, personal injury and bankruptcy for clients across New Mexico.",
+        description: "Criminal defence, personal injury and bankruptcy for clients across Nepal.",
       },
     ],
   },

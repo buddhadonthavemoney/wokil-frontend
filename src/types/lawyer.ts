@@ -62,7 +62,7 @@ export interface LawyerProfile {
     faqs?: { question: string; answer: string }[];
   };
   themeSelection: {
-    theme: 'classic' | 'executive' | 'legal-craft';
+    theme: 'classic' | 'executive' | 'legal-craft' | 'corporate-elite' | 'swiss-institutional';
   };
   subdomainSelection: {
     subdomain: string;

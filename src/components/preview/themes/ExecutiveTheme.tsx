@@ -112,8 +112,8 @@ export function ExecutiveTheme({ profile }: ExecutiveThemeProps) {
             </nav>
 
             {/* Hero Header */}
-            <header id="top" className="bg-white border-b border-slate-200 scroll-mt-16">
-                <div className="container mx-auto px-6 py-12 @md:py-20">
+            <header id="top" className="bg-white border-b border-slate-200 scroll-mt-16 min-h-[calc(100cqh-4rem)] flex flex-col justify-start @md:justify-center">
+                <div className="container mx-auto px-6 pt-4 pb-8 @sm:pt-6 @sm:pb-12 @md:py-20">
                     <div className="flex flex-col @md:flex-row gap-10 @md:gap-16 items-center max-w-6xl mx-auto">
                         <div className="flex-1 space-y-6 @md:space-y-8 text-center @md:text-left animate-in fade-in slide-in-from-left duration-700">
                             <div className="space-y-3 @md:space-y-4">

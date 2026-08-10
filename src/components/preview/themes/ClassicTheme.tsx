@@ -112,7 +112,7 @@ export function ClassicTheme({ profile }: ClassicThemeProps) {
       </nav>
 
       {/* Hero Section */}
-      <header id="top" className="bg-[#1B2B44] text-white relative overflow-hidden scroll-mt-16">
+      <header id="top" className="bg-[#1B2B44] text-white relative overflow-hidden scroll-mt-16 min-h-[calc(100cqh-4rem)] flex flex-col justify-center">
         <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]" />
         <div className="container mx-auto px-6 py-14 @md:py-32 relative z-10">
           <div className="flex flex-col @md:flex-row items-center gap-8 @md:gap-12 max-w-6xl mx-auto">
@@ -195,7 +195,7 @@ export function ClassicTheme({ profile }: ClassicThemeProps) {
               <section data-reveal className="bg-white rounded-2xl p-10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-[#F0F0F0]">
                 <h2 className="font-heading text-3xl font-bold text-[#1B2B44] mb-8 flex items-center gap-4">
                   <span className="w-10 h-[2px] bg-[#C5A059]" />
-                  Jurisdictions
+                  Courts
                 </h2>
                 <div className="flex flex-wrap gap-4">
                   {jurisdictions.map((jurisdiction) => (
