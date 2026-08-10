@@ -128,6 +128,28 @@ export const zTimeline = z.object({
     experience: z.array(zTimelineEntry).optional()
 });
 
+/**
+ * A heading plus a paragraph — one "Why Work With Me" reason or one "How It Works" step.
+ */
+export const zContentBlock = z.object({
+    title: z.string(),
+    description: z.string()
+});
+
+export const zFaqItem = z.object({
+    question: z.string(),
+    answer: z.string()
+});
+
+/**
+ * Marketing copy the themes render in their "Why Work With Me", "How It Works" and FAQ sections. Every list is optional — the themes fall back to their own default copy when one is empty, so a profile that never sets this renders as it always did. Process-step numbers are not stored; the themes derive them from position.
+ */
+export const zSiteContent = z.object({
+    valuePoints: z.array(zContentBlock).optional(),
+    processSteps: z.array(zContentBlock).optional(),
+    faqs: z.array(zFaqItem).optional()
+});
+
 export const zLawyerProfile = z.object({
     basicInformation: zBasicInformation.optional(),
     contactInformation: zContactInformation.optional(),
@@ -137,6 +159,7 @@ export const zLawyerProfile = z.object({
     subdomainSelection: zSubdomainSelection.optional(),
     themeSelection: zThemeSelection.optional(),
     timeline: zTimeline.optional(),
+    siteContent: zSiteContent.optional(),
     googleAnalyticsId: z.string().optional(),
     isPublic: z.boolean().optional(),
     isPublished: z.boolean().readonly().optional(),
@@ -221,6 +244,7 @@ export const zLawyerProfileWritable = z.object({
     subdomainSelection: zSubdomainSelection.optional(),
     themeSelection: zThemeSelection.optional(),
     timeline: zTimeline.optional(),
+    siteContent: zSiteContent.optional(),
     googleAnalyticsId: z.string().optional(),
     isPublic: z.boolean().optional(),
     showPicture: z.boolean().optional(),

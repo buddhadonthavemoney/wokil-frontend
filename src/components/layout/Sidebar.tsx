@@ -16,6 +16,7 @@ import {
   Building2,
   Gavel,
   CalendarDays,
+  ChevronDown,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -76,6 +77,74 @@ function ComingSoonLink({ icon, label, path, isActive }: ComingSoonLinkProps) {
         Soon
       </span>
     </Link>
+  );
+}
+
+/**
+ * Expandable parent row with indented children, per the Stitch "Wokil — Dashboard"
+ * sidebar. The parent is a button, not a link — it only opens the group. Starts
+ * open whenever one of its children is the current route.
+ */
+function NavGroup({
+  icon,
+  label,
+  items,
+  pathname,
+  onNavigate,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  items: { label: string; path: string }[];
+  pathname: string | null;
+  onNavigate: () => void;
+}) {
+  const hasActiveChild = items.some((item) => item.path === pathname);
+  const [isOpen, setIsOpen] = useState(hasActiveChild);
+
+  return (
+    <div className="flex flex-col">
+      <button
+        type="button"
+        onClick={() => setIsOpen((open) => !open)}
+        aria-expanded={isOpen}
+        className={`
+          w-full flex items-center justify-between px-4 py-2.5 rounded-lg border-r-2
+          transition-all duration-200 font-medium text-sm
+          ${hasActiveChild
+            ? 'bg-secondary text-accent font-semibold border-accent'
+            : 'text-muted-foreground border-transparent hover:bg-muted hover:text-foreground'
+          }
+        `}
+      >
+        <span className="flex items-center gap-3">
+          <span className={hasActiveChild ? 'text-accent' : 'text-muted-foreground'}>{icon}</span>
+          <span>{label}</span>
+        </span>
+        <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+
+      {isOpen && (
+        <div className="pl-11 flex flex-col gap-1 mt-1">
+          {items.map((item) => (
+            <Link
+              key={item.path}
+              href={item.path}
+              prefetch={true}
+              onClick={onNavigate}
+              className={`
+                py-2 text-sm transition-colors
+                ${item.path === pathname
+                  ? 'text-accent font-semibold'
+                  : 'text-muted-foreground hover:text-accent'
+                }
+              `}
+            >
+              {item.label}
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -174,9 +243,16 @@ export default function Sidebar() {
             <div onClick={handleNavClick}>
               <NavLink icon={<LayoutDashboard className="w-5 h-5" />} label="Dashboard" path="/dashboard" isActive={pathname === '/dashboard'} />
             </div>
-            <div onClick={handleNavClick}>
-              <NavLink icon={<User className="w-5 h-5" />} label="Profile" path="/profile-builder" isActive={pathname === '/profile-builder'} />
-            </div>
+            <NavGroup
+              icon={<User className="w-5 h-5" />}
+              label="Profile"
+              pathname={pathname}
+              onNavigate={handleNavClick}
+              items={[
+                { label: 'Builder', path: '/profile-builder' },
+                { label: 'All Details', path: '/profile-details' },
+              ]}
+            />
           </NavSection>
 
           <NavSection label="Management">

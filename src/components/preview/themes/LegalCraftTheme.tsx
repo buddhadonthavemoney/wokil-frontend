@@ -1,25 +1,13 @@
-import { LawyerProfile, TimelineEntry, formatTimelineRange } from '@/types/lawyer';
+import { LawyerProfile, TimelineEntry, formatTimelineRange, resolveSiteContent } from '@/types/lawyer';
 import { Phone, Mail, MapPin, Clock, Globe, Linkedin, Scale, BookOpen, PenTool as Pen, Gavel, UserCheck, MessageCircle, Wallet, Menu, GraduationCap, Briefcase, type LucideIcon } from 'lucide-react';
 
 interface LegalCraftThemeProps {
     profile: LawyerProfile;
 }
 
-// Generic value-proposition copy, not claims specific to any one attorney —
-// placeholder content until the data model grows fields for this. Safe to
-// ship as-is: it's boilerplate common on solo/boutique practice sites, not
-// a factual assertion about the particular attorney.
-const VALUE_POINTS = [
-    { icon: UserCheck, title: 'Direct Access', description: "You'll work with me personally throughout your matter — not handed off to a rotating cast of associates." },
-    { icon: MessageCircle, title: 'Clear Communication', description: 'Plain-language updates at every stage, so you always know where your case stands.' },
-    { icon: Wallet, title: 'Transparent Fees', description: 'Fee structures are discussed upfront during your consultation — no surprises on your invoice.' },
-];
-
-const PROCESS_STEPS = [
-    { step: '01', title: 'Initial Consultation', description: 'We discuss the facts of your matter, your goals, and whether representation makes sense.' },
-    { step: '02', title: 'Case Strategy', description: 'A tailored plan is built around your case, timeline, and desired outcome.' },
-    { step: '03', title: 'Representation', description: 'Your matter is handled from filing through resolution, with regular updates along the way.' },
-];
+// Value points are free text, so there's no icon to store per entry — cycle
+// through these by position instead.
+const VALUE_ICONS = [UserCheck, MessageCircle, Wallet];
 
 /** Vertical rail of career-history rows, in the LegalCraft cream/tan palette. */
 function TimelineRail({ icon: Icon, title, entries }: { icon: LucideIcon; title: string; entries: TimelineEntry[] }) {
@@ -67,7 +55,6 @@ export function LegalCraftTheme({ profile }: LegalCraftThemeProps) {
     const yearsOfExperience = basicInformation.yearsOfExperience;
 
     const areasOfPractice = practiceDetails.areasOfPractice || [];
-    const jurisdictions = practiceDetails.jurisdictions || [];
 
     const phoneNumber = contactInformation.phoneNumber;
     const email = contactInformation.email;
@@ -80,12 +67,10 @@ export function LegalCraftTheme({ profile }: LegalCraftThemeProps) {
     const website = onlinePresence.website;
     const linkedIn = onlinePresence.linkedIn;
 
-    const faqs = [
-        { q: 'Do you offer an initial consultation?', a: `Yes — use the contact details below to schedule a consultation with ${fullName}.` },
-        { q: 'What areas do you practice in?', a: jurisdictions.length > 0 ? `Admitted to practice in ${jurisdictions.join(', ')}. See Crafted Expertise above for matters handled.` : 'See Crafted Expertise above for the specific matters handled.' },
-        { q: 'What are your office hours?', a: officeHours || 'Office hours are available by appointment — contact the office to schedule a time.' },
-        { q: 'How do I get started?', a: 'Call or email using the details below, or use the "Request Interview" button at the top of the page.' },
-    ];
+    const { valuePoints, processSteps, faqs } = resolveSiteContent(profile, {
+        expertiseSection: 'Crafted Expertise',
+        cta: 'Request Interview',
+    });
 
     return (
         <div className="min-h-screen bg-[#FDFBF7] font-body text-[#3C2A21] selection:bg-[#D4A373]/20">
@@ -238,13 +223,16 @@ export function LegalCraftTheme({ profile }: LegalCraftThemeProps) {
                                 Why Work With Me
                             </h3>
                             <div className="grid @md:grid-cols-3 gap-8">
-                                {VALUE_POINTS.map(({ icon: Icon, title, description }) => (
+                                {valuePoints.map(({ title, description }, i) => {
+                                    const Icon = VALUE_ICONS[i % VALUE_ICONS.length];
+                                    return (
                                     <div key={title} className="p-8 bg-[#F5F2ED] border-l-4 border-[#D4A373]">
                                         <Icon className="w-6 h-6 text-[#D4A373] mb-4" />
                                         <h4 className="text-lg font-bold text-[#1A120B] font-heading mb-2">{title}</h4>
                                         <p className="text-sm text-[#3C2A21]/70 leading-relaxed">{description}</p>
                                     </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         </section>
 
@@ -254,9 +242,9 @@ export function LegalCraftTheme({ profile }: LegalCraftThemeProps) {
                                 How It Works
                             </h3>
                             <div className="grid @md:grid-cols-3 gap-8">
-                                {PROCESS_STEPS.map(({ step, title, description }) => (
-                                    <div key={step} className="p-8 bg-[#F5F2ED] border-l-4 border-[#D4A373]">
-                                        <span className="block font-heading font-black text-3xl text-[#D4A373]/40 mb-4">{step}</span>
+                                {processSteps.map(({ title, description }, i) => (
+                                    <div key={title} className="p-8 bg-[#F5F2ED] border-l-4 border-[#D4A373]">
+                                        <span className="block font-heading font-black text-3xl text-[#D4A373]/40 mb-4">{String(i + 1).padStart(2, '0')}</span>
                                         <h4 className="text-lg font-bold text-[#1A120B] font-heading mb-2">{title}</h4>
                                         <p className="text-sm text-[#3C2A21]/70 leading-relaxed">{description}</p>
                                     </div>
@@ -270,13 +258,13 @@ export function LegalCraftTheme({ profile }: LegalCraftThemeProps) {
                                 Frequently Asked Questions
                             </h3>
                             <div className="divide-y divide-[#E5E5E5] border-y border-[#E5E5E5]">
-                                {faqs.map(({ q, a }) => (
-                                    <details key={q} className="group py-6">
+                                {faqs.map(({ question, answer }) => (
+                                    <details key={question} className="group py-6">
                                         <summary className="flex items-center justify-between cursor-pointer list-none text-lg font-semibold text-[#1A120B]">
-                                            {q}
+                                            {question}
                                             <span className="text-[#D4A373] text-xl transition-transform group-open:rotate-45 shrink-0 ml-4">+</span>
                                         </summary>
-                                        <p className="mt-4 text-[#3C2A21]/70 leading-relaxed">{a}</p>
+                                        <p className="mt-4 text-[#3C2A21]/70 leading-relaxed">{answer}</p>
                                     </details>
                                 ))}
                             </div>
