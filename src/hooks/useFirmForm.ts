@@ -14,13 +14,26 @@ const initialFirm = createBlankFirmProfile();
  * what "exists yet" means. One hook with three injected callbacks would be
  * harder to read than two that each say what they do.
  */
-export function useFirmForm() {
+interface UseFirmFormOptions {
+  /**
+   * Step to open on, from the dashboard's "Edit roster" deep link.
+   *
+   * When set it also suppresses the resume-to-last-step below. Both run on
+   * mount, but the resume waits on an async fetch and so always lands second —
+   * without this it would silently drag the user off the step they asked for.
+   */
+  initialStep?: number;
+}
+
+export function useFirmForm({ initialStep }: UseFirmFormOptions = {}) {
   const totalSteps = FIRM_TOTAL_STEPS;
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
 
   const [firm, setFirm] = useState<FirmProfile>(() => ({ ...initialFirm }));
-  const [currentStep, setCurrentStep] = useState(1);
+  const [currentStep, setCurrentStep] = useState(() =>
+    initialStep && initialStep >= 1 ? Math.min(initialStep, FIRM_TOTAL_STEPS) : 1
+  );
 
   // Whether the firm row exists yet decides create-vs-update on save. The
   // wizard is entered before any firm exists, so the first save must POST.
@@ -40,7 +53,8 @@ export function useFirmForm() {
         if (data && data.id) {
           setFirm((prev) => toFirmProfile(data, prev));
           setFirmExists(true);
-          if (data.slug) setCurrentStep(totalSteps);
+          // Resume where they left off — unless a step was explicitly asked for.
+          if (data.slug && !initialStep) setCurrentStep(totalSteps);
         }
       } catch (error) {
         console.error('Failed to fetch firm', error);

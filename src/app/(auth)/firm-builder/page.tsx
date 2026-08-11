@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Building2, Sparkles, ZoomIn, ZoomOut } from 'lucide-react';
 
@@ -59,6 +59,11 @@ const SAMPLE_FIRM = {
 };
 
 function FirmBuilderContent() {
+  const searchParams = useSearchParams();
+  // Read before the hook runs so it can open on the right step directly,
+  // rather than jumping there after the fact.
+  const requestedStep = Number(searchParams?.get('step'));
+
   const {
     firm,
     currentStep,
@@ -70,21 +75,13 @@ function FirmBuilderContent() {
     saveFirmData,
     setFirm,
     resetCurrentStep,
-  } = useFirmForm();
+  } = useFirmForm({
+    initialStep: Number.isInteger(requestedStep) && requestedStep >= 1 ? requestedStep : undefined,
+  });
 
   const { toast } = useToast();
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [zoom, setZoom] = useState([0.5]);
-
-  // The firm dashboard's "Edit roster" links straight to a step. Applied once
-  // on mount: re-running it would yank the user back every time they advanced.
-  const requestedStep = searchParams?.get('step');
-  useEffect(() => {
-    const step = Number(requestedStep);
-    if (Number.isInteger(step) && step >= 1) goToStep(step);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [requestedStep]);
 
   const handleFillSample = () => {
     const key = FIRM_STEPS[currentStep - 1]?.key;
