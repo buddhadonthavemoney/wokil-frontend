@@ -379,7 +379,9 @@ export const deploySiteMutation = (options?: Partial<Options<DeploySiteData>>): 
 };
 
 /**
- * Create a Google Analytics property
+ * Enable Google Analytics for the user's site
+ *
+ * Opts the site into tracking on the shared GA4 property and returns its measurement ID. Idempotent. No property is provisioned per user — reporting is split apart by site hostname.
  */
 export const createGaPropertyMutation = (options?: Partial<Options<CreateGaPropertyData>>): UseMutationOptions<CreateGaPropertyResponse, CreateGaPropertyError, Options<CreateGaPropertyData>> => {
     const mutationOptions: UseMutationOptions<CreateGaPropertyResponse, CreateGaPropertyError, Options<CreateGaPropertyData>> = {

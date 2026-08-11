@@ -119,6 +119,28 @@ export type ThemeSelection = {
 };
 
 /**
+ * A heading plus a paragraph — one "Why Work With Me" reason or one "How It Works" step.
+ */
+export type ContentBlock = {
+    title: string;
+    description: string;
+};
+
+export type FaqItem = {
+    question: string;
+    answer: string;
+};
+
+/**
+ * Marketing copy the themes render in their "Why Work With Me", "How It Works" and FAQ sections. Every list is optional — the themes fall back to their own default copy when one is empty, so a profile that never sets this renders as it always did. Process-step numbers are not stored; the themes derive them from position.
+ */
+export type SiteContent = {
+    valuePoints?: Array<ContentBlock>;
+    processSteps?: Array<ContentBlock>;
+    faqs?: Array<FaqItem>;
+};
+
+/**
  * One row of career history — a degree or a job. Both use the same shape; only the labels differ in the UI.
  */
 export type TimelineEntry = {
@@ -150,28 +172,6 @@ export type Timeline = {
     experience?: Array<TimelineEntry>;
 };
 
-/**
- * A heading plus a paragraph — one "Why Work With Me" reason or one "How It Works" step.
- */
-export type ContentBlock = {
-    title: string;
-    description: string;
-};
-
-export type FaqItem = {
-    question: string;
-    answer: string;
-};
-
-/**
- * Marketing copy the themes render in their "Why Work With Me", "How It Works" and FAQ sections. Every list is optional — the themes fall back to their own default copy when one is empty, so a profile that never sets this renders as it always did. Process-step numbers are not stored; the themes derive them from position.
- */
-export type SiteContent = {
-    valuePoints?: Array<ContentBlock>;
-    processSteps?: Array<ContentBlock>;
-    faqs?: Array<FaqItem>;
-};
-
 export type LawyerProfile = {
     basicInformation?: BasicInformation;
     contactInformation?: ContactInformation;
@@ -180,8 +180,8 @@ export type LawyerProfile = {
     onlinePresence?: OnlinePresence;
     subdomainSelection?: SubdomainSelection;
     themeSelection?: ThemeSelection;
-    timeline?: Timeline;
     siteContent?: SiteContent;
+    timeline?: Timeline;
     googleAnalyticsId?: string;
     isPublic?: boolean;
     /**
@@ -255,6 +255,10 @@ export type AnalyticsData = {
     totalViews: number;
     visitors: number;
     /**
+     * Times a visitor opened the contact QR panel (hover or tap)
+     */
+    qrHovers: number;
+    /**
      * Views by referrer, e.g. {"google": 12, "direct": 5}
      */
     sources: {
@@ -277,8 +281,8 @@ export type LawyerProfileWritable = {
     onlinePresence?: OnlinePresence;
     subdomainSelection?: SubdomainSelection;
     themeSelection?: ThemeSelection;
-    timeline?: Timeline;
     siteContent?: SiteContent;
+    timeline?: Timeline;
     googleAnalyticsId?: string;
     isPublic?: boolean;
     showPicture?: boolean;

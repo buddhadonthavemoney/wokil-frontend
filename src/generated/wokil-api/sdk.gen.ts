@@ -210,7 +210,9 @@ export const streamDeployStatus = <ThrowOnError extends boolean = false>(options
 });
 
 /**
- * Create a Google Analytics property
+ * Enable Google Analytics for the user's site
+ *
+ * Opts the site into tracking on the shared GA4 property and returns its measurement ID. Idempotent. No property is provisioned per user — reporting is split apart by site hostname.
  */
 export const createGaProperty = <ThrowOnError extends boolean = false>(options?: Options<CreateGaPropertyData, ThrowOnError>): RequestResult<CreateGaPropertyResponses, CreateGaPropertyErrors, ThrowOnError> => (options?.client ?? client).post<CreateGaPropertyResponses, CreateGaPropertyErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

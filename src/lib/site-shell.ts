@@ -47,6 +47,18 @@ export function buildShell({ bodyHtml, profile, css, qrHtml }: ShellOptions): st
       function gtag() { dataLayer.push(arguments); }
       gtag("js", new Date());
       gtag("config", "${escapeJsString(gaId)}");
+
+      // The QR panel opens on hover/focus with no JS of its own, so this
+      // listener is the only signal that anyone looked at it. pointerenter
+      // covers mouse and touch alike. Fires at most once per page view —
+      // hovering in and out repeatedly is one curious visitor, not ten.
+      document.addEventListener("DOMContentLoaded", function () {
+        var qr = document.querySelector("[data-qr]");
+        if (!qr) return;
+        qr.addEventListener("pointerenter", function () {
+          gtag("event", "qr_hover");
+        }, { once: true });
+      });
     </script>`
     : '';
 

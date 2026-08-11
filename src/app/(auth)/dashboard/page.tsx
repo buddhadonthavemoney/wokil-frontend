@@ -420,14 +420,13 @@ function DashboardContent() {
                             </div>
                             <div className="text-3xl font-bold">{analytics?.visitors || 0}</div>
                         </div>
-                        {/* Placeholders for future stats */}
-                        <div className="bg-card border border-border rounded-xl p-8 shadow-premium opacity-60">
+                        <div className="bg-card border border-border rounded-xl p-8 shadow-premium hover:shadow-md transition-shadow">
                             <div className="flex items-center justify-between mb-4">
-                                <span className="text-sm font-medium text-muted-foreground">QR Scans</span>
+                                <span className="text-sm font-medium text-muted-foreground">QR Opens</span>
                                 <QrCode className="w-4 h-4 text-purple-500" />
                             </div>
-                            <div className="text-3xl font-bold">-</div>
-                            <p className="text-xs text-muted-foreground mt-2">Coming Soon</p>
+                            <div className="text-3xl font-bold">{analytics?.qrHovers || 0}</div>
+                            <p className="text-xs text-muted-foreground mt-2">Visitors who opened your contact QR</p>
                         </div>
                         <div className="bg-card border border-border rounded-xl p-8 shadow-premium opacity-60">
                             <div className="flex items-center justify-between mb-4">

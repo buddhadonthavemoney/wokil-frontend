@@ -47,7 +47,10 @@ export function ContactQrWidget({ profile, className = 'fixed' }: ContactQrWidge
     // page without either side shipping a toggle script.
     // ponytail: macOS Safari doesn't focus buttons on click, so touch-open leans
     // on iOS Safari (which does). Swap in a real toggle if that proves too thin.
+    // data-qr is the hook the published shell's GA snippet binds to; it does
+    // nothing in the dashboard preview, which never loads gtag.
     <div
+      data-qr
       className={`${className} group bottom-6 right-6 z-50 flex flex-col items-end @sm:bottom-10 @sm:right-10 pointer-events-none`}
     >
       <div className="pointer-events-auto mb-4 bg-white/80 backdrop-blur-xl border border-white/50 p-5 rounded-3xl shadow-2xl transform origin-bottom-right transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] opacity-0 scale-90 invisible translate-y-4 group-hover:opacity-100 group-hover:scale-100 group-hover:visible group-hover:translate-y-0 group-focus-within:opacity-100 group-focus-within:scale-100 group-focus-within:visible group-focus-within:translate-y-0">
