@@ -6,14 +6,15 @@
  * never run. "/" here means the deployed site's root, not a Next route.
  */
 /* eslint-disable @next/next/no-html-link-for-pages */
-import { FirmProfile, RosterMember } from '@/types/firm';
+import { RosterMember } from '@/types/firm';
+import { SiteModel } from '@/types/site-model';
 import { memberAnchor, memberInitials } from '@/lib/firm-roster';
 import {
   Phone, Mail, MapPin, Linkedin, Building2, Menu, Users, ArrowLeft, Scale, Briefcase,
 } from 'lucide-react';
 
 interface FirmTeamPageProps {
-  firm: FirmProfile;
+  site: SiteModel;
 }
 
 /**
@@ -133,13 +134,11 @@ function MemberEntry({ member, index }: { member: RosterMember; index: number })
  * not have to navigate back and forth. Each entry still has its own anchor, so
  * links can point at an individual.
  */
-export function FirmTeamPage({ firm }: FirmTeamPageProps) {
-  const { firmDetails, contactInformation, firmProfile, roster } = firm;
-
-  const name = firmDetails.name || 'Your Firm';
-  const logo = firmProfile?.logo;
-  const { phoneNumber, email, officeAddress } = contactInformation;
-  const members = roster ?? [];
+export function FirmTeamPage({ site }: FirmTeamPageProps) {
+  const name = site.name;
+  const logo = site.image?.src;
+  const { phoneNumber, email, officeAddress } = site.contact;
+  const members = site.roster ?? [];
 
   return (
     <div className="min-h-screen bg-[#FDFCFB] font-body text-[#1A1A1A]">
@@ -152,7 +151,7 @@ export function FirmTeamPage({ firm }: FirmTeamPageProps) {
           </a>
           <div className="hidden @lg:flex items-center gap-8 text-sm font-medium text-white/60">
             <a href="/#about" className="hover:text-white transition-colors">About</a>
-            <a href="/#practice-areas" className="hover:text-white transition-colors">Practice Areas</a>
+            <a href="/#practice-areas" className="hover:text-white transition-colors">{site.heading.practice}</a>
             <a href="/team/" className="text-white transition-colors">Our Team</a>
           </div>
           <a href="/#contact" className="hidden @lg:block px-4 @md:px-5 py-2.5 bg-[#C5A059] hover:bg-[#B18F4A] rounded-lg text-sm font-bold text-[#1B2B44] transition-colors shrink-0">
@@ -164,7 +163,7 @@ export function FirmTeamPage({ firm }: FirmTeamPageProps) {
             </summary>
             <div className="absolute right-0 top-full mt-2 w-56 bg-[#1B2B44] border border-white/10 rounded-xl shadow-2xl p-4 flex flex-col gap-3 text-sm font-medium text-white/70 z-50">
               <a href="/#about" className="hover:text-white transition-colors">About</a>
-              <a href="/#practice-areas" className="hover:text-white transition-colors">Practice Areas</a>
+              <a href="/#practice-areas" className="hover:text-white transition-colors">{site.heading.practice}</a>
               <a href="/team/" className="text-white transition-colors">Our Team</a>
               <a href="/#contact" className="mt-1 px-4 py-2.5 bg-[#C5A059] hover:bg-[#B18F4A] rounded-lg text-sm font-bold text-[#1B2B44] text-center transition-colors">
                 Request Consultation
@@ -277,10 +276,7 @@ export function FirmTeamPage({ firm }: FirmTeamPageProps) {
               <Building2 className="w-5 h-5 text-[#C5A059]" />
               {name}
             </a>
-            <p className="text-white/40 text-sm leading-relaxed max-w-xs font-light">
-              This website provides general information about {name}. It does not constitute legal
-              advice, and viewing this site does not create an attorney-client relationship.
-            </p>
+            <p className="text-white/40 text-sm leading-relaxed max-w-xs font-light">{site.disclaimer}</p>
           </div>
 
           <div>

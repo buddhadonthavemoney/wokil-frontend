@@ -6,37 +6,17 @@ import { LawyerProfile } from '@/types/lawyer';
 import { FirmProfile, toFirmProfile } from '@/types/firm';
 import { buildShell } from '@/lib/site-shell';
 import { ContactQrWidget, buildVCard, buildFirmVCard } from '@/components/preview/ContactQrWidget';
-import { ClassicTheme } from '@/components/preview/themes/ClassicTheme';
-import { ExecutiveTheme } from '@/components/preview/themes/ExecutiveTheme';
-import { LegalCraftTheme } from '@/components/preview/themes/LegalCraftTheme';
-import { CorporateEliteTheme } from '@/components/preview/themes/CorporateEliteTheme';
-import { SwissInstitutionalTheme } from '@/components/preview/themes/SwissInstitutionalTheme';
-import { FirmClassicTheme } from '@/components/preview/themes/FirmClassicTheme';
 import { FirmTeamPage } from '@/components/preview/themes/FirmTeamPage';
+import { resolveTheme } from '@/components/preview/themes/registry';
+import { fromFirmProfile, fromLawyerProfile } from '@/types/site-model';
 import { TEAM_PAGE_PATH } from '@/lib/firm-roster';
-
-const THEME_COMPONENTS: Record<string, (props: { profile: LawyerProfile }) => React.ReactElement> = {
-  classic: ClassicTheme,
-  executive: ExecutiveTheme,
-  'legal-craft': LegalCraftTheme,
-  'corporate-elite': CorporateEliteTheme,
-  'swiss-institutional': SwissInstitutionalTheme,
-};
-
-// Kept separate from THEME_COMPONENTS rather than merged into one map: the two
-// take different props, and a shared registry would make it possible to render
-// a firm through a lawyer theme (or vice versa) with a type assertion papering
-// over the mismatch.
-const FIRM_THEME_COMPONENTS: Record<string, (props: { firm: FirmProfile }) => React.ReactElement> = {
-  'firm-classic': FirmClassicTheme,
-};
 
 // Compiled once at frontend build time (pnpm run build:theme-css), read once at
 // module load and cached in memory for the life of the server process.
 const THEME_CSS = readFileSync(join(process.cwd(), 'src/generated/theme-styles.css'), 'utf-8');
 
-// The theme components (e.g. ClassicTheme.tsx:17, `basicInformation.fullName`)
-// assume every top-level group is present, not just individual leaf fields.
+// The mappers in site-model.ts (and the unmigrated themes) assume every
+// top-level group is present, not just individual leaf fields.
 // The Go side marshals LawyerProfile with `omitempty` pointer sub-structs, so an
 // incomplete profile can arrive with groups entirely missing — normalize before
 // rendering rather than trusting the incoming shape.
@@ -90,7 +70,7 @@ function normalizeProfile(input: Partial<LawyerProfile>): LawyerProfile {
 }
 
 // normalizeProfile's sibling, for exactly the same reason: Go's `omitempty`
-// pointers drop whole groups, and FirmClassicTheme reads
+// pointers drop whole groups, and fromFirmProfile reads
 // `firmDetails.name` / `practiceDetails.areasOfPractice` directly. Without
 // this a firm that never filled in a step nil-derefs at deploy time.
 function normalizeFirm(input: Partial<FirmProfile>): FirmProfile {
@@ -135,18 +115,22 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
   const extraPages: Record<string, string> = {};
 
   if (kind === 'firm') {
-    const theme = body.theme ?? 'firm-classic';
-    const Component = FIRM_THEME_COMPONENTS[theme];
-    if (!Component) {
-      return res.status(400).json({ error: `unknown or unmigrated firm theme: ${theme}` });
+    const themeId = body.theme ?? 'firm-classic';
+    const theme = resolveTheme(themeId);
+    // A firm can only be rendered by a SiteModel theme. The old LawyerProfile
+    // themes have no notion of a roster, so routing a firm through one would
+    // quietly publish a site with its people missing.
+    if (!theme || theme.kind !== 'site') {
+      return res.status(400).json({ error: `unknown or unmigrated firm theme: ${themeId}` });
     }
     if (!body.firm) {
       return res.status(400).json({ error: 'missing firm' });
     }
 
     const firm = normalizeFirm(body.firm);
+    const site = fromFirmProfile(firm);
     try {
-      bodyHtml = renderToStaticMarkup(Component({ firm }));
+      bodyHtml = renderToStaticMarkup(theme.Component({ site }));
     } catch (err) {
       console.error('[render] firm render failed', err);
       return res.status(500).json({ error: 'render failed' });
@@ -159,7 +143,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     // "team is being introduced" state the home page shows.
     try {
       extraPages[TEAM_PAGE_PATH] = buildShell({
-        bodyHtml: renderToStaticMarkup(FirmTeamPage({ firm })),
+        bodyHtml: renderToStaticMarkup(FirmTeamPage({ site })),
         title: `Our Team — ${firm.firmDetails.name}`,
         googleAnalyticsId: undefined,
         css: THEME_CSS,
@@ -170,10 +154,10 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       return res.status(500).json({ error: 'render failed' });
     }
   } else {
-    const theme = body.theme ?? 'classic';
-    const Component = THEME_COMPONENTS[theme];
-    if (!Component) {
-      return res.status(400).json({ error: `unknown or unmigrated theme: ${theme}` });
+    const themeId = body.theme ?? 'classic';
+    const theme = resolveTheme(themeId);
+    if (!theme) {
+      return res.status(400).json({ error: `unknown or unmigrated theme: ${themeId}` });
     }
     if (!body.profile) {
       return res.status(400).json({ error: 'missing profile' });
@@ -181,7 +165,13 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 
     const profile = normalizeProfile(body.profile);
     try {
-      bodyHtml = renderToStaticMarkup(Component({ profile }));
+      // Migrated themes take the normalized model; the rest still take the
+      // profile directly. Both produce the same markup for the same profile —
+      // the model is a re-shaping, not a re-design.
+      bodyHtml =
+        theme.kind === 'site'
+          ? renderToStaticMarkup(theme.Component({ site: fromLawyerProfile(profile) }))
+          : renderToStaticMarkup(theme.Component({ profile }));
     } catch (err) {
       console.error('[render] render failed', err);
       return res.status(500).json({ error: 'render failed' });

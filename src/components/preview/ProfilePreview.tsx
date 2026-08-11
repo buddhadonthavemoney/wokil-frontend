@@ -1,24 +1,15 @@
 import { LawyerProfile } from '@/types/lawyer';
+import { fromLawyerProfile } from '@/types/site-model';
 import { ClassicTheme } from './themes/ClassicTheme';
-import { ExecutiveTheme } from './themes/ExecutiveTheme';
-import { LegalCraftTheme } from './themes/LegalCraftTheme';
-import { CorporateEliteTheme } from './themes/CorporateEliteTheme';
-import { SwissInstitutionalTheme } from './themes/SwissInstitutionalTheme';
+import { resolveTheme } from './themes/registry';
 import { ContactQrWidget, buildVCard } from './ContactQrWidget';
-import { ComponentType, useEffect, useRef } from 'react';
+import { useSiteHydration } from './useSiteHydration';
+import { useMemo, useRef } from 'react';
 
 interface ProfilePreviewProps {
   profile: LawyerProfile;
   zoom?: number;
 }
-
-const THEME_COMPONENTS: Record<string, ComponentType<{ profile: LawyerProfile }>> = {
-  classic: ClassicTheme,
-  executive: ExecutiveTheme,
-  'legal-craft': LegalCraftTheme,
-  'corporate-elite': CorporateEliteTheme,
-  'swiss-institutional': SwissInstitutionalTheme,
-};
 
 // Renders the actual production theme component directly — no server round
 // trip, no iframe/blob-URL indirection. The profile is already local state
@@ -33,62 +24,25 @@ const THEME_COMPONENTS: Record<string, ComponentType<{ profile: LawyerProfile }>
 // instead of the browser viewport, which is what let a "mobile" preview
 // silently render in desktop layout before.
 export function ProfilePreview({ profile, zoom = 1 }: ProfilePreviewProps) {
-  const Theme = THEME_COMPONENTS[profile.themeSelection?.theme] ?? ClassicTheme;
+  // Unlike the deploy path, an unknown theme here falls back to Classic rather
+  // than failing: this renders live as the user types, and a wizard that showed
+  // an error card mid-edit would be worse than showing the default theme.
+  const theme = resolveTheme(profile.themeSelection?.theme) ?? {
+    kind: 'site' as const,
+    Component: ClassicTheme,
+  };
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // The deployed site's [data-reveal] scroll animation is driven by a plain
-  // <script> baked into site-shell.ts, because that page ships zero React —
-  // this dashboard preview is the one place that markup actually hydrates,
-  // so it needs its own IntersectionObserver wired up to match. `root` is
-  // this scrollable div itself, not the viewport: it's what actually
-  // scrolls in both the phone mockup and /preview.
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
+  // Only the migrated themes need it, and it walks the whole profile — so skip
+  // the work entirely for the four still on the LawyerProfile prop.
+  const site = useMemo(
+    () => (theme.kind === 'site' ? fromLawyerProfile(profile) : undefined),
+    [theme.kind, profile],
+  );
 
-    const revealEls = container.querySelectorAll('[data-reveal]');
-    if (!revealEls.length) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('is-visible');
-            observer.unobserve(entry.target);
-          }
-        });
-      },
-      { root: container, threshold: 0.15, rootMargin: '0px 0px -10% 0px' }
-    );
-
-    revealEls.forEach((el) => observer.observe(el));
-    return () => observer.disconnect();
-  }, [Theme, profile]);
-
-  // Same overflow-driven nav collapse the published site gets from the
-  // [data-nav] script in site-shell.ts — this preview is the one place the
-  // theme markup hydrates, so it needs its own copy to behave identically.
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    const navs = container.querySelectorAll<HTMLElement>('[data-nav]');
-    if (!navs.length) return;
-
-    const fitAll = () => {
-      navs.forEach((nav) => {
-        nav.removeAttribute('data-collapsed');
-        const row = (nav.firstElementChild as HTMLElement) ?? nav;
-        if (row.scrollWidth > row.clientWidth + 1) nav.setAttribute('data-collapsed', '');
-      });
-    };
-
-    fitAll();
-    const ro = new ResizeObserver(fitAll);
-    navs.forEach((nav) => ro.observe(nav));
-    document.fonts?.ready.then(fitAll);
-    return () => ro.disconnect();
-  }, [Theme, profile, zoom]);
+  // Replays the [data-reveal] and [data-nav] scripts that site-shell.ts bakes
+  // into the published page. Shared with FirmPreview — see useSiteHydration.
+  useSiteHydration(containerRef, [theme.Component, profile, zoom]);
 
   return (
     // The QR widget is a sibling of the scroll container, not a child: inside it
@@ -108,7 +62,11 @@ export function ProfilePreview({ profile, zoom = 1 }: ProfilePreviewProps) {
             transform: `scale(${zoom})`,
           }}
         >
-          <Theme profile={profile} />
+          {theme.kind === 'site' && site ? (
+            <theme.Component site={site} />
+          ) : theme.kind === 'profile' ? (
+            <theme.Component profile={profile} />
+          ) : null}
         </div>
       </div>
       <ContactQrWidget vcard={buildVCard(profile)} className="absolute" />

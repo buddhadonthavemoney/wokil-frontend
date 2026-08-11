@@ -1,19 +1,19 @@
 'use client';
 
-import { useState } from 'react';
 import { useProfileForm } from '@/hooks/useProfileForm';
+import { useRequireAccountType } from '@/hooks/useAccountType';
 
 import { LawyerProfile } from '@/types/lawyer';
 import { PROFILE_STEPS } from '@/components/form/steps';
 import { WizardShell } from '@/components/form/WizardShell';
 import { ThemeSelector } from '@/components/form/ThemeSelector';
+import { BuilderPreview } from '@/components/preview/BuilderPreview';
 import { ProfilePreview } from '@/components/preview/ProfilePreview';
 import { saveProfile } from '@/generated/wokil-api';
 import { useQuery } from '@tanstack/react-query';
 import { listThemesOptions } from '@/generated/wokil-api/@tanstack/react-query.gen';
 import { Button } from '@/components/ui/button';
-import { Slider } from '@/components/ui/slider';
-import { Scale, Sparkles, Monitor, ZoomIn, ZoomOut } from 'lucide-react';
+import { Scale, Monitor } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 
@@ -85,6 +85,10 @@ const SAUL_GOODMAN_DATA = {
 };
 
 export default function ProfileBuilder() {
+  // A firm account belongs in the firm wizard; its data lives behind
+  // getMyFirm, so this page would show it an empty lawyer profile.
+  useRequireAccountType('individual', '/firm-builder');
+
   const {
     profile,
     currentStep,
@@ -118,7 +122,6 @@ export default function ProfileBuilder() {
 
   const { data: themesData } = useQuery(listThemesOptions({ query: { category: 'individual' } }));
   const themes = themesData ?? [];
-  const [zoom, setZoom] = useState([1.0]);
 
   const hasBasicInfo = Boolean(
     profile.basicInformation.fullName &&
@@ -150,80 +153,41 @@ export default function ProfileBuilder() {
       onFillSample={handleFillSample}
       onClear={resetCurrentStep}
     >
-      <div className="relative w-full flex justify-center items-center mb-4 px-2 gap-4">
-        {/* Theme Selector Popover */}
-        <ThemeSelector
-          themes={themes}
-          currentTheme={profile.themeSelection?.theme}
-          onThemeSelect={(themeId) => {
-            const updatedProfile: LawyerProfile = {
-              ...profile,
-              themeSelection: { theme: themeId as LawyerProfile['themeSelection']['theme'] },
-            };
-            setProfile(updatedProfile);
-            saveProfile({ body: updatedProfile, throwOnError: true }).catch((err) => {
-              console.error("Theme switch failed to save:", err);
-            });
-          }}
-        />
+      <BuilderPreview
+        isEmpty={!hasBasicInfo}
+        emptyTitle="Ready to build your profile?"
+        emptyDescription="Fill up the basic information to see a real-time preview of your professional site."
+        toolbar={
+          <>
+            <ThemeSelector
+              themes={themes}
+              currentTheme={profile.themeSelection?.theme}
+              onThemeSelect={(themeId) => {
+                const updatedProfile: LawyerProfile = {
+                  ...profile,
+                  themeSelection: { theme: themeId as LawyerProfile['themeSelection']['theme'] },
+                };
+                setProfile(updatedProfile);
+                saveProfile({ body: updatedProfile, throwOnError: true }).catch((err) => {
+                  console.error("Theme switch failed to save:", err);
+                });
+              }}
+            />
 
-        {/* Desktop Preview Button */}
-        <Button
-          variant="ghost"
-          size="sm"
-          className="gap-2 rounded-full text-[10px] font-bold uppercase tracking-wider text-muted-foreground hover:text-primary hover:bg-primary/5 transition-all"
-          onClick={() => router.push('/preview')}
-        >
-          <Monitor className="w-3.5 h-3.5" />
-          Desktop View
-        </Button>
-      </div>
-
-      {/* Minimal Zoom Slider */}
-      <div className="flex justify-center mb-8 px-4">
-        <div className="w-full max-w-[200px] flex items-center gap-3">
-          <ZoomOut className="w-3 h-3 text-muted-foreground/40" />
-          <Slider
-            value={zoom}
-            onValueChange={setZoom}
-            min={0.5}
-            max={1.5}
-            step={0.05}
-            className="w-full cursor-pointer h-1"
-          />
-          <ZoomIn className="w-3 h-3 text-muted-foreground/40" />
-          <span className="text-[9px] font-mono text-muted-foreground/60 w-8 text-right">{Math.round(zoom[0] * 100)}%</span>
-        </div>
-      </div>
-
-      {/* Phone Mockup Container */}
-      <div className="relative mx-auto border-gray-800 dark:border-gray-800 bg-gray-800 border-[14px] rounded-[2.5rem] h-[600px] w-[300px] shadow-xl">
-        <div className="w-[148px] h-[18px] bg-gray-800 top-0 rounded-b-[1rem] left-1/2 -translate-x-1/2 absolute z-20"></div>
-        <div className="h-[32px] w-[3px] bg-gray-800 absolute -start-[17px] top-[72px] rounded-s-lg"></div>
-        <div className="h-[46px] w-[3px] bg-gray-800 absolute -start-[17px] top-[124px] rounded-s-lg"></div>
-        <div className="h-[46px] w-[3px] bg-gray-800 absolute -start-[17px] top-[178px] rounded-s-lg"></div>
-        <div className="h-[64px] w-[3px] bg-gray-800 absolute -end-[17px] top-[142px] rounded-e-lg"></div>
-
-        <div className="rounded-[2rem] overflow-hidden w-full h-full bg-card dark:bg-gray-800 relative z-10">
-          {!hasBasicInfo ? (
-            <div className="w-full h-full flex flex-col items-center justify-center bg-card p-8 text-center space-y-4 animate-fade-in">
-              <div className="w-16 h-16 bg-primary/5 rounded-2xl flex items-center justify-center mb-2">
-                <Sparkles className="w-8 h-8 text-primary opacity-40" />
-              </div>
-              <h3 className="text-lg font-bold text-slate-800 leading-tight">Ready to build your profile?</h3>
-              <p className="text-xs text-slate-400 leading-relaxed font-medium">
-                Fill up the basic information to see a real-time preview of your professional site.
-              </p>
-              <div className="pt-4 flex flex-col gap-2 w-full">
-                <div className="h-2 bg-slate-50 rounded-full w-3/4 mx-auto" />
-                <div className="h-2 bg-slate-50 rounded-full w-1/2 mx-auto opacity-50" />
-              </div>
-            </div>
-          ) : (
-            <ProfilePreview profile={profile} zoom={zoom[0]} />
-          )}
-        </div>
-      </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-2 rounded-full text-[10px] font-bold uppercase tracking-wider text-muted-foreground hover:text-primary hover:bg-primary/5 transition-all"
+              onClick={() => router.push('/preview')}
+            >
+              <Monitor className="w-3.5 h-3.5" />
+              Desktop View
+            </Button>
+          </>
+        }
+      >
+        {(zoom) => <ProfilePreview profile={profile} zoom={zoom} />}
+      </BuilderPreview>
     </WizardShell>
   );
 }

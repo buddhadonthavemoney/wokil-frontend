@@ -35,6 +35,7 @@ import { InfoModal } from '@/components/InfoModal';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getProfile, getSiteAnalytics } from '@/generated/wokil-api';
 import { useDeployStream } from '@/hooks/useDeployStream';
+import { useRequireAccountType } from '@/hooks/useAccountType';
 import { DeployProgressModal } from '@/components/deploy/DeployProgressModal';
 import {
   LineChart,
@@ -61,6 +62,11 @@ export default function Dashboard() {
 }
 
 function DashboardContent() {
+  // This whole page reads getProfile, which a firm account has no rows behind —
+  // it would render an empty name, an empty avatar and empty stats rather than
+  // an error. The firm's equivalent home is /firm-dashboard.
+  const { redirecting } = useRequireAccountType('individual', '/firm-dashboard');
+
   const [highlightViewSite, setHighlightViewSite] = useState(false);
   const [showGuideArrow, setShowGuideArrow] = useState(false);
 
@@ -177,7 +183,9 @@ function DashboardContent() {
     }
   };
 
-  if (loading) {
+  // `redirecting` holds the loading state for a firm account on its way to
+  // /firm-dashboard, so it never flashes the empty lawyer dashboard first.
+  if (loading || redirecting) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="animate-pulse text-muted-foreground">Loading...</div>

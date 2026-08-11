@@ -1,141 +1,34 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useProfileForm } from '@/hooks/useProfileForm';
-import { LawyerProfile } from '@/types/lawyer';
-import { cn } from '@/lib/utils';
-import { saveProfile } from '@/generated/wokil-api';
-import { useQuery } from '@tanstack/react-query';
-import { listThemesOptions } from '@/generated/wokil-api/@tanstack/react-query.gen';
-import { ProfilePreview } from '@/components/preview/ProfilePreview';
-import { Button } from '@/components/ui/button';
-import { Scale, Eye, ArrowLeft, Check, Loader2 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { Scale } from 'lucide-react';
+import { useAccountType } from '@/hooks/useAccountType';
+import { IndividualPreview } from './IndividualPreview';
+import { FirmPreviewPage } from './FirmPreviewPage';
 
+/**
+ * One preview route, two account types.
+ *
+ * A dispatcher rather than a branch inside a single component: the two sides
+ * read different form hooks (useProfileForm vs useFirmForm), and hooks cannot
+ * be called conditionally — branching in one component would mean running
+ * both, so every firm visit would also fetch and autosave a lawyer profile it
+ * does not own.
+ */
 export default function Preview() {
-  const {
-    profile,
-    publishProfile,
-    setProfile,
-    loading: hookLoading,
-  } = useProfileForm();
+  const { accountType, isLoading } = useAccountType();
 
-  const [isPublishing, setIsPublishing] = useState(false);
-  const { data: themesData } = useQuery(listThemesOptions({ query: { category: 'individual' } }));
-  const themes = themesData ?? [];
-  const { toast } = useToast();
-  const router = useRouter();
-
-  // Switching themes is instant — it's just picking a different component to
-  // render from local state, no server round trip needed for the preview
-  // itself. Still persists to the backend so the choice survives a reload.
-  const handleThemeChange = (newTheme: string) => {
-    const updatedProfile: LawyerProfile = {
-      ...profile,
-      themeSelection: { theme: newTheme as LawyerProfile['themeSelection']['theme'] }
-    };
-
-    setProfile(updatedProfile);
-
-    saveProfile({ body: updatedProfile, throwOnError: true }).catch((err) => {
-      console.error("Theme switch failed to save:", err);
-      toast({
-        title: "Update Failed",
-        description: "Could not save the theme change. Please try again.",
-        variant: "destructive"
-      });
-    });
-  };
-
-  const handlePublish = async () => {
-    setIsPublishing(true);
-    try {
-      await publishProfile();
-      // Navigate to dashboard with deploying parameter
-      router.push('/dashboard?deploying=true');
-    } catch (err: any) {
-      console.error("Publish failed:", err);
-      toast({
-        title: "Publish Failed",
-        description: err.message || "There was an error initiating publication.",
-        variant: "destructive",
-      });
-      setIsPublishing(false);
-    }
-  };
-
-  if (hookLoading && !profile.basicInformation.fullName) {
+  if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen gap-4">
         <Scale className="w-12 h-12 text-primary animate-pulse" />
-        <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground animate-pulse">Loading Profile...</p>
+        <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground animate-pulse">
+          Loading Preview...
+        </p>
       </div>
     );
   }
 
-  return (
-    <div className="fixed inset-0 z-[100] bg-background overflow-hidden">
-      <div className="fixed top-0 left-0 right-0 z-[60] bg-background/90 backdrop-blur-md border-b border-border shadow-sm">
-        <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-          <Button
-            variant="ghost"
-            onClick={() => router.push('/profile-builder')}
-            className="gap-2 font-bold text-[10px] sm:text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span className="hidden sm:inline">Back to Editor</span>
-          </Button>
-          <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary">
-            <Eye className="w-3.5 h-3.5" />
-            <span className="text-[10px] font-bold uppercase tracking-widest">Live Preview</span>
-          </div>
-          <Button
-            onClick={handlePublish}
-            disabled={isPublishing}
-            className="gap-2 font-bold text-[10px] sm:text-xs uppercase tracking-widest px-4 sm:px-6 shadow-lg shadow-primary/20"
-          >
-            {isPublishing ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                <span className="hidden sm:inline">Publishing...</span>
-              </>
-            ) : (
-              <>
-                <Check className="w-4 h-4" />
-                <span className="hidden sm:inline">Publish Now</span>
-                <span className="sm:hidden">Publish</span>
-              </>
-            )}
-          </Button>
-        </div>
-      </div>
-
-      <div className="pt-[73px] h-full">
-        <ProfilePreview profile={profile} />
-      </div>
-
-      {/* Theme Switcher Overlay */}
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] w-[90%] sm:w-auto overflow-hidden">
-        <div className="bg-white/80 backdrop-blur-xl border border-white/20 shadow-2xl rounded-2xl p-1.5 sm:p-2 flex items-center gap-1 shadow-primary/10 overflow-x-auto no-scrollbar scroll-smooth">
-          {themes.map((theme) => (
-            <button
-              key={theme.id}
-              onClick={() => handleThemeChange(theme.id)}
-              disabled={isPublishing}
-              className={cn(
-                "px-3 sm:px-4 py-2 rounded-xl text-[9px] sm:text-[10px] font-bold uppercase tracking-widest transition-all duration-300 whitespace-nowrap shrink-0 capitalize",
-                isPublishing && "opacity-50 cursor-not-allowed",
-                profile.themeSelection?.theme === theme.id
-                  ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
-                  : "text-muted-foreground hover:bg-black/5 hover:text-foreground"
-              )}
-            >
-              {theme.name}
-            </button>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
+  // Unknown type (the lookup failed) falls through to the individual preview,
+  // which is where everyone landed before firms existed.
+  return accountType === 'firm' ? <FirmPreviewPage /> : <IndividualPreview />;
 }

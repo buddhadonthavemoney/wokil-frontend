@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
+import { useAccountType } from '@/hooks/useAccountType';
 import {
   Scale,
   LayoutDashboard,
@@ -163,6 +164,8 @@ export default function Sidebar() {
   const router = useRouter();
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { accountType } = useAccountType();
+  const isFirm = accountType === 'firm';
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -239,28 +242,41 @@ export default function Sidebar() {
 
         {/* Navigation */}
         <nav className="flex-1 px-4 pt-4 overflow-y-auto">
+          {/*
+            Nav follows the account type: an individual has no firm to manage,
+            and a firm account has no lawyer profile behind /profile-builder —
+            linking to the other type's pages only offers a bounce back.
+          */}
           <NavSection label="General">
             <div onClick={handleNavClick}>
-              <NavLink icon={<LayoutDashboard className="w-5 h-5" />} label="Dashboard" path="/dashboard" isActive={pathname === '/dashboard'} />
+              <NavLink
+                icon={<LayoutDashboard className="w-5 h-5" />}
+                label="Dashboard"
+                path={isFirm ? '/firm-dashboard' : '/dashboard'}
+                isActive={pathname === (isFirm ? '/firm-dashboard' : '/dashboard')}
+              />
             </div>
-            <NavGroup
-              icon={<User className="w-5 h-5" />}
-              label="Profile"
-              pathname={pathname}
-              onNavigate={handleNavClick}
-              items={[
-                { label: 'Builder', path: '/profile-builder' },
-                { label: 'All Details', path: '/profile-details' },
-              ]}
-            />
+            {isFirm ? (
+              <div onClick={handleNavClick}>
+                <NavLink icon={<Building2 className="w-5 h-5" />} label="Firm Builder" path="/firm-builder" isActive={pathname === '/firm-builder'} />
+              </div>
+            ) : (
+              <NavGroup
+                icon={<User className="w-5 h-5" />}
+                label="Profile"
+                pathname={pathname}
+                onNavigate={handleNavClick}
+                items={[
+                  { label: 'Builder', path: '/profile-builder' },
+                  { label: 'All Details', path: '/profile-details' },
+                ]}
+              />
+            )}
           </NavSection>
 
           <NavSection label="Management">
             <div onClick={handleNavClick}>
               <NavLink icon={<Globe className="w-5 h-5" />} label="Sites" path="/sites" isActive={pathname === '/sites'} />
-            </div>
-            <div onClick={handleNavClick}>
-              <NavLink icon={<Building2 className="w-5 h-5" />} label="Firm Dashboard" path="/firm-dashboard" isActive={pathname === '/firm-dashboard'} />
             </div>
             <div onClick={handleNavClick}>
               <NavLink icon={<IdCard className="w-5 h-5" />} label="Business Cards" path="/business-cards" isActive={pathname === '/business-cards'} />

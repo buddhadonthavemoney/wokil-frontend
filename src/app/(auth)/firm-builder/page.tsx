@@ -1,14 +1,20 @@
 'use client';
 
-import { Suspense, useState } from 'react';
+import { Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Building2, Sparkles, ZoomIn, ZoomOut } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { Building2, Monitor } from 'lucide-react';
 
 import { useFirmForm } from '@/hooks/useFirmForm';
+import { useRequireAccountType } from '@/hooks/useAccountType';
 import { FIRM_STEPS } from '@/components/form/firmSteps';
 import { WizardShell } from '@/components/form/WizardShell';
-import { FirmClassicTheme } from '@/components/preview/themes/FirmClassicTheme';
-import { Slider } from '@/components/ui/slider';
+import { ThemeSelector } from '@/components/form/ThemeSelector';
+import { BuilderPreview } from '@/components/preview/BuilderPreview';
+import { FirmPreview } from '@/components/preview/FirmPreview';
+import { Button } from '@/components/ui/button';
+import { updateFirm } from '@/generated/wokil-api';
+import { listThemesOptions } from '@/generated/wokil-api/@tanstack/react-query.gen';
 import { useToast } from '@/hooks/use-toast';
 import { FirmProfile } from '@/types/firm';
 
@@ -59,6 +65,9 @@ const SAMPLE_FIRM = {
 };
 
 function FirmBuilderContent() {
+  // An individual account here would be editing a firm it does not own.
+  useRequireAccountType('firm', '/profile-builder');
+
   const searchParams = useSearchParams();
   // Read before the hook runs so it can open on the right step directly,
   // rather than jumping there after the fact.
@@ -81,7 +90,11 @@ function FirmBuilderContent() {
 
   const { toast } = useToast();
   const router = useRouter();
-  const [zoom, setZoom] = useState([0.5]);
+
+  // Scoped to firm themes: the lawyer themes take a LawyerProfile and would
+  // throw if a firm ever selected one.
+  const { data: themesData } = useQuery(listThemesOptions({ query: { category: 'firm' } }));
+  const themes = themesData ?? [];
 
   const handleFillSample = () => {
     const key = FIRM_STEPS[currentStep - 1]?.key;
@@ -123,72 +136,50 @@ function FirmBuilderContent() {
       onFillSample={handleFillSample}
       onClear={resetCurrentStep}
     >
-      {/* Zoom */}
-      <div className="flex justify-center mb-8 px-4">
-        <div className="w-full max-w-[200px] flex items-center gap-3">
-          <ZoomOut className="w-3 h-3 text-muted-foreground/40" />
-          <Slider
-            value={zoom}
-            onValueChange={setZoom}
-            min={0.25}
-            max={1}
-            step={0.05}
-            className="w-full cursor-pointer h-1"
-          />
-          <ZoomIn className="w-3 h-3 text-muted-foreground/40" />
-          <span className="text-[9px] font-mono text-muted-foreground/60 w-8 text-right">
-            {Math.round(zoom[0] * 100)}%
-          </span>
-        </div>
-      </div>
+      <BuilderPreview
+        isEmpty={!hasFirmName}
+        emptyTitle="Ready to build your firm's site?"
+        emptyDescription="Add your firm name to see a real-time preview."
+        toolbar={
+          <>
+            <ThemeSelector
+              themes={themes}
+              currentTheme={firm.themeSelection?.theme}
+              onThemeSelect={(themeId) => {
+                const updated: FirmProfile = { ...firm, themeSelection: { theme: themeId } };
+                setFirm(updated);
 
-      {/*
-        A desktop frame rather than the lawyer wizard's phone mockup: a firm
-        page leads with a roster, which is a two-column layout that a 300px
-        phone shell renders as an unreadable ribbon.
-      */}
-      <div className="relative mx-auto rounded-2xl border border-border bg-card shadow-xl overflow-hidden">
-        <div className="h-9 border-b border-border bg-muted/40 flex items-center gap-1.5 px-4">
-          <span className="w-2.5 h-2.5 rounded-full bg-muted-foreground/20" />
-          <span className="w-2.5 h-2.5 rounded-full bg-muted-foreground/20" />
-          <span className="w-2.5 h-2.5 rounded-full bg-muted-foreground/20" />
-          <span className="ml-3 text-[10px] font-mono text-muted-foreground/50 truncate">
-            {firm.subdomainSelection.subdomain
-              ? `${firm.subdomainSelection.subdomain}.wokil.com`
-              : 'your-firm.wokil.com'}
-          </span>
-        </div>
-
-        <div className="h-[560px] overflow-y-auto overflow-x-hidden bg-white">
-          {!hasFirmName ? (
-            <div className="w-full h-full flex flex-col items-center justify-center p-8 text-center space-y-4">
-              <div className="w-16 h-16 bg-primary/5 rounded-2xl flex items-center justify-center mb-2">
-                <Sparkles className="w-8 h-8 text-primary opacity-40" />
-              </div>
-              <h3 className="text-lg font-bold text-slate-800 leading-tight">
-                Ready to build your firm&apos;s site?
-              </h3>
-              <p className="text-xs text-slate-400 leading-relaxed font-medium max-w-xs">
-                Add your firm name to see a real-time preview.
-              </p>
-            </div>
-          ) : (
-            <div
-              // @container is what the themes' @sm/@lg variants resolve
-              // against, so the preview breaks at the frame's width rather
-              // than the browser's.
-              className="@container origin-top-left"
-              style={{
-                transform: `scale(${zoom[0]})`,
-                width: `${100 / zoom[0]}%`,
-                height: `${100 / zoom[0]}%`,
+                const payload = { ...updated };
+                // Once deployed the subdomain is locked server-side; sending it
+                // back turns an ordinary save into a 400.
+                if (updated.firmProfile?.deploymentURL) {
+                  delete (payload as Partial<FirmProfile>).subdomainSelection;
+                }
+                updateFirm({ body: payload as FirmProfile, throwOnError: true }).catch((err) => {
+                  console.error('Theme switch failed to save:', err);
+                });
               }}
+            />
+
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-2 rounded-full text-[10px] font-bold uppercase tracking-wider text-muted-foreground hover:text-primary hover:bg-primary/5 transition-all"
+              onClick={() => router.push('/preview')}
             >
-              <FirmClassicTheme firm={firm} />
-            </div>
-          )}
-        </div>
-      </div>
+              <Monitor className="w-3.5 h-3.5" />
+              Desktop View
+            </Button>
+          </>
+        }
+      >
+        {/*
+          FirmPreview, not a bare <ClassicTheme>: the theme hides its
+          [data-reveal] sections — the roster included — until an observer
+          marks them visible, which only FirmPreview wires up.
+        */}
+        {(zoom) => <FirmPreview firm={firm} zoom={zoom} />}
+      </BuilderPreview>
     </WizardShell>
   );
 }
