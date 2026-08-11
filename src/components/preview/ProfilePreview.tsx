@@ -4,7 +4,7 @@ import { ExecutiveTheme } from './themes/ExecutiveTheme';
 import { LegalCraftTheme } from './themes/LegalCraftTheme';
 import { CorporateEliteTheme } from './themes/CorporateEliteTheme';
 import { SwissInstitutionalTheme } from './themes/SwissInstitutionalTheme';
-import { ContactQrWidget } from './ContactQrWidget';
+import { ContactQrWidget, buildVCard } from './ContactQrWidget';
 import { ComponentType, useEffect, useRef } from 'react';
 
 interface ProfilePreviewProps {
@@ -111,7 +111,7 @@ export function ProfilePreview({ profile, zoom = 1 }: ProfilePreviewProps) {
           <Theme profile={profile} />
         </div>
       </div>
-      <ContactQrWidget profile={profile} className="absolute" />
+      <ContactQrWidget vcard={buildVCard(profile)} className="absolute" />
     </div>
   );
 }

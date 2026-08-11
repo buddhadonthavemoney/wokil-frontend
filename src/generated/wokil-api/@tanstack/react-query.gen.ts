@@ -3,8 +3,8 @@
 import { type DefaultError, queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { checkDomainAvailability, createForm, createGaProperty, createSite, deleteSite, deploySite, getProfile, getPublicDirectory, getSiteAnalytics, getVerificationRecords, googleCallback, googleLogin, listForms, listSites, listSubmissions, listThemes, listUsers, type Options, saveProfile, submitForm, updateProfileVisibility, uploadFile, verifyDns } from '../sdk.gen';
-import type { CheckDomainAvailabilityData, CheckDomainAvailabilityError, CheckDomainAvailabilityResponse, CreateFormData, CreateFormError, CreateFormResponse, CreateGaPropertyData, CreateGaPropertyError, CreateGaPropertyResponse, CreateSiteData, CreateSiteError, CreateSiteResponse, DeleteSiteData, DeleteSiteError, DeleteSiteResponse, DeploySiteData, DeploySiteError, DeploySiteResponse, GetProfileData, GetProfileError, GetProfileResponse, GetPublicDirectoryData, GetPublicDirectoryError, GetPublicDirectoryResponse, GetSiteAnalyticsData, GetSiteAnalyticsError, GetSiteAnalyticsResponse, GetVerificationRecordsData, GetVerificationRecordsError, GetVerificationRecordsResponse, GoogleCallbackData, GoogleCallbackError, GoogleCallbackResponse, GoogleLoginData, GoogleLoginResponse, ListFormsData, ListFormsError, ListFormsResponse, ListSitesData, ListSitesError, ListSitesResponse, ListSubmissionsData, ListSubmissionsError, ListSubmissionsResponse, ListThemesData, ListThemesError, ListThemesResponse, ListUsersData, ListUsersError, ListUsersResponse, SaveProfileData, SaveProfileError, SaveProfileResponse, SubmitFormData, SubmitFormError, SubmitFormResponse, UpdateProfileVisibilityData, UpdateProfileVisibilityError, UpdateProfileVisibilityResponse, UploadFileData, UploadFileError, UploadFileResponse, VerifyDnsData, VerifyDnsError, VerifyDnsResponse } from '../types.gen';
+import { checkDomainAvailability, createFirm, createForm, createGaProperty, createSite, deleteSite, deploySite, getAccountType, getMyFirm, getProfile, getPublicDirectory, getSiteAnalytics, getVerificationRecords, googleCallback, googleLogin, listForms, listSites, listSubmissions, listThemes, listUsers, type Options, saveProfile, searchFirms, setAccountType, submitForm, updateFirm, updateProfileVisibility, uploadFile, verifyDns } from '../sdk.gen';
+import type { CheckDomainAvailabilityData, CheckDomainAvailabilityError, CheckDomainAvailabilityResponse, CreateFirmData, CreateFirmError, CreateFirmResponse, CreateFormData, CreateFormError, CreateFormResponse, CreateGaPropertyData, CreateGaPropertyError, CreateGaPropertyResponse, CreateSiteData, CreateSiteError, CreateSiteResponse, DeleteSiteData, DeleteSiteError, DeleteSiteResponse, DeploySiteData, DeploySiteError, DeploySiteResponse, GetAccountTypeData, GetAccountTypeError, GetAccountTypeResponse, GetMyFirmData, GetMyFirmError, GetMyFirmResponse, GetProfileData, GetProfileError, GetProfileResponse, GetPublicDirectoryData, GetPublicDirectoryError, GetPublicDirectoryResponse, GetSiteAnalyticsData, GetSiteAnalyticsError, GetSiteAnalyticsResponse, GetVerificationRecordsData, GetVerificationRecordsError, GetVerificationRecordsResponse, GoogleCallbackData, GoogleCallbackError, GoogleCallbackResponse, GoogleLoginData, GoogleLoginResponse, ListFormsData, ListFormsError, ListFormsResponse, ListSitesData, ListSitesError, ListSitesResponse, ListSubmissionsData, ListSubmissionsError, ListSubmissionsResponse, ListThemesData, ListThemesError, ListThemesResponse, ListUsersData, ListUsersError, ListUsersResponse, SaveProfileData, SaveProfileError, SaveProfileResponse, SearchFirmsData, SearchFirmsError, SearchFirmsResponse, SetAccountTypeData, SetAccountTypeError, SetAccountTypeResponse, SubmitFormData, SubmitFormError, SubmitFormResponse, UpdateFirmData, UpdateFirmError, UpdateFirmResponse, UpdateProfileVisibilityData, UpdateProfileVisibilityError, UpdateProfileVisibilityResponse, UploadFileData, UploadFileError, UploadFileResponse, VerifyDnsData, VerifyDnsError, VerifyDnsResponse } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -117,6 +117,8 @@ export const listThemesQueryKey = (options?: Options<ListThemesData>) => createQ
 
 /**
  * List active themes
+ *
+ * Without `category` this returns every active theme. Pickers should always pass one: an individual theme and a firm theme take different render payloads, so offering the wrong kind fails at deploy time rather than at selection time.
  */
 export const listThemesOptions = (options?: Options<ListThemesData>) => queryOptions<ListThemesResponse, ListThemesError, ListThemesResponse, ReturnType<typeof listThemesQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
@@ -414,6 +416,119 @@ export const getSiteAnalyticsOptions = (options?: Options<GetSiteAnalyticsData>)
     },
     queryKey: getSiteAnalyticsQueryKey(options)
 });
+
+export const searchFirmsQueryKey = (options: Options<SearchFirmsData>) => createQueryKey('searchFirms', options);
+
+/**
+ * Search firms by name
+ *
+ * Backs the firm typeahead in the individual-lawyer wizard. Public and deliberately thin — id, name and slug only. Capped at 10 results.
+ */
+export const searchFirmsOptions = (options: Options<SearchFirmsData>) => queryOptions<SearchFirmsResponse, SearchFirmsError, SearchFirmsResponse, ReturnType<typeof searchFirmsQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await searchFirms({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: searchFirmsQueryKey(options)
+});
+
+/**
+ * Create the authenticated user's firm
+ *
+ * Creates the firm owned by the caller and sets their account_type to 'firm'. A user owns at most one firm.
+ */
+export const createFirmMutation = (options?: Partial<Options<CreateFirmData>>): UseMutationOptions<CreateFirmResponse, CreateFirmError, Options<CreateFirmData>> => {
+    const mutationOptions: UseMutationOptions<CreateFirmResponse, CreateFirmError, Options<CreateFirmData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await createFirm({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const getMyFirmQueryKey = (options?: Options<GetMyFirmData>) => createQueryKey('getMyFirm', options);
+
+/**
+ * Get the authenticated user's firm
+ */
+export const getMyFirmOptions = (options?: Options<GetMyFirmData>) => queryOptions<GetMyFirmResponse, GetMyFirmError, GetMyFirmResponse, ReturnType<typeof getMyFirmQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getMyFirm({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getMyFirmQueryKey(options)
+});
+
+/**
+ * Upsert the firm (progressive save)
+ *
+ * Deep-merges the body into the stored firm, so a wizard step that only touches one group leaves the others alone.
+ */
+export const updateFirmMutation = (options?: Partial<Options<UpdateFirmData>>): UseMutationOptions<UpdateFirmResponse, UpdateFirmError, Options<UpdateFirmData>> => {
+    const mutationOptions: UseMutationOptions<UpdateFirmResponse, UpdateFirmError, Options<UpdateFirmData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await updateFirm({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const getAccountTypeQueryKey = (options?: Options<GetAccountTypeData>) => createQueryKey('getAccountType', options);
+
+/**
+ * Get the caller's account type
+ *
+ * null means the user has signed in but not yet chosen, which is what routes them to the onboarding choice screen.
+ */
+export const getAccountTypeOptions = (options?: Options<GetAccountTypeData>) => queryOptions<GetAccountTypeResponse, GetAccountTypeError, GetAccountTypeResponse, ReturnType<typeof getAccountTypeQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getAccountType({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getAccountTypeQueryKey(options)
+});
+
+/**
+ * Set the caller's account type
+ */
+export const setAccountTypeMutation = (options?: Partial<Options<SetAccountTypeData>>): UseMutationOptions<SetAccountTypeResponse, SetAccountTypeError, Options<SetAccountTypeData>> => {
+    const mutationOptions: UseMutationOptions<SetAccountTypeResponse, SetAccountTypeError, Options<SetAccountTypeData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await setAccountType({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
 
 /**
  * Upload an image and update the profile photo

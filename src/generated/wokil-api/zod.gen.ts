@@ -46,7 +46,7 @@ export const zTheme = z.object({
     name: z.string(),
     description: zNullString,
     thumbnail_url: zNullString,
-    category: z.enum(['individual'])
+    category: z.enum(['individual', 'firm'])
 });
 
 export const zSubmission = z.object({
@@ -230,6 +230,67 @@ export const zAnalyticsData = z.object({
     history: z.array(zDailyMetric)
 });
 
+export const zFirmSummary = z.object({
+    id: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }),
+    name: z.string(),
+    slug: z.string()
+});
+
+export const zFirmDetails = z.object({
+    name: z.string().optional(),
+    registrationNumber: z.string().optional(),
+    foundedYear: z.string().optional(),
+    tagline: z.string().optional()
+});
+
+/**
+ * The firm's own "about" section — the counterpart of a lawyer's professionalProfile.
+ */
+export const zFirmAbout = z.object({
+    about: z.string().optional(),
+    logo: z.string().optional(),
+    officeHours: z.string().optional(),
+    deploymentURL: z.string().readonly().optional()
+});
+
+/**
+ * One lawyer as the firm entered them. Only fullName and professionalTitle are expected; the rest render when present and are simply omitted when not.
+ */
+export const zRosterMember = z.object({
+    fullName: z.string().optional(),
+    professionalTitle: z.string().optional(),
+    yearsOfExperience: z.int().optional(),
+    photo: z.string().optional(),
+    bio: z.string().optional(),
+    areasOfPractice: z.array(z.string()).optional(),
+    email: z.string().optional(),
+    phone: z.string().optional(),
+    linkedIn: z.string().optional()
+});
+
+export const zFirmProfile = z.object({
+    firmDetails: zFirmDetails.optional(),
+    practiceDetails: zPracticeDetails.optional(),
+    contactInformation: zContactInformation.optional(),
+    firmProfile: zFirmAbout.optional(),
+    roster: z.array(zRosterMember).optional(),
+    onlinePresence: zOnlinePresence.optional(),
+    subdomainSelection: zSubdomainSelection.optional(),
+    themeSelection: zThemeSelection.optional(),
+    id: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).readonly().optional(),
+    slug: z.string().optional(),
+    isPublished: z.boolean().readonly().optional(),
+    siteUrl: z.string().readonly().optional()
+});
+
+export const zAccountTypeResponse = z.object({
+    accountType: z.enum(['individual', 'firm'])
+});
+
+export const zAccountTypeRequest = z.object({
+    accountType: z.enum(['individual', 'firm'])
+});
+
 export const zProfessionalProfileWritable = z.object({
     bio: z.string().optional(),
     officeHours: z.string().optional(),
@@ -249,6 +310,27 @@ export const zLawyerProfileWritable = z.object({
     googleAnalyticsId: z.string().optional(),
     isPublic: z.boolean().optional(),
     showPicture: z.boolean().optional(),
+    slug: z.string().optional()
+});
+
+/**
+ * The firm's own "about" section — the counterpart of a lawyer's professionalProfile.
+ */
+export const zFirmAboutWritable = z.object({
+    about: z.string().optional(),
+    logo: z.string().optional(),
+    officeHours: z.string().optional()
+});
+
+export const zFirmProfileWritable = z.object({
+    firmDetails: zFirmDetails.optional(),
+    practiceDetails: zPracticeDetails.optional(),
+    contactInformation: zContactInformation.optional(),
+    firmProfile: zFirmAboutWritable.optional(),
+    roster: z.array(zRosterMember).optional(),
+    onlinePresence: zOnlinePresence.optional(),
+    subdomainSelection: zSubdomainSelection.optional(),
+    themeSelection: zThemeSelection.optional(),
     slug: z.string().optional()
 });
 
@@ -284,6 +366,10 @@ export const zGetPublicDirectoryQuery = z.object({
  * OK
  */
 export const zGetPublicDirectoryResponse = zPublicDirectoryResponse;
+
+export const zListThemesQuery = z.object({
+    category: z.enum(['individual', 'firm']).optional()
+});
 
 /**
  * Active themes, ordered by sort_order (null when none found)
@@ -406,6 +492,46 @@ export const zCreateGaPropertyResponse = zGaPropertyResponse;
  * OK
  */
 export const zGetSiteAnalyticsResponse = zAnalyticsData;
+
+export const zSearchFirmsQuery = z.object({
+    search: z.string()
+});
+
+/**
+ * Matching firms, best match first (empty when none)
+ */
+export const zSearchFirmsResponse = z.array(zFirmSummary);
+
+export const zCreateFirmBody = zFirmProfileWritable;
+
+/**
+ * Created
+ */
+export const zCreateFirmResponse = zFirmProfile;
+
+/**
+ * OK (empty object when the caller has no firm yet)
+ */
+export const zGetMyFirmResponse = zFirmProfile;
+
+export const zUpdateFirmBody = zFirmProfileWritable;
+
+/**
+ * Updated firm
+ */
+export const zUpdateFirmResponse = zFirmProfile;
+
+/**
+ * OK
+ */
+export const zGetAccountTypeResponse = zAccountTypeResponse;
+
+export const zSetAccountTypeBody = zAccountTypeRequest;
+
+/**
+ * OK
+ */
+export const zSetAccountTypeResponse = zAccountTypeResponse;
 
 export const zUploadFileBody = z.object({
     file: z.string()

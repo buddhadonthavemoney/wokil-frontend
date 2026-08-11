@@ -2,7 +2,7 @@
 
 import { type Client, type ClientMeta, formDataBodySerializer, type Options as Options2, type RequestResult, type ServerSentEventsResult, type TDataShape } from './client';
 import { client } from './client.gen';
-import type { CheckDomainAvailabilityData, CheckDomainAvailabilityErrors, CheckDomainAvailabilityResponses, CreateFormData, CreateFormErrors, CreateFormResponses, CreateGaPropertyData, CreateGaPropertyErrors, CreateGaPropertyResponses, CreateSiteData, CreateSiteErrors, CreateSiteResponses, DeleteSiteData, DeleteSiteErrors, DeleteSiteResponses, DeploySiteData, DeploySiteErrors, DeploySiteResponses, GetProfileData, GetProfileErrors, GetProfileResponses, GetPublicDirectoryData, GetPublicDirectoryErrors, GetPublicDirectoryResponses, GetSiteAnalyticsData, GetSiteAnalyticsErrors, GetSiteAnalyticsResponses, GetVerificationRecordsData, GetVerificationRecordsErrors, GetVerificationRecordsResponses, GoogleCallbackData, GoogleCallbackErrors, GoogleCallbackResponses, GoogleLoginData, GoogleLoginResponses, ListFormsData, ListFormsErrors, ListFormsResponses, ListSitesData, ListSitesErrors, ListSitesResponses, ListSubmissionsData, ListSubmissionsErrors, ListSubmissionsResponses, ListThemesData, ListThemesErrors, ListThemesResponses, ListUsersData, ListUsersErrors, ListUsersResponses, SaveProfileData, SaveProfileErrors, SaveProfileResponses, StreamDeployStatusData, StreamDeployStatusErrors, StreamDeployStatusResponse, StreamDeployStatusResponses, SubmitFormData, SubmitFormErrors, SubmitFormResponses, UpdateProfileVisibilityData, UpdateProfileVisibilityErrors, UpdateProfileVisibilityResponses, UploadFileData, UploadFileErrors, UploadFileResponses, VerifyDnsData, VerifyDnsErrors, VerifyDnsResponses } from './types.gen';
+import type { CheckDomainAvailabilityData, CheckDomainAvailabilityErrors, CheckDomainAvailabilityResponses, CreateFirmData, CreateFirmErrors, CreateFirmResponses, CreateFormData, CreateFormErrors, CreateFormResponses, CreateGaPropertyData, CreateGaPropertyErrors, CreateGaPropertyResponses, CreateSiteData, CreateSiteErrors, CreateSiteResponses, DeleteSiteData, DeleteSiteErrors, DeleteSiteResponses, DeploySiteData, DeploySiteErrors, DeploySiteResponses, GetAccountTypeData, GetAccountTypeErrors, GetAccountTypeResponses, GetMyFirmData, GetMyFirmErrors, GetMyFirmResponses, GetProfileData, GetProfileErrors, GetProfileResponses, GetPublicDirectoryData, GetPublicDirectoryErrors, GetPublicDirectoryResponses, GetSiteAnalyticsData, GetSiteAnalyticsErrors, GetSiteAnalyticsResponses, GetVerificationRecordsData, GetVerificationRecordsErrors, GetVerificationRecordsResponses, GoogleCallbackData, GoogleCallbackErrors, GoogleCallbackResponses, GoogleLoginData, GoogleLoginResponses, ListFormsData, ListFormsErrors, ListFormsResponses, ListSitesData, ListSitesErrors, ListSitesResponses, ListSubmissionsData, ListSubmissionsErrors, ListSubmissionsResponses, ListThemesData, ListThemesErrors, ListThemesResponses, ListUsersData, ListUsersErrors, ListUsersResponses, SaveProfileData, SaveProfileErrors, SaveProfileResponses, SearchFirmsData, SearchFirmsErrors, SearchFirmsResponses, SetAccountTypeData, SetAccountTypeErrors, SetAccountTypeResponses, StreamDeployStatusData, StreamDeployStatusErrors, StreamDeployStatusResponse, StreamDeployStatusResponses, SubmitFormData, SubmitFormErrors, SubmitFormResponses, UpdateFirmData, UpdateFirmErrors, UpdateFirmResponses, UpdateProfileVisibilityData, UpdateProfileVisibilityErrors, UpdateProfileVisibilityResponses, UploadFileData, UploadFileErrors, UploadFileResponses, VerifyDnsData, VerifyDnsErrors, VerifyDnsResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -42,6 +42,8 @@ export const getPublicDirectory = <ThrowOnError extends boolean = false>(options
 
 /**
  * List active themes
+ *
+ * Without `category` this returns every active theme. Pickers should always pass one: an individual theme and a firm theme take different render payloads, so offering the wrong kind fails at deploy time rather than at selection time.
  */
 export const listThemes = <ThrowOnError extends boolean = false>(options?: Options<ListThemesData, ThrowOnError>): RequestResult<ListThemesResponses, ListThemesErrors, ThrowOnError> => (options?.client ?? client).get<ListThemesResponses, ListThemesErrors, ThrowOnError>({ url: '/api/themes', ...options });
 
@@ -227,6 +229,76 @@ export const getSiteAnalytics = <ThrowOnError extends boolean = false>(options?:
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/sites/analytics',
     ...options
+});
+
+/**
+ * Search firms by name
+ *
+ * Backs the firm typeahead in the individual-lawyer wizard. Public and deliberately thin — id, name and slug only. Capped at 10 results.
+ */
+export const searchFirms = <ThrowOnError extends boolean = false>(options: Options<SearchFirmsData, ThrowOnError>): RequestResult<SearchFirmsResponses, SearchFirmsErrors, ThrowOnError> => (options.client ?? client).get<SearchFirmsResponses, SearchFirmsErrors, ThrowOnError>({ url: '/api/firms', ...options });
+
+/**
+ * Create the authenticated user's firm
+ *
+ * Creates the firm owned by the caller and sets their account_type to 'firm'. A user owns at most one firm.
+ */
+export const createFirm = <ThrowOnError extends boolean = false>(options: Options<CreateFirmData, ThrowOnError>): RequestResult<CreateFirmResponses, CreateFirmErrors, ThrowOnError> => (options.client ?? client).post<CreateFirmResponses, CreateFirmErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/firms',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Get the authenticated user's firm
+ */
+export const getMyFirm = <ThrowOnError extends boolean = false>(options?: Options<GetMyFirmData, ThrowOnError>): RequestResult<GetMyFirmResponses, GetMyFirmErrors, ThrowOnError> => (options?.client ?? client).get<GetMyFirmResponses, GetMyFirmErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/firms/me',
+    ...options
+});
+
+/**
+ * Upsert the firm (progressive save)
+ *
+ * Deep-merges the body into the stored firm, so a wizard step that only touches one group leaves the others alone.
+ */
+export const updateFirm = <ThrowOnError extends boolean = false>(options: Options<UpdateFirmData, ThrowOnError>): RequestResult<UpdateFirmResponses, UpdateFirmErrors, ThrowOnError> => (options.client ?? client).put<UpdateFirmResponses, UpdateFirmErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/firms/me',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Get the caller's account type
+ *
+ * null means the user has signed in but not yet chosen, which is what routes them to the onboarding choice screen.
+ */
+export const getAccountType = <ThrowOnError extends boolean = false>(options?: Options<GetAccountTypeData, ThrowOnError>): RequestResult<GetAccountTypeResponses, GetAccountTypeErrors, ThrowOnError> => (options?.client ?? client).get<GetAccountTypeResponses, GetAccountTypeErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/user/account-type',
+    ...options
+});
+
+/**
+ * Set the caller's account type
+ */
+export const setAccountType = <ThrowOnError extends boolean = false>(options: Options<SetAccountTypeData, ThrowOnError>): RequestResult<SetAccountTypeResponses, SetAccountTypeErrors, ThrowOnError> => (options.client ?? client).patch<SetAccountTypeResponses, SetAccountTypeErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/user/account-type',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
 });
 
 /**

@@ -3,13 +3,15 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { LawyerProfile } from '@/types/lawyer';
+import { FirmProfile, toFirmProfile } from '@/types/firm';
 import { buildShell } from '@/lib/site-shell';
-import { ContactQrWidget } from '@/components/preview/ContactQrWidget';
+import { ContactQrWidget, buildVCard, buildFirmVCard } from '@/components/preview/ContactQrWidget';
 import { ClassicTheme } from '@/components/preview/themes/ClassicTheme';
 import { ExecutiveTheme } from '@/components/preview/themes/ExecutiveTheme';
 import { LegalCraftTheme } from '@/components/preview/themes/LegalCraftTheme';
 import { CorporateEliteTheme } from '@/components/preview/themes/CorporateEliteTheme';
 import { SwissInstitutionalTheme } from '@/components/preview/themes/SwissInstitutionalTheme';
+import { FirmClassicTheme } from '@/components/preview/themes/FirmClassicTheme';
 
 const THEME_COMPONENTS: Record<string, (props: { profile: LawyerProfile }) => React.ReactElement> = {
   classic: ClassicTheme,
@@ -17,6 +19,14 @@ const THEME_COMPONENTS: Record<string, (props: { profile: LawyerProfile }) => Re
   'legal-craft': LegalCraftTheme,
   'corporate-elite': CorporateEliteTheme,
   'swiss-institutional': SwissInstitutionalTheme,
+};
+
+// Kept separate from THEME_COMPONENTS rather than merged into one map: the two
+// take different props, and a shared registry would make it possible to render
+// a firm through a lawyer theme (or vice versa) with a type assertion papering
+// over the mismatch.
+const FIRM_THEME_COMPONENTS: Record<string, (props: { firm: FirmProfile }) => React.ReactElement> = {
+  'firm-classic': FirmClassicTheme,
 };
 
 // Compiled once at frontend build time (pnpm run build:theme-css), read once at
@@ -77,6 +87,21 @@ function normalizeProfile(input: Partial<LawyerProfile>): LawyerProfile {
   };
 }
 
+// normalizeProfile's sibling, for exactly the same reason: Go's `omitempty`
+// pointers drop whole groups, and FirmClassicTheme reads
+// `firmDetails.name` / `practiceDetails.areasOfPractice` directly. Without
+// this a firm that never filled in a step nil-derefs at deploy time.
+function normalizeFirm(input: Partial<FirmProfile>): FirmProfile {
+  return toFirmProfile(input);
+}
+
+type RenderBody = {
+  kind?: 'individual' | 'firm';
+  profile?: Partial<LawyerProfile>;
+  firm?: Partial<FirmProfile>;
+  theme?: string;
+};
+
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
@@ -92,28 +117,59 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(401).json({ error: 'unauthorized' });
   }
 
-  const body = req.body as { profile?: Partial<LawyerProfile>; theme?: string };
-  const theme = body.theme ?? 'classic';
-  const Component = THEME_COMPONENTS[theme];
-  if (!Component) {
-    return res.status(400).json({ error: `unknown or unmigrated theme: ${theme}` });
-  }
-  if (!body.profile) {
-    return res.status(400).json({ error: 'missing profile' });
-  }
-
-  const profile = normalizeProfile(body.profile);
+  const body = req.body as RenderBody;
+  // `kind` is explicit on the wire so the payload shape is never inferred from
+  // which field happens to be present. Older callers omit it and are always
+  // individual.
+  const kind = body.kind ?? 'individual';
 
   let bodyHtml: string;
-  try {
-    bodyHtml = renderToStaticMarkup(Component({ profile }));
-  } catch (err) {
-    console.error('[render] render failed', err);
-    return res.status(500).json({ error: 'render failed' });
+  let qrHtml: string;
+  let title: string;
+  let googleAnalyticsId: string | undefined;
+
+  if (kind === 'firm') {
+    const theme = body.theme ?? 'firm-classic';
+    const Component = FIRM_THEME_COMPONENTS[theme];
+    if (!Component) {
+      return res.status(400).json({ error: `unknown or unmigrated firm theme: ${theme}` });
+    }
+    if (!body.firm) {
+      return res.status(400).json({ error: 'missing firm' });
+    }
+
+    const firm = normalizeFirm(body.firm);
+    try {
+      bodyHtml = renderToStaticMarkup(Component({ firm }));
+    } catch (err) {
+      console.error('[render] firm render failed', err);
+      return res.status(500).json({ error: 'render failed' });
+    }
+    qrHtml = renderToStaticMarkup(ContactQrWidget({ vcard: buildFirmVCard(firm) }));
+    title = firm.firmDetails.name;
+  } else {
+    const theme = body.theme ?? 'classic';
+    const Component = THEME_COMPONENTS[theme];
+    if (!Component) {
+      return res.status(400).json({ error: `unknown or unmigrated theme: ${theme}` });
+    }
+    if (!body.profile) {
+      return res.status(400).json({ error: 'missing profile' });
+    }
+
+    const profile = normalizeProfile(body.profile);
+    try {
+      bodyHtml = renderToStaticMarkup(Component({ profile }));
+    } catch (err) {
+      console.error('[render] render failed', err);
+      return res.status(500).json({ error: 'render failed' });
+    }
+    qrHtml = renderToStaticMarkup(ContactQrWidget({ vcard: buildVCard(profile) }));
+    title = profile.basicInformation.fullName;
+    googleAnalyticsId = profile.googleAnalyticsId;
   }
 
-  const qrHtml = renderToStaticMarkup(ContactQrWidget({ profile }));
-  const html = buildShell({ bodyHtml, profile, css: THEME_CSS, qrHtml });
+  const html = buildShell({ bodyHtml, title, googleAnalyticsId, css: THEME_CSS, qrHtml });
 
   return res.status(200).json({ files: { 'index.html': html } });
 }

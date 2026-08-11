@@ -22,7 +22,7 @@ export default function Preview() {
   } = useProfileForm();
 
   const [isPublishing, setIsPublishing] = useState(false);
-  const { data: themesData } = useQuery(listThemesOptions());
+  const { data: themesData } = useQuery(listThemesOptions({ query: { category: 'individual' } }));
   const themes = themesData ?? [];
   const { toast } = useToast();
   const router = useRouter();

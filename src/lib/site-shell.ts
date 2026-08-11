@@ -1,5 +1,3 @@
-import { LawyerProfile } from '@/types/lawyer';
-
 // Raw string templates aren't auto-escaped the way Go's html/template is —
 // every interpolated value here must be escaped explicitly.
 function escapeHtml(value: string): string {
@@ -24,7 +22,10 @@ function escapeJsString(value: string): string {
 
 interface ShellOptions {
   bodyHtml: string;
-  profile: LawyerProfile;
+  /** Page <title>. The lawyer's name, or the firm's. */
+  title: string;
+  /** Measurement id, when the owner has opted into analytics. */
+  googleAnalyticsId?: string;
   css: string;
   // Pre-rendered ContactQrWidget markup. It lives in a React component
   // (components/preview/ContactQrWidget.tsx) rather than here so the dashboard
@@ -34,10 +35,9 @@ interface ShellOptions {
 
 // buildShell reproduces what wokil-go's templates/layouts/base.html does beyond
 // the theme content itself: page title, GA snippet, and the QR/vCard widget.
-export function buildShell({ bodyHtml, profile, css, qrHtml }: ShellOptions): string {
-  const fullName = profile.basicInformation?.fullName ?? '';
-  const title = fullName ? escapeHtml(fullName) : 'Lawyer Profile';
-  const gaId = profile.googleAnalyticsId;
+export function buildShell({ bodyHtml, title, googleAnalyticsId, css, qrHtml }: ShellOptions): string {
+  const pageTitle = title ? escapeHtml(title) : 'Lawyer Profile';
+  const gaId = googleAnalyticsId;
 
   const gaSnippet = gaId
     ? `
@@ -67,7 +67,7 @@ export function buildShell({ bodyHtml, profile, css, qrHtml }: ShellOptions): st
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>${title}</title>
+    <title>${pageTitle}</title>
     <style>${css}</style>${gaSnippet}
   </head>
   <body class="@container min-h-screen selection:bg-blue-600/10">

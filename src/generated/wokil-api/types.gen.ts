@@ -48,7 +48,7 @@ export type Theme = {
     name: string;
     description: NullString;
     thumbnail_url: NullString;
-    category: 'individual';
+    category: 'individual' | 'firm';
 };
 
 export type Submission = {
@@ -267,6 +267,85 @@ export type AnalyticsData = {
     history: Array<DailyMetric>;
 };
 
+export type FirmSummary = {
+    id: number;
+    name: string;
+    slug: string;
+};
+
+export type FirmDetails = {
+    name?: string;
+    registrationNumber?: string;
+    /**
+     * Free text, not a date — firms give Gregorian and Bikram Sambat years alike, and nothing sorts or compares them.
+     */
+    foundedYear?: string;
+    tagline?: string;
+};
+
+/**
+ * The firm's own "about" section — the counterpart of a lawyer's professionalProfile.
+ */
+export type FirmAbout = {
+    about?: string;
+    logo?: string;
+    officeHours?: string;
+    /**
+     * Derived from the sites table on read — never stored on the firm.
+     */
+    readonly deploymentURL?: string;
+};
+
+/**
+ * One lawyer as the firm entered them. Only fullName and professionalTitle are expected; the rest render when present and are simply omitted when not.
+ */
+export type RosterMember = {
+    fullName?: string;
+    professionalTitle?: string;
+    yearsOfExperience?: number;
+    photo?: string;
+    bio?: string;
+    areasOfPractice?: Array<string>;
+    email?: string;
+    phone?: string;
+    linkedIn?: string;
+};
+
+export type FirmProfile = {
+    firmDetails?: FirmDetails;
+    practiceDetails?: PracticeDetails;
+    contactInformation?: ContactInformation;
+    firmProfile?: FirmAbout;
+    /**
+     * The firm's lawyers, as entered by the firm itself. These are plain directory entries, not user accounts — nobody on this list can sign in, and an empty roster is a valid, deployable state.
+     */
+    roster?: Array<RosterMember>;
+    onlinePresence?: OnlinePresence;
+    subdomainSelection?: SubdomainSelection;
+    themeSelection?: ThemeSelection;
+    readonly id?: number;
+    slug?: string;
+    /**
+     * Whether the firm has a live deployed site. Derived from the sites table on read — never stored on the firm and ignored if sent on write.
+     */
+    readonly isPublished?: boolean;
+    /**
+     * Live domain of the firm's deployed site. Derived from the sites table on read — never stored on the firm and ignored if sent on write.
+     */
+    readonly siteUrl?: string;
+};
+
+export type AccountTypeResponse = {
+    /**
+     * null when the user has signed in but not yet chosen.
+     */
+    accountType: 'individual' | 'firm';
+};
+
+export type AccountTypeRequest = {
+    accountType: 'individual' | 'firm';
+};
+
 export type ProfessionalProfileWritable = {
     bio?: string;
     officeHours?: string;
@@ -286,6 +365,30 @@ export type LawyerProfileWritable = {
     googleAnalyticsId?: string;
     isPublic?: boolean;
     showPicture?: boolean;
+    slug?: string;
+};
+
+/**
+ * The firm's own "about" section — the counterpart of a lawyer's professionalProfile.
+ */
+export type FirmAboutWritable = {
+    about?: string;
+    logo?: string;
+    officeHours?: string;
+};
+
+export type FirmProfileWritable = {
+    firmDetails?: FirmDetails;
+    practiceDetails?: PracticeDetails;
+    contactInformation?: ContactInformation;
+    firmProfile?: FirmAboutWritable;
+    /**
+     * The firm's lawyers, as entered by the firm itself. These are plain directory entries, not user accounts — nobody on this list can sign in, and an empty roster is a valid, deployable state.
+     */
+    roster?: Array<RosterMember>;
+    onlinePresence?: OnlinePresence;
+    subdomainSelection?: SubdomainSelection;
+    themeSelection?: ThemeSelection;
     slug?: string;
 };
 
@@ -399,7 +502,12 @@ export type GetPublicDirectoryResponse = GetPublicDirectoryResponses[keyof GetPu
 export type ListThemesData = {
     body?: never;
     path?: never;
-    query?: never;
+    query?: {
+        /**
+         * Restrict to themes for this kind of account.
+         */
+        category?: 'individual' | 'firm';
+    };
     url: '/api/themes';
 };
 
@@ -985,6 +1093,205 @@ export type GetSiteAnalyticsResponses = {
 };
 
 export type GetSiteAnalyticsResponse = GetSiteAnalyticsResponses[keyof GetSiteAnalyticsResponses];
+
+export type SearchFirmsData = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Partial firm name.
+         */
+        search: string;
+    };
+    url: '/api/firms';
+};
+
+export type SearchFirmsErrors = {
+    /**
+     * Invalid request
+     */
+    400: string;
+    /**
+     * Internal server error
+     */
+    500: string;
+};
+
+export type SearchFirmsError = SearchFirmsErrors[keyof SearchFirmsErrors];
+
+export type SearchFirmsResponses = {
+    /**
+     * Matching firms, best match first (empty when none)
+     */
+    200: Array<FirmSummary>;
+};
+
+export type SearchFirmsResponse = SearchFirmsResponses[keyof SearchFirmsResponses];
+
+export type CreateFirmData = {
+    body: FirmProfileWritable;
+    path?: never;
+    query?: never;
+    url: '/api/firms';
+};
+
+export type CreateFirmErrors = {
+    /**
+     * Invalid request
+     */
+    400: string;
+    /**
+     * Missing or invalid bearer token
+     */
+    401: string;
+    /**
+     * Conflicts with existing state
+     */
+    409: string;
+    /**
+     * Internal server error
+     */
+    500: string;
+};
+
+export type CreateFirmError = CreateFirmErrors[keyof CreateFirmErrors];
+
+export type CreateFirmResponses = {
+    /**
+     * Created
+     */
+    201: FirmProfile;
+};
+
+export type CreateFirmResponse = CreateFirmResponses[keyof CreateFirmResponses];
+
+export type GetMyFirmData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/firms/me';
+};
+
+export type GetMyFirmErrors = {
+    /**
+     * Missing or invalid bearer token
+     */
+    401: string;
+    /**
+     * Internal server error
+     */
+    500: string;
+};
+
+export type GetMyFirmError = GetMyFirmErrors[keyof GetMyFirmErrors];
+
+export type GetMyFirmResponses = {
+    /**
+     * OK (empty object when the caller has no firm yet)
+     */
+    200: FirmProfile;
+};
+
+export type GetMyFirmResponse = GetMyFirmResponses[keyof GetMyFirmResponses];
+
+export type UpdateFirmData = {
+    body: FirmProfileWritable;
+    path?: never;
+    query?: never;
+    url: '/api/firms/me';
+};
+
+export type UpdateFirmErrors = {
+    /**
+     * Invalid request
+     */
+    400: string;
+    /**
+     * Missing or invalid bearer token
+     */
+    401: string;
+    /**
+     * Resource not found
+     */
+    404: string;
+    /**
+     * Internal server error
+     */
+    500: string;
+};
+
+export type UpdateFirmError = UpdateFirmErrors[keyof UpdateFirmErrors];
+
+export type UpdateFirmResponses = {
+    /**
+     * Updated firm
+     */
+    200: FirmProfile;
+};
+
+export type UpdateFirmResponse = UpdateFirmResponses[keyof UpdateFirmResponses];
+
+export type GetAccountTypeData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/user/account-type';
+};
+
+export type GetAccountTypeErrors = {
+    /**
+     * Missing or invalid bearer token
+     */
+    401: string;
+    /**
+     * Internal server error
+     */
+    500: string;
+};
+
+export type GetAccountTypeError = GetAccountTypeErrors[keyof GetAccountTypeErrors];
+
+export type GetAccountTypeResponses = {
+    /**
+     * OK
+     */
+    200: AccountTypeResponse;
+};
+
+export type GetAccountTypeResponse = GetAccountTypeResponses[keyof GetAccountTypeResponses];
+
+export type SetAccountTypeData = {
+    body: AccountTypeRequest;
+    path?: never;
+    query?: never;
+    url: '/api/user/account-type';
+};
+
+export type SetAccountTypeErrors = {
+    /**
+     * Invalid request
+     */
+    400: string;
+    /**
+     * Missing or invalid bearer token
+     */
+    401: string;
+    /**
+     * Internal server error
+     */
+    500: string;
+};
+
+export type SetAccountTypeError = SetAccountTypeErrors[keyof SetAccountTypeErrors];
+
+export type SetAccountTypeResponses = {
+    /**
+     * OK
+     */
+    200: AccountTypeResponse;
+};
+
+export type SetAccountTypeResponse = SetAccountTypeResponses[keyof SetAccountTypeResponses];
 
 export type UploadFileData = {
     body: {
