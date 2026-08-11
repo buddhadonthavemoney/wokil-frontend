@@ -3,6 +3,7 @@ import { LawyerProfile } from '@/types/lawyer';
 import { getProfile, saveProfile, deploySite } from '@/generated/wokil-api';
 import { useToast } from '@/hooks/use-toast';
 import { createBlankLawyerProfile, toLawyerProfile } from '@/lib/lawyer-profile-adapter';
+import { PROFILE_STEPS, PROFILE_TOTAL_STEPS } from '@/components/form/steps';
 
 const generateSlug = (name: string): string => {
   return name
@@ -21,7 +22,7 @@ const generateId = (): string => {
 const initialProfile = createBlankLawyerProfile();
 
 export function useProfileForm() {
-  const totalSteps = 7;
+  const totalSteps = PROFILE_TOTAL_STEPS;
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
 
@@ -170,17 +171,7 @@ export function useProfileForm() {
   }, [profile.id, toast]);
 
   const resetCurrentStep = useCallback(() => {
-    const stepKeys: (keyof Omit<LawyerProfile, 'id' | 'slug' | 'isPublished' | 'publishedAt' | 'siteUrl'>)[] = [
-      'basicInformation',
-      'practiceDetails',
-      'contactInformation',
-      'professionalProfile',
-      'timeline',
-      'onlinePresence',
-      'subdomainSelection'
-    ];
-
-    const key = stepKeys[currentStep - 1];
+    const key = PROFILE_STEPS[currentStep - 1]?.key;
     if (key) {
       setProfile(prev => ({
         ...prev,
