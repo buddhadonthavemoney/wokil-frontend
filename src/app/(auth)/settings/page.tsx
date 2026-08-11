@@ -10,6 +10,7 @@ import { getProfile, createGaProperty, updateProfileVisibility } from '@/generat
 import { useToast } from '@/hooks/use-toast';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Label } from '@/components/ui/label';
+import { AccountTypeSetting } from '@/components/settings/AccountTypeSetting';
 
 export default function Settings() {
   const router = useRouter();
@@ -111,6 +112,8 @@ export default function Settings() {
         {/* Analytics Section */}
         <section className="space-y-8 pt-4">
             <div className="grid gap-8">
+                <AccountTypeSetting />
+
                 {/* Visibility Settings */}
                 <div className="bg-card border-none rounded-xl p-8 shadow-premium space-y-6">
                     <div className="flex items-center gap-3 border-b border-border pb-4">

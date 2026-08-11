@@ -12,6 +12,8 @@ import { LegalCraftTheme } from '@/components/preview/themes/LegalCraftTheme';
 import { CorporateEliteTheme } from '@/components/preview/themes/CorporateEliteTheme';
 import { SwissInstitutionalTheme } from '@/components/preview/themes/SwissInstitutionalTheme';
 import { FirmClassicTheme } from '@/components/preview/themes/FirmClassicTheme';
+import { FirmTeamPage } from '@/components/preview/themes/FirmTeamPage';
+import { TEAM_PAGE_PATH } from '@/lib/firm-roster';
 
 const THEME_COMPONENTS: Record<string, (props: { profile: LawyerProfile }) => React.ReactElement> = {
   classic: ClassicTheme,
@@ -127,6 +129,10 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
   let qrHtml: string;
   let title: string;
   let googleAnalyticsId: string | undefined;
+  // Extra pages beyond index.html, as relative path -> full HTML document. The
+  // deploy pipeline walks the workspace recursively, so nested paths upload
+  // as-is.
+  const extraPages: Record<string, string> = {};
 
   if (kind === 'firm') {
     const theme = body.theme ?? 'firm-classic';
@@ -147,6 +153,22 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     }
     qrHtml = renderToStaticMarkup(ContactQrWidget({ vcard: buildFirmVCard(firm) }));
     title = firm.firmDetails.name;
+
+    // The People page: every lawyer in full, on one page. Rendered even for an
+    // empty roster, so the nav link never lands on a 404 — it carries the same
+    // "team is being introduced" state the home page shows.
+    try {
+      extraPages[TEAM_PAGE_PATH] = buildShell({
+        bodyHtml: renderToStaticMarkup(FirmTeamPage({ firm })),
+        title: `Our Team — ${firm.firmDetails.name}`,
+        googleAnalyticsId: undefined,
+        css: THEME_CSS,
+        qrHtml,
+      });
+    } catch (err) {
+      console.error('[render] firm team page render failed', err);
+      return res.status(500).json({ error: 'render failed' });
+    }
   } else {
     const theme = body.theme ?? 'classic';
     const Component = THEME_COMPONENTS[theme];
@@ -171,5 +193,5 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 
   const html = buildShell({ bodyHtml, title, googleAnalyticsId, css: THEME_CSS, qrHtml });
 
-  return res.status(200).json({ files: { 'index.html': html } });
+  return res.status(200).json({ files: { 'index.html': html, ...extraPages } });
 }

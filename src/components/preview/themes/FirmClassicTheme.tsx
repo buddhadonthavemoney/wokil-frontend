@@ -1,30 +1,12 @@
 import { FirmProfile, RosterMember } from '@/types/firm';
+import { TEAM_PAGE_HREF, memberAnchor, memberHref, memberInitials } from '@/lib/firm-roster';
 import {
-  Phone, Mail, MapPin, Clock, Globe, Linkedin, Scale, Menu, Users, Building2, CalendarDays, BadgeCheck,
+  Phone, Mail, MapPin, Clock, Globe, Linkedin, Scale, Menu, Users, Building2, CalendarDays,
+  BadgeCheck, ArrowRight,
 } from 'lucide-react';
 
 interface FirmClassicThemeProps {
   firm: FirmProfile;
-}
-
-/** Slug used for a roster member's anchor link, so the nav can jump to them. */
-export function rosterAnchor(member: RosterMember, index: number): string {
-  const base = member.fullName
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '');
-  // Index-suffixed: two lawyers at the same firm can share a name, and a
-  // duplicate anchor silently sends every link to the first one.
-  return `member-${base || 'lawyer'}-${index + 1}`;
-}
-
-function initials(name: string): string {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? '')
-    .join('');
 }
 
 /**
@@ -39,7 +21,7 @@ function RosterCard({ member, index }: { member: RosterMember; index: number }) 
 
   return (
     <article
-      id={rosterAnchor(member, index)}
+      id={memberAnchor(member, index)}
       className="scroll-mt-24 bg-white rounded-2xl p-8 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-[#F0F0F0] flex flex-col @sm:flex-row gap-6"
     >
       <div className="shrink-0">
@@ -52,7 +34,7 @@ function RosterCard({ member, index }: { member: RosterMember; index: number }) 
         ) : (
           <div className="w-24 h-24 rounded-2xl bg-[#1B2B44] flex items-center justify-center border-2 border-[#C5A059]">
             <span className="font-heading text-2xl font-bold text-[#C5A059]">
-              {initials(member.fullName) || <Scale className="w-8 h-8 text-[#C5A059]" />}
+              {memberInitials(member.fullName) || <Scale className="w-8 h-8 text-[#C5A059]" />}
             </span>
           </div>
         )}
@@ -60,7 +42,11 @@ function RosterCard({ member, index }: { member: RosterMember; index: number }) 
 
       <div className="min-w-0 space-y-3">
         <div>
-          <h3 className="font-heading text-2xl font-bold text-[#1B2B44] leading-snug">{member.fullName}</h3>
+          <h3 className="font-heading text-2xl font-bold text-[#1B2B44] leading-snug">
+            <a href={memberHref(member, index)} className="hover:text-[#C5A059] transition-colors">
+              {member.fullName}
+            </a>
+          </h3>
           <p className="text-[#C5A059] font-medium">{member.professionalTitle}</p>
           {member.yearsOfExperience ? (
             <p className="text-xs font-bold uppercase tracking-widest text-[#4A4A4A]/60 mt-1">
@@ -160,8 +146,8 @@ function EmptyRoster({ email, phone }: { email?: string; phone?: string }) {
  * The firm counterpart of ClassicTheme, sharing its navy/gold palette and
  * section rhythm so a firm site and a lawyer site read as one product.
  *
- * The roster renders as a section on this single page with per-member anchor
- * links rather than separate pages, matching today's single-page model.
+ * The roster appears here as a preview section; every lawyer's full entry
+ * lives on the People page (FirmTeamPage), which each card links through to.
  */
 export function FirmClassicTheme({ firm }: FirmClassicThemeProps) {
   const { firmDetails, practiceDetails, contactInformation, firmProfile, roster, onlinePresence } = firm;
@@ -193,7 +179,7 @@ export function FirmClassicTheme({ firm }: FirmClassicThemeProps) {
           <div className="hidden @lg:flex items-center gap-8 text-sm font-medium text-white/60">
             <a href="#about" className="hover:text-white transition-colors">About</a>
             <a href="#practice-areas" className="hover:text-white transition-colors">Practice Areas</a>
-            <a href="#team" className="hover:text-white transition-colors">Our Team</a>
+            <a href={TEAM_PAGE_HREF} className="hover:text-white transition-colors">Our Team</a>
           </div>
           <a href="#contact" className="hidden @lg:block px-4 @md:px-5 py-2.5 bg-[#C5A059] hover:bg-[#B18F4A] rounded-lg text-sm font-bold text-[#1B2B44] transition-colors shrink-0">
             Request Consultation
@@ -205,7 +191,7 @@ export function FirmClassicTheme({ firm }: FirmClassicThemeProps) {
             <div className="absolute right-0 top-full mt-2 w-56 bg-[#1B2B44] border border-white/10 rounded-xl shadow-2xl p-4 flex flex-col gap-3 text-sm font-medium text-white/70 z-50">
               <a href="#about" className="hover:text-white transition-colors">About</a>
               <a href="#practice-areas" className="hover:text-white transition-colors">Practice Areas</a>
-              <a href="#team" className="hover:text-white transition-colors">Our Team</a>
+              <a href={TEAM_PAGE_HREF} className="hover:text-white transition-colors">Our Team</a>
               <a href="#contact" className="mt-1 px-4 py-2.5 bg-[#C5A059] hover:bg-[#B18F4A] rounded-lg text-sm font-bold text-[#1B2B44] text-center transition-colors">
                 Request Consultation
               </a>
@@ -324,8 +310,15 @@ export function FirmClassicTheme({ firm }: FirmClassicThemeProps) {
               {hasRoster ? (
                 <div className="space-y-6">
                   {members.map((member, index) => (
-                    <RosterCard key={rosterAnchor(member, index)} member={member} index={index} />
+                    <RosterCard key={memberAnchor(member, index)} member={member} index={index} />
                   ))}
+                  <a
+                    href={TEAM_PAGE_HREF}
+                    className="inline-flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-[#1B2B44] hover:text-[#C5A059] transition-colors"
+                  >
+                    Meet the full team
+                    <ArrowRight className="w-4 h-4" />
+                  </a>
                 </div>
               ) : (
                 <EmptyRoster email={email} phone={phoneNumber} />
@@ -404,8 +397,8 @@ export function FirmClassicTheme({ firm }: FirmClassicThemeProps) {
                 </h3>
                 <ul className="space-y-3 text-sm">
                   {members.map((member, index) => (
-                    <li key={rosterAnchor(member, index)}>
-                      <a href={`#${rosterAnchor(member, index)}`} className="group flex flex-col hover:text-[#1B2B44] transition-colors">
+                    <li key={memberAnchor(member, index)}>
+                      <a href={memberHref(member, index)} className="group flex flex-col hover:text-[#1B2B44] transition-colors">
                         <span className="font-medium text-[#1B2B44]">{member.fullName}</span>
                         <span className="text-[#4A4A4A]/70 text-xs">{member.professionalTitle}</span>
                       </a>
@@ -437,7 +430,7 @@ export function FirmClassicTheme({ firm }: FirmClassicThemeProps) {
             <ul className="space-y-2 text-sm text-white/60">
               <li><a href="#about" className="hover:text-white transition-colors">About</a></li>
               <li><a href="#practice-areas" className="hover:text-white transition-colors">Practice Areas</a></li>
-              <li><a href="#team" className="hover:text-white transition-colors">Our Team</a></li>
+              <li><a href={TEAM_PAGE_HREF} className="hover:text-white transition-colors">Our Team</a></li>
               <li><a href="#contact" className="hover:text-white transition-colors">Contact</a></li>
             </ul>
           </div>
