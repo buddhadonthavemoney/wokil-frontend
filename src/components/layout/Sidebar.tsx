@@ -260,7 +260,7 @@ export default function Sidebar() {
               <NavLink icon={<Globe className="w-5 h-5" />} label="Sites" path="/sites" isActive={pathname === '/sites'} />
             </div>
             <div onClick={handleNavClick}>
-              <ComingSoonLink icon={<Building2 className="w-5 h-5" />} label="Firm Dashboard" path="/firm-dashboard" isActive={pathname === '/firm-dashboard'} />
+              <NavLink icon={<Building2 className="w-5 h-5" />} label="Firm Dashboard" path="/firm-dashboard" isActive={pathname === '/firm-dashboard'} />
             </div>
             <div onClick={handleNavClick}>
               <NavLink icon={<IdCard className="w-5 h-5" />} label="Business Cards" path="/business-cards" isActive={pathname === '/business-cards'} />

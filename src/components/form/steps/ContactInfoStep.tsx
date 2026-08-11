@@ -5,7 +5,8 @@ import { LawyerProfile } from '@/types/lawyer';
 import { Phone, Mail, MapPin } from 'lucide-react';
 
 interface ContactInfoStepProps {
-  profile: LawyerProfile;
+  // See PracticeDetailsStep: narrowed so the firm wizard can share it.
+  profile: Pick<LawyerProfile, 'contactInformation'>;
   onUpdate: (fields: Partial<LawyerProfile['contactInformation']>) => void;
 }
 
