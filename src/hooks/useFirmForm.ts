@@ -151,19 +151,16 @@ export function useFirmForm({ initialStep }: UseFirmFormOptions = {}) {
    * from the sites table, and deploySite only *queues* the work — the DNS record
    * lands several steps later. The deploy stream's terminal event refetches for
    * the truth. (Same reasoning as publishProfile; see useProfileForm.)
+   *
+   * Throws rather than swallowing: the caller navigates to the dashboard on
+   * success to watch the deploy stream. Resolving after a failed queue sent the
+   * user to a progress modal for a deploy that was never started, and left its
+   * own error branch dead.
    */
   const publishFirm = useCallback(async () => {
-    try {
-      await saveFirmData();
-      await deploySite({ throwOnError: true });
-    } catch {
-      toast({
-        title: 'Error',
-        description: 'Failed to publish firm site.',
-        variant: 'destructive',
-      });
-    }
-  }, [saveFirmData, toast]);
+    await saveFirmData();
+    await deploySite({ throwOnError: true });
+  }, [saveFirmData]);
 
   return {
     firm,

@@ -1,6 +1,7 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import {
   Building2, Users, UserPlus, Globe, ExternalLink, Pencil, Loader2, CalendarDays, BadgeCheck,
@@ -12,8 +13,11 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getMyFirmOptions } from '@/generated/wokil-api/@tanstack/react-query.gen';
+import { getMyFirm } from '@/generated/wokil-api';
 import { FirmProfile, toFirmProfile } from '@/types/firm';
 import { FIRM_STEPS } from '@/components/form/firmSteps';
+import { useDeployStream } from '@/hooks/useDeployStream';
+import { DeployProgressModal } from '@/components/deploy/DeployProgressModal';
 
 /**
  * Deep-links into the wizard at the roster step, found by key rather than
@@ -33,7 +37,8 @@ function initials(name: string): string {
 
 export default function FirmDashboardPage() {
   const router = useRouter();
-  const { data, isLoading } = useQuery(getMyFirmOptions());
+  const searchParams = useSearchParams();
+  const { data, isLoading, refetch } = useQuery(getMyFirmOptions());
 
   const raw = data as Partial<FirmProfile> | undefined;
   const firm: FirmProfile = toFirmProfile(raw);
@@ -42,11 +47,67 @@ export default function FirmDashboardPage() {
   const hasFirm = Boolean(raw?.id);
   const roster = firm.roster ?? [];
 
+  // The firm preview hands the deploy off by navigating here with
+  // ?deploying=true — the publish call has already returned, and the work
+  // continues server-side. Subscribing to the stream is what turns that into
+  // visible progress; the param is consumed immediately so a refresh (or a
+  // shared URL) doesn't re-open the modal over a deploy that already ended.
+  // Read in the initializer rather than an effect: the preview reaches this
+  // page through a client-side router.push, so the param is already there on
+  // the first render, and arming in an effect would both cost a render and
+  // race the strip below.
+  const [activeDeployment, setActiveDeployment] = useState(
+    () => searchParams?.get('deploying') === 'true',
+  );
+
+  useEffect(() => {
+    if (!searchParams) return;
+    if (searchParams.get('deploying') !== 'true') return;
+    const newParams = new URLSearchParams(searchParams.toString());
+    newParams.delete('deploying');
+    const query = newParams.toString();
+    router.replace(query ? `/firm-dashboard?${query}` : '/firm-dashboard', { scroll: false });
+  }, [searchParams, router]);
+
+  const deployStream = useDeployStream({
+    active: activeDeployment,
+    onDeactivate: () => setActiveDeployment(false),
+    confirmAlreadyDone: async () => {
+      // Mirrors the individual dashboard: the stream's "no ongoing deployment"
+      // 400 only counts as a finished deploy if the firm itself confirms it,
+      // so subscribing after a deploy that never ran isn't reported as success.
+      const firmData = (await getMyFirm({ throwOnError: true })).data as
+        | Partial<FirmProfile>
+        | undefined;
+      return !!(firmData && (firmData.isPublished || firmData.siteUrl));
+    },
+    onDone: async () => {
+      // Refetched on failure too: a failed deploy can still have moved state
+      // that the cards above render.
+      await refetch();
+    },
+  });
+
+  // Rendered alongside every branch below, including the loading one: the
+  // navigation from the preview lands here while getMyFirm is still in flight,
+  // and a spinner that swallowed the deploy modal is exactly the "SSE isn't
+  // working" the user sees.
+  const deployModal = (
+    <DeployProgressModal
+      phase={deployStream.phase}
+      steps={deployStream.steps}
+      message={deployStream.message}
+      onClose={deployStream.reset}
+      siteUrl={firm.siteUrl ? `https://${firm.siteUrl}` : undefined}
+    />
+  );
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center gap-3 text-muted-foreground">
         <Loader2 className="w-5 h-5 animate-spin" />
         Loading your firm…
+        {deployModal}
       </div>
     );
   }
@@ -71,6 +132,7 @@ export default function FirmDashboardPage() {
             </Button>
           </Card>
         </main>
+        {deployModal}
       </div>
     );
   }
@@ -208,6 +270,7 @@ export default function FirmDashboardPage() {
           </CardContent>
         </Card>
       </main>
+      {deployModal}
     </div>
   );
 }
