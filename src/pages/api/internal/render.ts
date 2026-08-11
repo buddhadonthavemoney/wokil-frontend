@@ -4,6 +4,7 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import { LawyerProfile } from '@/types/lawyer';
 import { buildShell } from '@/lib/site-shell';
+import { ContactQrWidget } from '@/components/preview/ContactQrWidget';
 import { ClassicTheme } from '@/components/preview/themes/ClassicTheme';
 import { ExecutiveTheme } from '@/components/preview/themes/ExecutiveTheme';
 import { LegalCraftTheme } from '@/components/preview/themes/LegalCraftTheme';
@@ -111,7 +112,8 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(500).json({ error: 'render failed' });
   }
 
-  const html = buildShell({ bodyHtml, profile, css: THEME_CSS });
+  const qrHtml = renderToStaticMarkup(ContactQrWidget({ profile }));
+  const html = buildShell({ bodyHtml, profile, css: THEME_CSS, qrHtml });
 
   return res.status(200).json({ files: { 'index.html': html } });
 }

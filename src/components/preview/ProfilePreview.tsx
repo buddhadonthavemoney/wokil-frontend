@@ -4,6 +4,7 @@ import { ExecutiveTheme } from './themes/ExecutiveTheme';
 import { LegalCraftTheme } from './themes/LegalCraftTheme';
 import { CorporateEliteTheme } from './themes/CorporateEliteTheme';
 import { SwissInstitutionalTheme } from './themes/SwissInstitutionalTheme';
+import { ContactQrWidget } from './ContactQrWidget';
 import { ComponentType, useEffect, useRef } from 'react';
 
 interface ProfilePreviewProps {
@@ -90,21 +91,32 @@ export function ProfilePreview({ profile, zoom = 1 }: ProfilePreviewProps) {
   }, [Theme, profile, zoom]);
 
   return (
-    // container-type: size (not just @container's default inline-size) so
-    // `cqh` resolves against this box's real height — themes use
-    // min-h-[100cqh] on their hero to fill exactly one "screen": this box's
-    // height here, or (per the CSS spec's no-container fallback) the real
-    // viewport on a published site where no @container wrapper exists at all.
-    <div ref={containerRef} className="@container [container-type:size] w-full h-full overflow-auto bg-white no-scrollbar">
-      <div
-        className="origin-top-left"
-        style={{
-          width: `${(1 / zoom) * 100}%`,
-          transform: `scale(${zoom})`,
-        }}
-      >
-        <Theme profile={profile} />
+    // The QR widget is a sibling of the scroll container, not a child: inside
+    // it, `absolute` would scroll away with the content, and `fixed` would
+    // anchor to the dashboard viewport and escape the phone mockup entirely.
+    //
+    // `@container` here is the counterpart of the published page's
+    // `<body class="@container">` (site-shell.ts) — it's what makes the
+    // widget's `@sm:`/`@md:` classes size against the preview box rather than
+    // the dashboard viewport, so the phone mockup gets the phone treatment.
+    <div className="@container relative w-full h-full">
+      {/* container-type: size (not just @container's default inline-size) so
+          `cqh` resolves against this box's real height — themes use
+          min-h-[100cqh] on their hero to fill exactly one "screen": this box's
+          height here, or (per the CSS spec's no-container fallback) the real
+          viewport on a published site where no @container wrapper exists at all. */}
+      <div ref={containerRef} className="@container [container-type:size] w-full h-full overflow-auto bg-white no-scrollbar">
+        <div
+          className="origin-top-left"
+          style={{
+            width: `${(1 / zoom) * 100}%`,
+            transform: `scale(${zoom})`,
+          }}
+        >
+          <Theme profile={profile} />
+        </div>
       </div>
+      <ContactQrWidget profile={profile} className="absolute" />
     </div>
   );
 }
