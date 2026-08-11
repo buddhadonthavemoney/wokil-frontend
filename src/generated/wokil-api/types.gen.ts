@@ -79,7 +79,14 @@ export type CreateFormRequest = {
 
 export type BasicInformation = {
     fullName?: string;
+    /**
+     * Display name of the lawyer's firm. Free text, and the only thing the themes render. Kept separate from firmId so that affiliation stays purely cosmetic today, and an invite/membership flow can be layered on later without a data migration.
+     */
     lawFirmName?: string;
+    /**
+     * The firms row this lawyer is affiliated with, when they picked one from the typeahead rather than typing a name. Display-only - it grants no access to the firm and creates no membership.
+     */
+    firmId?: number;
     professionalTitle?: string;
     yearsOfExperience?: number;
 };

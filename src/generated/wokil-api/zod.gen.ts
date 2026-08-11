@@ -73,6 +73,7 @@ export const zCreateFormRequest = z.object({
 export const zBasicInformation = z.object({
     fullName: z.string().optional(),
     lawFirmName: z.string().optional(),
+    firmId: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
     professionalTitle: z.string().optional(),
     yearsOfExperience: z.int().optional()
 });
