@@ -1,7 +1,7 @@
 'use client';
 
 import * as DialogPrimitive from '@radix-ui/react-dialog';
-import { Check, Loader2, Sparkles, XCircle } from 'lucide-react';
+import { Check, Loader2, RefreshCw, Sparkles, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import type { DeployPhase, DeployStep } from '@/hooks/useDeployStream';
@@ -94,6 +94,21 @@ export function DeployProgressModal({ phase, steps, message, onClose, siteUrl }:
                 </li>
               ))}
             </ul>
+          )}
+
+          {/* The Worker serves the site with `max-age=60,
+              stale-while-revalidate=604800`, so a returning visitor's own
+              browser can hand back the pre-deploy HTML once before refreshing
+              it in the background — the edge purge can't reach that copy. Say
+              so rather than let it read as a failed deploy. */}
+          {isSuccess && (
+            <p className="mt-4 flex items-start gap-2 rounded-xl bg-muted/40 p-3 text-xs font-medium text-muted-foreground">
+              <RefreshCw className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+              <span>
+                Your browser may show the previous version the first time you open the site.
+                Reload the page to see the new theme.
+              </span>
+            </p>
           )}
 
           {!isRunning && (
