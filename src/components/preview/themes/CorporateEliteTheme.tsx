@@ -1,13 +1,35 @@
-import { LawyerProfile, TimelineEntry, formatTimelineRange, resolveSiteContent } from '@/types/lawyer';
+import { TimelineEntry, formatTimelineRange } from '@/types/lawyer';
+import { SiteModel } from '@/types/site-model';
+import { TEAM_PAGE_HREF } from '@/lib/firm-roster';
+import { RosterList, type RosterPalette } from './RosterSection';
 import {
     Phone, Mail, MapPin, Globe, Linkedin, Menu, Landmark, Verified, Handshake, Briefcase, ShieldCheck,
     ChevronDown, Gavel, Building2, Users, Plane, Copyright, HeartPulse, Home, ReceiptText, ScrollText,
-    Banknote, Scale, Leaf, Stethoscope, type LucideIcon,
+    Banknote, Scale, Leaf, Stethoscope, ArrowRight, type LucideIcon,
 } from 'lucide-react';
 
 interface CorporateEliteThemeProps {
-    profile: LawyerProfile;
+    site: SiteModel;
 }
+
+// Corporate Elite in roster form: soft off-white cards on the theme's warm
+// grey, navy headings, the same 12px uppercase meta as the rest of the page.
+const ROSTER_PALETTE: RosterPalette = {
+    card: 'bg-[#faf9f8] p-6 rounded-lg border border-[#c5c6ce]/20 shadow-[0_4px_12px_rgba(27,43,68,0.08)] hover:shadow-[0_8px_24px_rgba(27,43,68,0.12)] transition-shadow flex flex-col @sm:flex-row gap-6',
+    avatar: 'w-24 h-24 rounded-lg bg-[#1b2b44]/10',
+    avatarText: 'font-heading text-2xl text-[#05162e]',
+    name: 'font-heading text-2xl text-[#05162e] leading-snug',
+    title: 'font-semibold text-[#05162e]',
+    meta: 'text-[12px] font-semibold uppercase tracking-[0.1em] text-[#44474d] mt-1',
+    body: 'text-[#44474d] leading-relaxed',
+    chip: 'px-3 py-1 rounded-full bg-white border border-[#c5c6ce]/40 text-sm font-medium text-[#44474d] whitespace-nowrap',
+    link: 'text-[#44474d] hover:text-[#05162e] transition-colors',
+    icon: 'text-[#05162e]',
+    emptyCard: 'bg-[#faf9f8] p-12 rounded-lg border border-dashed border-[#c5c6ce] text-center',
+    emptyHeading: 'font-heading text-2xl text-[#05162e] mb-2',
+    emptyBody: 'text-[#44474d] leading-relaxed max-w-md mx-auto',
+    emptyButton: 'px-6 py-3 rounded-lg bg-[#05162e] text-white text-[12px] font-semibold uppercase tracking-[0.1em] hover:opacity-90 transition-opacity',
+};
 
 const VALUE_ICONS = [Verified, Globe, Handshake];
 
@@ -45,10 +67,10 @@ function startYearOf(entry: TimelineEntry): number {
     return match ? Number(match[0]) : -Infinity;
 }
 
-function unifiedTimeline(profile: LawyerProfile) {
+function unifiedTimeline(lawyer: SiteModel['lawyer']) {
     const tagged = [
-        ...(profile.timeline?.experience ?? []).map((entry) => ({ entry, kind: 'Career' as const })),
-        ...(profile.timeline?.education ?? []).map((entry) => ({ entry, kind: 'Degree' as const })),
+        ...(lawyer?.experience ?? []).map((entry) => ({ entry, kind: 'Career' as const })),
+        ...(lawyer?.education ?? []).map((entry) => ({ entry, kind: 'Degree' as const })),
     ];
     // Current roles float to the top — an open-ended entry is "now" regardless
     // of when it started.
@@ -61,27 +83,38 @@ function unifiedTimeline(profile: LawyerProfile) {
         });
 }
 
-export function CorporateEliteTheme({ profile }: CorporateEliteThemeProps) {
-    const { basicInformation, practiceDetails, contactInformation, professionalProfile, onlinePresence } = profile;
+export function CorporateEliteTheme({ site }: CorporateEliteThemeProps) {
+    const isFirm = site.kind === 'firm';
+    const lawyer = site.lawyer;
+    const members = site.roster ?? [];
 
-    const fullName = basicInformation.fullName || 'Professional Advocate';
-    const professionalTitle = basicInformation.professionalTitle || 'Principal Attorney';
-    const lawFirmName = basicInformation.lawFirmName || fullName;
-    const yearsOfExperience = basicInformation.yearsOfExperience;
+    const fullName = site.name;
+    const professionalTitle = site.tagline;
+    const lawFirmName = site.brandName;
 
-    const areasOfPractice = practiceDetails.areasOfPractice || [];
-    const jurisdictions = practiceDetails.jurisdictions || [];
+    const areasOfPractice = site.areasOfPractice;
+    const jurisdictions = site.jurisdictions;
 
-    const { phoneNumber, email, officeAddress } = contactInformation;
-    const { bio, profilePhoto, officeHours } = professionalProfile;
-    const { website, linkedIn } = onlinePresence;
+    const { phoneNumber, email, officeAddress, officeHours } = site.contact;
+    const bio = site.about;
+    const profilePhoto = site.image?.src;
+    const { website, linkedIn } = site.online;
 
-    const timeline = unifiedTimeline(profile);
+    const timeline = unifiedTimeline(lawyer);
 
-    const { valuePoints, processSteps, faqs } = resolveSiteContent(profile, {
-        expertiseSection: 'Core Practice Areas',
-        cta: 'Book a Consultation',
-    });
+    const aboutHeading = isFirm ? site.heading.about : 'Professional Bio';
+    const practiceHeading = isFirm ? site.heading.practice : 'Core Practice Areas';
+
+    const navLinks = isFirm
+        ? [
+            { href: '#credentials', label: 'Credentials' },
+            { href: '#team', label: 'Our Team' },
+        ]
+        : [
+            ...(timeline.length > 0 ? [{ href: '#timeline', label: 'Timeline' }] : []),
+            { href: '#credentials', label: 'Credentials' },
+            { href: '#faq', label: 'FAQ' },
+        ];
 
     return (
         <div className="min-h-screen bg-[#faf9f8] font-body text-[#1a1c1c] selection:bg-[#05162e]/10">
@@ -100,9 +133,9 @@ export function CorporateEliteTheme({ profile }: CorporateEliteThemeProps) {
                         {lawFirmName}
                     </a>
                     <div className="flex items-center gap-6 text-[12px] font-semibold uppercase tracking-[0.1em] text-[#44474d] group-data-[collapsed]/nav:hidden">
-                        {timeline.length > 0 && <a href="#timeline" className="hover:text-[#05162e] transition-colors">Timeline</a>}
-                        <a href="#credentials" className="hover:text-[#05162e] transition-colors">Credentials</a>
-                        <a href="#faq" className="hover:text-[#05162e] transition-colors">FAQ</a>
+                        {navLinks.map(({ href, label }) => (
+                            <a key={href} href={href} className="hover:text-[#05162e] transition-colors">{label}</a>
+                        ))}
                     </div>
                     <div className="flex items-center gap-2 shrink-0 group-data-[collapsed]/nav:hidden">
                         {phoneNumber && (
@@ -119,9 +152,9 @@ export function CorporateEliteTheme({ profile }: CorporateEliteThemeProps) {
                             <Menu className="w-5 h-5" />
                         </summary>
                         <div className="absolute right-0 top-full mt-2 w-56 bg-white border border-[#c5c6ce]/40 rounded-lg shadow-2xl p-4 flex flex-col gap-3 text-sm font-medium text-[#44474d] z-50">
-                            {timeline.length > 0 && <a href="#timeline" className="hover:text-[#05162e] transition-colors">Timeline</a>}
-                            <a href="#credentials" className="hover:text-[#05162e] transition-colors">Credentials</a>
-                            <a href="#faq" className="hover:text-[#05162e] transition-colors">FAQ</a>
+                            {navLinks.map(({ href, label }) => (
+                                <a key={href} href={href} className="hover:text-[#05162e] transition-colors">{label}</a>
+                            ))}
                             <a href="#contact" className="mt-1 px-4 py-2.5 bg-[#05162e] text-white rounded-lg text-sm font-bold text-center">Consultation</a>
                         </div>
                     </details>
@@ -132,17 +165,23 @@ export function CorporateEliteTheme({ profile }: CorporateEliteThemeProps) {
                 {/* Hero */}
                 <section id="top" className="container mx-auto max-w-[1280px] px-6 pt-4 pb-8 @sm:pt-6 @md:py-20 grid grid-cols-1 @md:grid-cols-2 gap-10 items-start @md:items-center scroll-mt-24 min-h-[calc(100cqh-5rem)]">
                     <div>
-                        {yearsOfExperience > 0 && (
-                            <span className="inline-block mb-4 px-3 py-1 rounded-full border border-[#05162e]/20 bg-[#1b2b44]/10 text-[12px] font-semibold uppercase tracking-[0.1em] text-[#05162e]">
-                                {yearsOfExperience}+ Years Experience
-                            </span>
+                        {site.facts.length > 0 && (
+                            <div className="flex flex-wrap gap-2 mb-4">
+                                {site.facts.map(({ label }) => (
+                                    <span key={label} className="inline-block px-3 py-1 rounded-full border border-[#05162e]/20 bg-[#1b2b44]/10 text-[12px] font-semibold uppercase tracking-[0.1em] text-[#05162e]">
+                                        {label}
+                                    </span>
+                                ))}
+                            </div>
                         )}
                         <h1 className="font-heading font-semibold text-4xl @sm:text-5xl @lg:text-6xl leading-[1.1] tracking-tight text-[#05162e] mb-2">
                             {fullName}
                         </h1>
-                        <div className="border-l-4 border-[#05162e] pl-4 font-heading text-xl @md:text-2xl text-[#44474d] mb-6">
-                            {professionalTitle}{basicInformation.lawFirmName ? ` at ${basicInformation.lawFirmName}` : ''}
-                        </div>
+                        {professionalTitle && (
+                            <div className="border-l-4 border-[#05162e] pl-4 font-heading text-xl @md:text-2xl text-[#44474d] mb-6">
+                                {professionalTitle}{site.affiliation ? ` at ${site.affiliation}` : ''}
+                            </div>
+                        )}
                         {bio && (
                             <p className="text-lg leading-relaxed text-[#44474d] max-w-xl mb-10 line-clamp-4 hover:line-clamp-none">{bio}</p>
                         )}
@@ -152,7 +191,11 @@ export function CorporateEliteTheme({ profile }: CorporateEliteThemeProps) {
                     </div>
                     <div className="hidden @md:block relative h-[560px] rounded-lg overflow-hidden bg-[#eeeeed] shadow-[0_4px_12px_rgba(27,43,68,0.08)]">
                         {profilePhoto ? (
-                            <img src={profilePhoto} alt={fullName} className="absolute inset-0 w-full h-full object-cover" />
+                            <img
+                                src={profilePhoto}
+                                alt={site.image?.alt ?? fullName}
+                                className={`absolute inset-0 w-full h-full ${isFirm ? 'object-contain bg-white p-16' : 'object-cover'}`}
+                            />
                         ) : (
                             <div className="absolute inset-0 flex items-center justify-center">
                                 <Landmark className="w-24 h-24 text-[#c5c6ce]" />
@@ -164,10 +207,11 @@ export function CorporateEliteTheme({ profile }: CorporateEliteThemeProps) {
                 {/* Bio + office hours */}
                 <section data-reveal className="container mx-auto max-w-[1280px] px-6 py-16 border-t border-[#c5c6ce]/30 grid grid-cols-1 @md:grid-cols-3 gap-6">
                     <div className="@md:col-span-2">
-                        <h2 className="font-heading text-3xl text-[#05162e] mb-6">Professional Bio</h2>
-                        <p className="leading-relaxed text-[#44474d] whitespace-pre-line">
-                            {bio || 'Professional brief will be curated here.'}
-                        </p>
+                        <h2 className="font-heading text-3xl text-[#05162e] mb-6">{aboutHeading}</h2>
+                        <p className="leading-relaxed text-[#44474d] whitespace-pre-line">{bio}</p>
+                        {site.aboutNote && (
+                            <p className="mt-4 text-[12px] font-semibold uppercase tracking-[0.1em] text-[#44474d]">{site.aboutNote}</p>
+                        )}
                     </div>
                     {officeHours && (
                         <div className="bg-[#f4f3f2] p-6 rounded-lg border border-[#c5c6ce]/20 shadow-[0_4px_12px_rgba(27,43,68,0.08)] h-fit">
@@ -199,7 +243,7 @@ export function CorporateEliteTheme({ profile }: CorporateEliteThemeProps) {
                         <div className="bg-[#f4f3f2] rounded-xl p-6 @md:p-10 grid grid-cols-1 @lg:grid-cols-4 gap-8">
                             {areasOfPractice.length > 0 && (
                                 <div className="@lg:col-span-3">
-                                    <h2 className="font-heading text-3xl text-[#05162e] mb-6">Core Practice Areas</h2>
+                                    <h2 className="font-heading text-3xl text-[#05162e] mb-6">{practiceHeading}</h2>
                                     <div className="grid grid-cols-1 @md:grid-cols-2 gap-6">
                                         {areasOfPractice.map((area) => {
                                             const Icon = PRACTICE_ICONS[area] ?? Briefcase;
@@ -229,11 +273,30 @@ export function CorporateEliteTheme({ profile }: CorporateEliteThemeProps) {
                     </section>
                 )}
 
+                {/* The one part that genuinely differs by site kind. */}
+                {isFirm ? (
+                    <section data-reveal id="team" className="scroll-mt-24 container mx-auto max-w-[1280px] px-6 py-16">
+                        <h2 className="font-heading text-3xl text-[#05162e] mb-12 text-center">Our Team</h2>
+                        <RosterList members={members} palette={ROSTER_PALETTE} email={email} phone={phoneNumber} />
+                        {members.length > 0 && (
+                            <div className="mt-10 text-center">
+                                <a
+                                    href={TEAM_PAGE_HREF}
+                                    className="inline-flex items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.1em] text-[#05162e] hover:opacity-70 transition-opacity group"
+                                >
+                                    Meet the full team
+                                    <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                                </a>
+                            </div>
+                        )}
+                    </section>
+                ) : lawyer ? (
+                    <>
                 {/* Why work with me */}
                 <section data-reveal id="why" className="scroll-mt-24 container mx-auto max-w-[1280px] px-6 py-16">
                     <h2 className="font-heading text-3xl text-[#05162e] mb-12 text-center">Why Work With Me</h2>
                     <div className="grid grid-cols-1 @md:grid-cols-3 gap-6">
-                        {valuePoints.map(({ title, description }, i) => {
+                        {lawyer.valuePoints.map(({ title, description }, i) => {
                             const Icon = VALUE_ICONS[i % VALUE_ICONS.length];
                             return (
                                 <div key={title} className="text-center p-6">
@@ -253,7 +316,7 @@ export function CorporateEliteTheme({ profile }: CorporateEliteThemeProps) {
                     <div className="container mx-auto max-w-[1280px] px-6">
                         <h2 className="font-heading text-3xl text-[#05162e] mb-12 text-center">How It Works</h2>
                         <div className="grid grid-cols-1 @sm:grid-cols-2 @lg:grid-cols-4 gap-4">
-                            {processSteps.map(({ title, description }, i) => (
+                            {lawyer.processSteps.map(({ title, description }, i) => (
                                 <div key={title} className="relative p-6 pt-8 bg-[#faf9f8] border border-[#c5c6ce]/20 rounded-lg shadow-[0_4px_12px_rgba(27,43,68,0.08)] text-center">
                                     <span className="absolute -top-4 left-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-[#05162e] text-white font-bold flex items-center justify-center border-4 border-[#f4f3f2]">
                                         {i + 1}
@@ -298,12 +361,16 @@ export function CorporateEliteTheme({ profile }: CorporateEliteThemeProps) {
                         </ol>
                     </section>
                 )}
+                    </>
+                ) : null}
 
-                {/* FAQ */}
+                {/* FAQ — individual only: the questions are written in the first
+                    person and a firm has no equivalent content to fill them. */}
+                {lawyer && (
                 <section data-reveal id="faq" className="scroll-mt-24 container mx-auto max-w-[1280px] px-6 py-16">
                     <h2 className="font-heading text-3xl text-[#05162e] mb-6 text-center">Frequently Asked Questions</h2>
                     <div className="max-w-3xl mx-auto space-y-4">
-                        {faqs.map(({ question, answer }) => (
+                        {lawyer.faqs.map(({ question, answer }) => (
                             <details key={question} className="group bg-[#faf9f8] border border-[#c5c6ce]/30 rounded-lg">
                                 <summary className="flex justify-between items-center gap-4 p-4 cursor-pointer list-none font-heading text-xl text-[#05162e] [&::-webkit-details-marker]:hidden">
                                     {question}
@@ -314,6 +381,7 @@ export function CorporateEliteTheme({ profile }: CorporateEliteThemeProps) {
                         ))}
                     </div>
                 </section>
+                )}
             </main>
 
             {/* Footer */}
@@ -321,10 +389,7 @@ export function CorporateEliteTheme({ profile }: CorporateEliteThemeProps) {
                 <div className="container mx-auto max-w-[1280px] px-6 grid grid-cols-1 @md:grid-cols-2 @lg:grid-cols-3 gap-8 mb-8">
                     <div>
                         <div className="font-heading text-2xl mb-4">{lawFirmName}</div>
-                        <p className="text-white/70 leading-relaxed mb-4">
-                            This website provides general information about the practice of {fullName}. It does not
-                            constitute legal advice, and viewing this site does not create an attorney-client relationship.
-                        </p>
+                        <p className="text-white/70 leading-relaxed mb-4">{site.disclaimer}</p>
                         {(website || linkedIn) && (
                             <div className="flex gap-4">
                                 {linkedIn && (
@@ -374,10 +439,9 @@ export function CorporateEliteTheme({ profile }: CorporateEliteThemeProps) {
                     <div>
                         <h3 className="text-[12px] font-semibold uppercase tracking-[0.1em] mb-4">Quick Links</h3>
                         <ul className="space-y-2 text-white/70">
-                            {timeline.length > 0 && <li><a href="#timeline" className="hover:text-white transition-colors">Timeline</a></li>}
-                            <li><a href="#credentials" className="hover:text-white transition-colors">Credentials</a></li>
-                            <li><a href="#why" className="hover:text-white transition-colors">Why Work With Me</a></li>
-                            <li><a href="#faq" className="hover:text-white transition-colors">FAQ</a></li>
+                            {navLinks.map(({ href, label }) => (
+                                <li key={href}><a href={href} className="hover:text-white transition-colors">{label}</a></li>
+                            ))}
                         </ul>
                     </div>
                 </div>

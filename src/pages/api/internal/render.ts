@@ -115,13 +115,10 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
   const extraPages: Record<string, string> = {};
 
   if (kind === 'firm') {
-    const themeId = body.theme ?? 'firm-classic';
-    const theme = resolveTheme(themeId);
-    // A firm can only be rendered by a SiteModel theme. The old LawyerProfile
-    // themes have no notion of a roster, so routing a firm through one would
-    // quietly publish a site with its people missing.
-    if (!theme || theme.kind !== 'site') {
-      return res.status(400).json({ error: `unknown or unmigrated firm theme: ${themeId}` });
+    const themeId = body.theme ?? 'classic';
+    const Theme = resolveTheme(themeId);
+    if (!Theme) {
+      return res.status(400).json({ error: `unknown firm theme: ${themeId}` });
     }
     if (!body.firm) {
       return res.status(400).json({ error: 'missing firm' });
@@ -130,7 +127,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     const firm = normalizeFirm(body.firm);
     const site = fromFirmProfile(firm);
     try {
-      bodyHtml = renderToStaticMarkup(theme.Component({ site }));
+      bodyHtml = renderToStaticMarkup(Theme({ site }));
     } catch (err) {
       console.error('[render] firm render failed', err);
       return res.status(500).json({ error: 'render failed' });
@@ -155,9 +152,9 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     }
   } else {
     const themeId = body.theme ?? 'classic';
-    const theme = resolveTheme(themeId);
-    if (!theme) {
-      return res.status(400).json({ error: `unknown or unmigrated theme: ${themeId}` });
+    const Theme = resolveTheme(themeId);
+    if (!Theme) {
+      return res.status(400).json({ error: `unknown theme: ${themeId}` });
     }
     if (!body.profile) {
       return res.status(400).json({ error: 'missing profile' });
@@ -165,13 +162,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 
     const profile = normalizeProfile(body.profile);
     try {
-      // Migrated themes take the normalized model; the rest still take the
-      // profile directly. Both produce the same markup for the same profile —
-      // the model is a re-shaping, not a re-design.
-      bodyHtml =
-        theme.kind === 'site'
-          ? renderToStaticMarkup(theme.Component({ site: fromLawyerProfile(profile) }))
-          : renderToStaticMarkup(theme.Component({ profile }));
+      bodyHtml = renderToStaticMarkup(Theme({ site: fromLawyerProfile(profile) }));
     } catch (err) {
       console.error('[render] render failed', err);
       return res.status(500).json({ error: 'render failed' });

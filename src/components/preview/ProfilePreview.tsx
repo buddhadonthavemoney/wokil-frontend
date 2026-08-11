@@ -1,7 +1,7 @@
 import { LawyerProfile } from '@/types/lawyer';
 import { fromLawyerProfile } from '@/types/site-model';
 import { ClassicTheme } from './themes/ClassicTheme';
-import { resolveTheme } from './themes/registry';
+import { THEMES } from './themes/registry';
 import { ContactQrWidget, buildVCard } from './ContactQrWidget';
 import { useSiteHydration } from './useSiteHydration';
 import { useMemo, useRef } from 'react';
@@ -27,22 +27,14 @@ export function ProfilePreview({ profile, zoom = 1 }: ProfilePreviewProps) {
   // Unlike the deploy path, an unknown theme here falls back to Classic rather
   // than failing: this renders live as the user types, and a wizard that showed
   // an error card mid-edit would be worse than showing the default theme.
-  const theme = resolveTheme(profile.themeSelection?.theme) ?? {
-    kind: 'site' as const,
-    Component: ClassicTheme,
-  };
+  const Theme = THEMES[profile.themeSelection?.theme] ?? ClassicTheme;
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Only the migrated themes need it, and it walks the whole profile — so skip
-  // the work entirely for the four still on the LawyerProfile prop.
-  const site = useMemo(
-    () => (theme.kind === 'site' ? fromLawyerProfile(profile) : undefined),
-    [theme.kind, profile],
-  );
+  const site = useMemo(() => fromLawyerProfile(profile), [profile]);
 
   // Replays the [data-reveal] and [data-nav] scripts that site-shell.ts bakes
   // into the published page. Shared with FirmPreview — see useSiteHydration.
-  useSiteHydration(containerRef, [theme.Component, profile, zoom]);
+  useSiteHydration(containerRef, [Theme, profile, zoom]);
 
   return (
     // The QR widget is a sibling of the scroll container, not a child: inside it
@@ -62,11 +54,7 @@ export function ProfilePreview({ profile, zoom = 1 }: ProfilePreviewProps) {
             transform: `scale(${zoom})`,
           }}
         >
-          {theme.kind === 'site' && site ? (
-            <theme.Component site={site} />
-          ) : theme.kind === 'profile' ? (
-            <theme.Component profile={profile} />
-          ) : null}
+          <Theme site={site} />
         </div>
       </div>
       <ContactQrWidget vcard={buildVCard(profile)} className="absolute" />

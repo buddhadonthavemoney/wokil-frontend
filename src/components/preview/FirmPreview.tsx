@@ -2,7 +2,7 @@ import { useMemo, useRef } from 'react';
 import { FirmProfile } from '@/types/firm';
 import { fromFirmProfile } from '@/types/site-model';
 import { ClassicTheme } from './themes/ClassicTheme';
-import { SITE_THEMES } from './themes/registry';
+import { THEMES } from './themes/registry';
 import { ContactQrWidget, buildFirmVCard } from './ContactQrWidget';
 import { useSiteHydration } from './useSiteHydration';
 
@@ -20,12 +20,9 @@ interface FirmPreviewProps {
  * equivalent. It marks six sections `[data-reveal]` — the roster among them —
  * and globals.css hides those until `.is-visible`. With no observer the roster
  * never appears at all.
- *
- * Only SITE_THEMES is consulted: the four unmigrated themes take a
- * LawyerProfile and have nowhere to put a roster.
  */
 export function FirmPreview({ firm, zoom = 1 }: FirmPreviewProps) {
-  const Theme = SITE_THEMES[firm.themeSelection?.theme] ?? ClassicTheme;
+  const Theme = THEMES[firm.themeSelection?.theme] ?? ClassicTheme;
   const containerRef = useRef<HTMLDivElement>(null);
 
   const site = useMemo(() => fromFirmProfile(firm), [firm]);

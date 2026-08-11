@@ -1,4 +1,7 @@
-import { LawyerProfile, TimelineEntry, formatTimelineRange, resolveSiteContent } from '@/types/lawyer';
+import { TimelineEntry, formatTimelineRange } from '@/types/lawyer';
+import { SiteModel } from '@/types/site-model';
+import { TEAM_PAGE_HREF } from '@/lib/firm-roster';
+import { RosterList, type RosterPalette } from './RosterSection';
 import {
     Phone, Mail, MapPin, Globe, Linkedin, Menu, Landmark, Briefcase, ShieldCheck,
     ChevronDown, Gavel, Building2, Users, Plane, Copyright, HeartPulse, Home, ReceiptText, ScrollText,
@@ -6,8 +9,27 @@ import {
 } from 'lucide-react';
 
 interface SwissInstitutionalThemeProps {
-    profile: LawyerProfile;
+    site: SiteModel;
 }
+
+// Swiss in roster form: hard edges, hairline rules, no shadows or rounding —
+// the whole point of the theme is that nothing is soft.
+const ROSTER_PALETTE: RosterPalette = {
+    card: 'border border-[#c5c6ce] bg-white p-6 @sm:p-8 flex flex-col @sm:flex-row gap-6',
+    avatar: 'w-24 h-24 bg-[#e2e2e2] grayscale',
+    avatarText: 'text-2xl font-bold text-[#05162e]',
+    name: 'text-2xl font-semibold tracking-tight uppercase text-[#05162e] leading-snug',
+    title: 'text-[12px] font-bold uppercase tracking-[0.06em] text-[#5f5e5e]',
+    meta: 'text-[12px] font-bold uppercase tracking-[0.06em] text-[#75777e] mt-1',
+    body: 'text-[15px] leading-6 text-[#1a1c1c]',
+    chip: 'px-3 py-1 border border-[#c5c6ce] text-[12px] font-bold uppercase tracking-[0.06em] text-[#5f5e5e] whitespace-nowrap',
+    link: 'text-[#1a1c1c] hover:text-[#05162e] transition-colors',
+    icon: 'text-[#75777e]',
+    emptyCard: 'border border-dashed border-[#c5c6ce] bg-white p-12 text-center',
+    emptyHeading: 'text-2xl font-semibold tracking-tight uppercase text-[#05162e] mb-2',
+    emptyBody: 'text-[15px] leading-6 text-[#1a1c1c] max-w-md mx-auto',
+    emptyButton: 'px-6 py-3 bg-[#1b2b44] text-white text-[12px] font-bold uppercase tracking-[0.06em] hover:bg-[#05162e] transition-colors',
+};
 
 // Same practice-area -> glyph map as Corporate Elite; free-text areas fall
 // back to the generic briefcase.
@@ -36,10 +58,10 @@ function startYearOf(entry: TimelineEntry): number {
     return match ? Number(match[0]) : -Infinity;
 }
 
-function unifiedTimeline(profile: LawyerProfile) {
+function unifiedTimeline(lawyer: SiteModel['lawyer']) {
     const tagged = [
-        ...(profile.timeline?.experience ?? []).map((entry) => ({ entry, kind: 'Career' as const })),
-        ...(profile.timeline?.education ?? []).map((entry) => ({ entry, kind: 'Degree' as const })),
+        ...(lawyer?.experience ?? []).map((entry) => ({ entry, kind: 'Career' as const })),
+        ...(lawyer?.education ?? []).map((entry) => ({ entry, kind: 'Degree' as const })),
     ];
     return tagged
         .map((row, index) => ({ ...row, index }))
@@ -72,27 +94,35 @@ function sectionLabel(index: string, label: string) {
     );
 }
 
-export function SwissInstitutionalTheme({ profile }: SwissInstitutionalThemeProps) {
-    const { basicInformation, practiceDetails, contactInformation, professionalProfile, onlinePresence } = profile;
+export function SwissInstitutionalTheme({ site }: SwissInstitutionalThemeProps) {
+    const isFirm = site.kind === 'firm';
+    const lawyer = site.lawyer;
+    const members = site.roster ?? [];
 
-    const fullName = basicInformation.fullName || 'Professional Advocate';
-    const professionalTitle = basicInformation.professionalTitle || 'Principal Attorney';
-    const lawFirmName = basicInformation.lawFirmName || fullName;
-    const yearsOfExperience = basicInformation.yearsOfExperience;
+    const fullName = site.name;
+    const professionalTitle = site.tagline;
+    const lawFirmName = site.brandName;
 
-    const areasOfPractice = practiceDetails.areasOfPractice || [];
-    const jurisdictions = practiceDetails.jurisdictions || [];
+    const areasOfPractice = site.areasOfPractice;
+    const jurisdictions = site.jurisdictions;
 
-    const { phoneNumber, email, officeAddress } = contactInformation;
-    const { bio, profilePhoto, officeHours } = professionalProfile;
-    const { website, linkedIn } = onlinePresence;
+    const { phoneNumber, email, officeAddress, officeHours } = site.contact;
+    const bio = site.about;
+    const profilePhoto = site.image?.src;
+    const { website, linkedIn } = site.online;
 
-    const timeline = unifiedTimeline(profile);
+    const timeline = unifiedTimeline(lawyer);
 
-    const { valuePoints, processSteps, faqs } = resolveSiteContent(profile, {
-        expertiseSection: 'Core Expertise',
-        cta: 'Book Consultation',
-    });
+    const navLinks = isFirm
+        ? [
+            ...(areasOfPractice.length > 0 ? [{ href: '#credentials', label: site.heading.practice }] : []),
+            { href: '#team', label: 'Our Team' },
+        ]
+        : [
+            ...(areasOfPractice.length > 0 ? [{ href: '#credentials', label: 'Expertise' }] : []),
+            ...(timeline.length > 0 ? [{ href: '#timeline', label: 'Timeline' }] : []),
+            { href: '#faq', label: 'FAQ' },
+        ];
 
     return (
         <div className="min-h-screen bg-[#f9f9f9] font-body text-[#1a1c1c] selection:bg-[#05162e]/10" style={GRID_BG}>
@@ -103,9 +133,9 @@ export function SwissInstitutionalTheme({ profile }: SwissInstitutionalThemeProp
                         {lawFirmName}
                     </a>
                     <div className="flex items-center gap-8 text-[12px] font-bold uppercase tracking-[0.06em] text-[#5f5e5e] group-data-[collapsed]/nav:hidden">
-                        {areasOfPractice.length > 0 && <a href="#credentials" className="hover:text-[#05162e] transition-colors">Expertise</a>}
-                        {timeline.length > 0 && <a href="#timeline" className="hover:text-[#05162e] transition-colors">Timeline</a>}
-                        <a href="#faq" className="hover:text-[#05162e] transition-colors">FAQ</a>
+                        {navLinks.map(({ href, label }) => (
+                            <a key={href} href={href} className="hover:text-[#05162e] transition-colors">{label}</a>
+                        ))}
                     </div>
                     <a href="#contact" className="shrink-0 px-6 py-3 bg-[#1b2b44] text-white text-[12px] font-bold uppercase tracking-[0.06em] hover:bg-[#05162e] transition-colors whitespace-nowrap group-data-[collapsed]/nav:hidden">
                         Book Consultation
@@ -115,9 +145,9 @@ export function SwissInstitutionalTheme({ profile }: SwissInstitutionalThemeProp
                             <Menu className="w-5 h-5" />
                         </summary>
                         <div className="absolute right-0 top-full w-56 bg-white border border-[#c5c6ce] p-4 flex flex-col gap-3 text-sm font-medium text-[#1a1c1c] z-50">
-                            {areasOfPractice.length > 0 && <a href="#credentials" className="hover:text-[#05162e] transition-colors">Expertise</a>}
-                            {timeline.length > 0 && <a href="#timeline" className="hover:text-[#05162e] transition-colors">Timeline</a>}
-                            <a href="#faq" className="hover:text-[#05162e] transition-colors">FAQ</a>
+                            {navLinks.map(({ href, label }) => (
+                                <a key={href} href={href} className="hover:text-[#05162e] transition-colors">{label}</a>
+                            ))}
                             <a href="#contact" className="mt-1 px-4 py-2.5 bg-[#1b2b44] text-white text-sm font-bold text-center">Book Consultation</a>
                         </div>
                     </details>
@@ -131,21 +161,27 @@ export function SwissInstitutionalTheme({ profile }: SwissInstitutionalThemeProp
                         <h1 className="text-4xl @sm:text-6xl @lg:text-8xl font-bold leading-[0.95] tracking-tighter uppercase text-[#05162e] break-words">
                             {fullName}
                         </h1>
-                        {yearsOfExperience > 0 && (
-                            <div className="flex items-center gap-4 border-l-4 border-[#05162e] pl-4">
-                                <span className="text-3xl @sm:text-4xl @md:text-5xl font-semibold tracking-tight text-[#05162e]">{yearsOfExperience}+</span>
-                                <span className="text-lg @sm:text-xl @md:text-2xl font-semibold uppercase tracking-tight leading-tight text-[#5f5e5e] max-w-[220px]">
-                                    Years Experience
-                                </span>
+                        {site.facts.length > 0 && (
+                            <div className="flex flex-col gap-3">
+                                {site.facts.map(({ label }) => (
+                                    <div key={label} className="flex items-center gap-4 border-l-4 border-[#05162e] pl-4">
+                                        <span className="text-lg @sm:text-xl @md:text-2xl font-semibold uppercase tracking-tight leading-tight text-[#5f5e5e]">
+                                            {label}
+                                        </span>
+                                    </div>
+                                ))}
                             </div>
                         )}
                         <div className="border border-[#c5c6ce] p-4 @sm:p-8 bg-white max-w-2xl">
-                            <h2 className="text-[12px] font-bold uppercase tracking-[0.06em] text-[#5f5e5e] mb-4">
-                                {professionalTitle}{basicInformation.lawFirmName ? ` — ${basicInformation.lawFirmName}` : ''}
-                            </h2>
-                            <p className="text-lg leading-7 tracking-[-0.01em] text-[#1a1c1c] line-clamp-4 hover:line-clamp-none">
-                                {bio || 'Professional brief will be curated here.'}
-                            </p>
+                            {professionalTitle && (
+                                <h2 className="text-[12px] font-bold uppercase tracking-[0.06em] text-[#5f5e5e] mb-4">
+                                    {professionalTitle}{site.affiliation ? ` — ${site.affiliation}` : ''}
+                                </h2>
+                            )}
+                            <p className="text-lg leading-7 tracking-[-0.01em] text-[#1a1c1c] line-clamp-4 hover:line-clamp-none">{bio}</p>
+                            {site.aboutNote && (
+                                <p className="mt-4 text-[12px] font-bold uppercase tracking-[0.06em] text-[#75777e]">{site.aboutNote}</p>
+                            )}
                         </div>
                         <a href="#contact" className="inline-block w-fit px-6 py-3 bg-[#1b2b44] text-white text-[12px] font-bold uppercase tracking-[0.06em] hover:bg-[#05162e] transition-colors">
                             Book Consultation
@@ -153,7 +189,11 @@ export function SwissInstitutionalTheme({ profile }: SwissInstitutionalThemeProp
                     </div>
                     <div className="hidden @md:block @md:col-span-5 h-[600px] bg-[#e2e2e2] relative overflow-hidden">
                         {profilePhoto ? (
-                            <img src={profilePhoto} alt={fullName} className="absolute inset-0 w-full h-full object-cover grayscale" />
+                            <img
+                                src={profilePhoto}
+                                alt={site.image?.alt ?? fullName}
+                                className={`absolute inset-0 w-full h-full ${isFirm ? 'object-contain bg-white p-16' : 'object-cover grayscale'}`}
+                            />
                         ) : (
                             <div className="absolute inset-0 flex items-center justify-center">
                                 <Landmark className="w-24 h-24 text-[#c5c6ce]" />
@@ -206,7 +246,7 @@ export function SwissInstitutionalTheme({ profile }: SwissInstitutionalThemeProp
                             <section id="credentials" className="scroll-mt-24">
                                 <div className="flex flex-col @sm:flex-row @sm:items-baseline justify-between border-b border-[#c5c6ce] pb-4 mb-8 gap-1 @sm:gap-4">
                                     <h2 className="text-2xl font-semibold tracking-tight uppercase text-[#05162e]">Core Expertise</h2>
-                                    {sectionLabel('01', 'PRACTICE AREAS')}
+                                    {sectionLabel('01', site.heading.practice.toUpperCase())}
                                 </div>
                                 <div className="grid grid-cols-1 @md:grid-cols-2 gap-px" style={{ backgroundColor: HAIRLINE }}>
                                     {areasOfPractice.map((area, i) => {
@@ -225,6 +265,26 @@ export function SwissInstitutionalTheme({ profile }: SwissInstitutionalThemeProp
                             </section>
                         )}
 
+                        {/* The one part that genuinely differs by site kind. */}
+                        {isFirm ? (
+                            <section id="team" className="scroll-mt-24">
+                                <div className="flex flex-col @sm:flex-row @sm:items-baseline justify-between border-b border-[#c5c6ce] pb-4 mb-8 gap-1 @sm:gap-4">
+                                    <h2 className="text-2xl font-semibold tracking-tight uppercase text-[#05162e]">Our Team</h2>
+                                    {sectionLabel('02', 'TEAM')}
+                                </div>
+                                <RosterList members={members} palette={ROSTER_PALETTE} email={email} phone={phoneNumber} />
+                                {members.length > 0 && (
+                                    <a
+                                        href={TEAM_PAGE_HREF}
+                                        className="mt-8 inline-flex items-center gap-2 text-[12px] font-bold uppercase tracking-[0.06em] text-[#05162e] hover:opacity-70 transition-opacity group"
+                                    >
+                                        Meet the full team
+                                        <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                                    </a>
+                                )}
+                            </section>
+                        ) : lawyer ? (
+                            <>
                         {/* Timeline */}
                         {timeline.length > 0 && (
                             <section id="timeline" className="scroll-mt-24">
@@ -260,7 +320,7 @@ export function SwissInstitutionalTheme({ profile }: SwissInstitutionalThemeProp
                                 {sectionLabel('03', 'WHY WORK WITH ME')}
                             </div>
                             <div className="grid grid-cols-1 @md:grid-cols-3 gap-8">
-                                {valuePoints.map(({ title, description }, i) => (
+                                {lawyer.valuePoints.map(({ title, description }, i) => (
                                     <div key={title} className="border border-[#c5c6ce] p-6 bg-white flex flex-col h-full">
                                         <span className="text-[14px] font-bold tracking-[0.1em] text-[#75777e] mb-6 block border-b border-[#c5c6ce] pb-2">
                                             {String(i + 1).padStart(2, '0')}
@@ -279,7 +339,7 @@ export function SwissInstitutionalTheme({ profile }: SwissInstitutionalThemeProp
                                 {sectionLabel('04', 'PROCESS')}
                             </div>
                             <div className="grid grid-cols-1 @md:grid-cols-3 gap-px" style={{ backgroundColor: HAIRLINE }}>
-                                {processSteps.map(({ title, description }, i) => (
+                                {lawyer.processSteps.map(({ title, description }, i) => (
                                     <div key={title} className="bg-white p-6">
                                         <span className="text-[14px] font-bold tracking-[0.1em] text-[#05162e] block mb-4">
                                             {String(i + 1).padStart(2, '0')}
@@ -298,7 +358,7 @@ export function SwissInstitutionalTheme({ profile }: SwissInstitutionalThemeProp
                                 {sectionLabel('05', 'FAQ')}
                             </div>
                             <div className="divide-y divide-[#c5c6ce] border-b border-[#c5c6ce]">
-                                {faqs.map(({ question, answer }) => (
+                                {lawyer.faqs.map(({ question, answer }) => (
                                     <details key={question} className="group">
                                         <summary className="flex justify-between items-center gap-4 py-4 cursor-pointer list-none text-lg font-bold tracking-[-0.01em] text-[#05162e] [&::-webkit-details-marker]:hidden">
                                             {question}
@@ -309,6 +369,8 @@ export function SwissInstitutionalTheme({ profile }: SwissInstitutionalThemeProp
                                 ))}
                             </div>
                         </section>
+                            </>
+                        ) : null}
                     </div>
                 </div>
             </main>
