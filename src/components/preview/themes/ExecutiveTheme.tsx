@@ -2,8 +2,7 @@
 import { TimelineEntry, formatTimelineRange } from '@/types/lawyer';
 import { SiteModel } from '@/types/site-model';
 import { TEAM_PAGE_HREF, SitePage, sectionHref } from '@/lib/firm-roster';
-import { RosterList, type RosterPalette } from './RosterSection';
-import { TeamBody, type TeamPalette } from './TeamSection';
+import { RosterList, TeamBody, type RosterPalette } from './RosterSection';
 import { Phone, Mail, MapPin, Clock, Globe, Linkedin, Shield, Award, Briefcase, Scale, Building2, Users, CalendarDays, UserCheck, MessageCircle, Wallet, Menu, GraduationCap, ArrowRight, ArrowLeft, type LucideIcon } from 'lucide-react';
 
 interface ExecutiveThemeProps {
@@ -12,7 +11,7 @@ interface ExecutiveThemeProps {
 }
 
 // Executive's People page: the roster palette, scaled up for full entries.
-const TEAM_PALETTE: TeamPalette = {
+const TEAM_PALETTE: RosterPalette = {
     card: 'bg-white border border-slate-200 rounded-xl p-8 @md:p-10',
     avatar: 'w-32 h-32 rounded-xl bg-slate-100 border border-slate-200',
     avatarText: 'font-heading text-3xl font-bold text-blue-700',

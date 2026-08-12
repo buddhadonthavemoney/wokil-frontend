@@ -2,8 +2,7 @@
 import { TimelineEntry, formatTimelineRange } from '@/types/lawyer';
 import { SiteModel } from '@/types/site-model';
 import { TEAM_PAGE_HREF, SitePage, sectionHref } from '@/lib/firm-roster';
-import { RosterList, type RosterPalette } from './RosterSection';
-import { TeamBody, type TeamPalette } from './TeamSection';
+import { RosterList, TeamBody, type RosterPalette } from './RosterSection';
 import { Phone, Mail, MapPin, Clock, Globe, Linkedin, Scale, BookOpen, PenTool as Pen, Gavel, Building2, Users, UserCheck, MessageCircle, Wallet, Menu, GraduationCap, Briefcase, ArrowRight, ArrowLeft, type LucideIcon } from 'lucide-react';
 
 interface LegalCraftThemeProps {
@@ -12,7 +11,7 @@ interface LegalCraftThemeProps {
 }
 
 // LegalCraft's People page: the same cream panels with the left tan rule.
-const TEAM_PALETTE: TeamPalette = {
+const TEAM_PALETTE: RosterPalette = {
     card: 'p-8 @md:p-10 bg-[#F5F2ED] border-l-4 border-[#D4A373]',
     avatar: 'w-32 h-32 rounded-sm bg-white border border-[#E5E5E5]',
     avatarText: 'font-heading text-3xl font-bold text-[#D4A373]',

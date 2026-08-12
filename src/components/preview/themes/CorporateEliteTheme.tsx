@@ -2,8 +2,7 @@
 import { TimelineEntry, formatTimelineRange } from '@/types/lawyer';
 import { SiteModel } from '@/types/site-model';
 import { TEAM_PAGE_HREF, SitePage, sectionHref } from '@/lib/firm-roster';
-import { RosterList, type RosterPalette } from './RosterSection';
-import { TeamBody, type TeamPalette } from './TeamSection';
+import { RosterList, TeamBody, type RosterPalette } from './RosterSection';
 import {
     Phone, Mail, MapPin, Globe, Linkedin, Menu, Landmark, Verified, Handshake, Briefcase, ShieldCheck,
     ChevronDown, Gavel, Building2, Users, Plane, Copyright, HeartPulse, Home, ReceiptText, ScrollText,
@@ -16,7 +15,7 @@ interface CorporateEliteThemeProps {
 }
 
 // Corporate Elite's People page: the roster palette at full-entry scale.
-const TEAM_PALETTE: TeamPalette = {
+const TEAM_PALETTE: RosterPalette = {
     card: 'bg-[#faf9f8] p-8 @md:p-10 rounded-lg border border-[#c5c6ce]/20 shadow-[0_4px_12px_rgba(27,43,68,0.08)]',
     avatar: 'w-32 h-32 rounded-lg bg-[#1b2b44]/10',
     avatarText: 'font-heading text-3xl text-[#05162e]',

@@ -2,8 +2,7 @@
 import { TimelineEntry, formatTimelineRange } from '@/types/lawyer';
 import { SiteModel } from '@/types/site-model';
 import { TEAM_PAGE_HREF, type SitePage, sectionHref } from '@/lib/firm-roster';
-import { RosterList, type RosterPalette } from './RosterSection';
-import { TeamBody, type TeamPalette } from './TeamSection';
+import { RosterList, TeamBody, type RosterPalette } from './RosterSection';
 import {
     Phone, Mail, MapPin, Globe, Linkedin, Menu, Landmark, Briefcase, ShieldCheck,
     ChevronDown, Gavel, Building2, Users, Plane, Copyright, HeartPulse, Home, ReceiptText, ScrollText,
@@ -37,7 +36,7 @@ const ROSTER_PALETTE: RosterPalette = {
 // The People page in the same idiom: hairline rules instead of shadows, square
 // avatars, uppercase labels. The timeline rails borrow the hero's border-left
 // treatment rather than the dot-on-a-line other themes use.
-const TEAM_PALETTE: TeamPalette = {
+const TEAM_PALETTE: RosterPalette = {
     card: 'border border-[#c5c6ce] bg-white p-6 @sm:p-10',
     avatar: 'w-32 h-32 bg-[#e2e2e2] grayscale',
     avatarText: 'text-3xl font-bold text-[#05162e]',

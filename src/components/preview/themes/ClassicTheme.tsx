@@ -1,11 +1,10 @@
 /* eslint-disable @next/next/no-html-link-for-pages */
 import { TimelineEntry, formatTimelineRange } from '@/types/lawyer';
-import { RosterMember } from '@/types/firm';
 import { SiteModel } from '@/types/site-model';
 import {
-  TEAM_PAGE_HREF, SitePage, sectionHref, memberAnchor, memberHref, memberInitials,
+  TEAM_PAGE_HREF, SitePage, sectionHref,
 } from '@/lib/firm-roster';
-import { TeamBody, TeamPalette } from './TeamSection';
+import { RosterList, TeamBody, type RosterPalette } from './RosterSection';
 import {
   Phone, Mail, MapPin, Clock, Globe, Linkedin, Scale, UserCheck, MessageCircle, Wallet, Menu,
   GraduationCap, Briefcase, Users, Building2, CalendarDays, BadgeCheck, ArrowRight, ArrowLeft,
@@ -18,7 +17,7 @@ interface ClassicThemeProps {
 }
 
 /** Classic's navy-and-gold rendering of the People page. */
-const TEAM_PALETTE: TeamPalette = {
+const TEAM_PALETTE: RosterPalette = {
   card: 'bg-white rounded-2xl p-8 @md:p-10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-[#F0F0F0]',
   avatar: 'w-32 h-32 rounded-2xl bg-[#1B2B44] border-2 border-[#C5A059]',
   avatarText: 'font-heading text-3xl font-bold text-[#C5A059]',
@@ -110,137 +109,30 @@ function TimelineRail({ icon: Icon, title, entries }: { icon: LucideIcon; title:
 }
 
 /**
- * One lawyer's card on a firm's roster.
- *
- * Every field below the name and title is optional, and each is omitted rather
- * than shown with a placeholder — a firm that entered only names gets a clean
- * list of names, not a wall of "Not provided".
+ * The home page's roster in the same navy-and-gold idiom — the compact
+ * sibling of TEAM_PALETTE above. All member markup lives in RosterSection;
+ * this theme only lends it the colours and edges Classic is known for.
  */
-function RosterCard({ member, index }: { member: RosterMember; index: number }) {
-  const areas = member.areasOfPractice ?? [];
-
-  return (
-    <article
-      id={memberAnchor(member, index)}
-      className="scroll-mt-24 bg-white rounded-2xl p-8 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-[#F0F0F0] flex flex-col @sm:flex-row gap-6"
-    >
-      <div className="shrink-0">
-        {member.photo ? (
-          <img
-            src={member.photo}
-            alt={member.fullName}
-            className="w-24 h-24 rounded-2xl object-cover border-2 border-[#C5A059]"
-          />
-        ) : (
-          <div className="w-24 h-24 rounded-2xl bg-[#1B2B44] flex items-center justify-center border-2 border-[#C5A059]">
-            <span className="font-heading text-2xl font-bold text-[#C5A059]">
-              {memberInitials(member.fullName) || <Scale className="w-8 h-8 text-[#C5A059]" />}
-            </span>
-          </div>
-        )}
-      </div>
-
-      <div className="min-w-0 space-y-3">
-        <div>
-          <h3 className="font-heading text-2xl font-bold text-[#1B2B44] leading-snug">
-            <a href={memberHref(member, index)} className="hover:text-[#C5A059] transition-colors">
-              {member.fullName}
-            </a>
-          </h3>
-          <p className="text-[#C5A059] font-medium">{member.professionalTitle}</p>
-          {member.yearsOfExperience ? (
-            <p className="text-xs font-bold uppercase tracking-widest text-[#4A4A4A]/60 mt-1">
-              {member.yearsOfExperience}+ years of practice
-            </p>
-          ) : null}
-        </div>
-
-        {member.bio && <p className="text-[#4A4A4A] leading-relaxed">{member.bio}</p>}
-
-        {areas.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {areas.map((area) => (
-              <span
-                key={area}
-                className="px-3 py-1 bg-[#F8F9FB] border border-[#EDF0F5] rounded-lg text-xs font-medium text-[#1B2B44]"
-              >
-                {area}
-              </span>
-            ))}
-          </div>
-        )}
-
-        {(member.email || member.phone || member.linkedIn) && (
-          <div className="flex flex-wrap items-center gap-4 pt-1 text-sm">
-            {member.email && (
-              <a href={`mailto:${member.email}`} className="flex items-center gap-2 text-[#4A4A4A] hover:text-[#1B2B44] transition-colors">
-                <Mail className="w-4 h-4 text-[#C5A059] shrink-0" />
-                <span className="break-all">{member.email}</span>
-              </a>
-            )}
-            {member.phone && (
-              <a href={`tel:${member.phone}`} className="flex items-center gap-2 text-[#4A4A4A] hover:text-[#1B2B44] transition-colors">
-                <Phone className="w-4 h-4 text-[#C5A059] shrink-0" />
-                {member.phone}
-              </a>
-            )}
-            {member.linkedIn && (
-              <a
-                href={member.linkedIn}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 text-[#4A4A4A] hover:text-[#1B2B44] transition-colors"
-              >
-                <Linkedin className="w-4 h-4 text-[#C5A059] shrink-0" />
-                LinkedIn
-              </a>
-            )}
-          </div>
-        )}
-      </div>
-    </article>
-  );
-}
-
-/**
- * What the roster section renders before anyone has been added.
- *
- * A first-class state, not an afterthought: a firm can legitimately publish
- * before entering its lawyers, and the deploy path explicitly allows it. It
- * deliberately invents no people — no stub cards, no "Jane Doe, Partner" — and
- * instead points visitors at the firm's own contact details, which are real.
- */
-function EmptyRoster({ email, phone }: { email?: string; phone?: string }) {
-  return (
-    <div className="bg-white rounded-2xl p-10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-dashed border-[#D8DEE8] text-center">
-      <div className="w-14 h-14 mx-auto rounded-2xl bg-[#F8F9FB] border border-[#EDF0F5] flex items-center justify-center mb-5">
-        <Users className="w-7 h-7 text-[#C5A059]" />
-      </div>
-      <h3 className="font-heading text-xl font-bold text-[#1B2B44] mb-2">Our team is being introduced</h3>
-      <p className="text-[#4A4A4A] leading-relaxed max-w-md mx-auto">
-        Profiles for our lawyers are on the way. In the meantime, please get in touch and we will
-        put you in contact with the right person.
-      </p>
-      {(email || phone) && (
-        <div className="mt-6 flex flex-wrap items-center justify-center gap-4 text-sm">
-          {email && (
-            <a
-              href={`mailto:${email}`}
-              className="px-5 py-2.5 bg-[#1B2B44] text-white rounded-lg font-bold hover:bg-[#243652] transition-colors"
-            >
-              Email the firm
-            </a>
-          )}
-          {phone && (
-            <a href={`tel:${phone}`} className="px-5 py-2.5 border border-[#1B2B44]/20 rounded-lg font-bold text-[#1B2B44] hover:border-[#C5A059] transition-colors">
-              {phone}
-            </a>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
+const CLASSIC_ROSTER_PALETTE: RosterPalette = {
+  card: 'bg-white rounded-2xl p-8 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-[#F0F0F0] flex flex-col @sm:flex-row gap-6',
+  avatar: 'w-24 h-24 rounded-2xl bg-[#1B2B44] border-2 border-[#C5A059]',
+  avatarText: 'font-heading text-2xl font-bold text-[#C5A059]',
+  name: 'font-heading text-2xl font-bold text-[#1B2B44] leading-snug hover:text-[#C5A059] transition-colors',
+  title: 'text-[#C5A059] font-medium',
+  meta: 'text-xs font-bold uppercase tracking-widest text-[#4A4A4A]/60 mt-1',
+  body: 'text-[#4A4A4A] leading-relaxed',
+  chip: 'px-3 py-1 bg-[#F8F9FB] border border-[#EDF0F5] rounded-lg text-xs font-medium text-[#1B2B44]',
+  link: 'text-[#4A4A4A] hover:text-[#1B2B44] transition-colors',
+  icon: 'text-[#C5A059]',
+  emptyCard:
+    'bg-white rounded-2xl p-10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-dashed border-[#D8DEE8] text-center',
+  emptyIconBox:
+    'w-14 h-14 mx-auto rounded-2xl bg-[#F8F9FB] border border-[#EDF0F5] flex items-center justify-center mb-5',
+  emptyHeading: 'font-heading text-xl font-bold text-[#1B2B44] mb-2',
+  emptyBody: 'text-[#4A4A4A] leading-relaxed max-w-md mx-auto',
+  emptyButton:
+    'px-5 py-2.5 bg-[#1B2B44] text-white rounded-lg font-bold hover:bg-[#243652] transition-colors',
+};
 
 /**
  * Classic — navy and gold, credential-forward.
@@ -494,14 +386,15 @@ export function ClassicTheme({ site, page = 'home' }: ClassicThemeProps) {
               <section data-reveal id="team" className="scroll-mt-24 space-y-6">
                 <Heading>Our Team</Heading>
                 {members.length === 0 ? (
-                  <EmptyRoster email={site.contact.email} phone={site.contact.phoneNumber} />
+                  <RosterList
+                    members={members}
+                    palette={CLASSIC_ROSTER_PALETTE}
+                    email={site.contact.email}
+                    phone={site.contact.phoneNumber}
+                  />
                 ) : (
                   <>
-                    <div className="space-y-6">
-                      {members.map((member, index) => (
-                        <RosterCard key={index} member={member} index={index} />
-                      ))}
-                    </div>
+                    <RosterList members={members} palette={CLASSIC_ROSTER_PALETTE} />
                     <a
                       href={TEAM_PAGE_HREF}
                       className="inline-flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-[#1B2B44] hover:text-[#C5A059] transition-colors group"
