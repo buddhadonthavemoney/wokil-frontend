@@ -92,7 +92,8 @@ export default function ProfileBuilder() {
   const {
     profile,
     currentStep,
-    totalSteps,
+    lockedSteps,
+    finishStep,
     updateNestedProfile,
     nextStep,
     prevStep,
@@ -130,7 +131,9 @@ export default function ProfileBuilder() {
   );
 
   const handleNext = async () => {
-    if (currentStep === totalSteps) {
+    // `finishStep`, not the last step: after deployment the subdomain step is
+    // locked, so the wizard ends one step earlier.
+    if (currentStep >= finishStep) {
       await saveProfileData();
       router.push('/preview');
     } else {
@@ -152,6 +155,7 @@ export default function ProfileBuilder() {
       onStepClick={goToStep}
       onFillSample={handleFillSample}
       onClear={resetCurrentStep}
+      lockedSteps={lockedSteps}
     >
       <BuilderPreview
         isEmpty={!hasBasicInfo}

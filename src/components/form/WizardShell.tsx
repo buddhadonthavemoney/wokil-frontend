@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { ProgressIndicator } from '@/components/form/ProgressIndicator';
 import { FormNavigation } from '@/components/form/FormNavigation';
+import { lastReachableStep } from '@/components/form/lockedSteps';
 
 /**
  * One step of a wizard: which group of `T` it edits, what the progress bar
@@ -52,6 +53,12 @@ interface WizardShellProps<T, K extends Extract<keyof T, string>> {
   onFillSample?: () => void;
   onClear?: () => void;
 
+  /**
+   * 1-based steps that can no longer be edited. They stay visible but are not
+   * navigable, and the wizard finishes at the last step before them.
+   */
+  lockedSteps?: readonly number[];
+
   /** The right-hand preview column. */
   children: React.ReactNode;
 }
@@ -77,10 +84,16 @@ export function WizardShell<T, K extends Extract<keyof T, string>>({
   onStepClick,
   onFillSample,
   onClear,
+  lockedSteps = [],
   children,
 }: WizardShellProps<T, K>) {
   const totalSteps = steps.length;
   const step = steps[currentStep - 1];
+  // Where "Continue" turns into "Preview Website". Same helper the builder
+  // pages use to decide when Next finishes, so the button and the handler
+  // cannot disagree.
+  const finishStep = lastReachableStep(totalSteps, lockedSteps);
+  const isLastStep = currentStep >= finishStep;
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -107,6 +120,7 @@ export function WizardShell<T, K extends Extract<keyof T, string>>({
               totalSteps={totalSteps}
               steps={steps.map((s) => s.label)}
               onStepClick={onStepClick}
+              lockedSteps={lockedSteps}
             />
 
             <div className="bg-card border-none rounded-xl p-6 md:p-8 shadow-premium animate-fade-in relative overflow-hidden min-h-[400px] max-h-[calc(100vh-8rem)] flex flex-col">
@@ -148,12 +162,16 @@ export function WizardShell<T, K extends Extract<keyof T, string>>({
                   totalSteps={totalSteps}
                   onNext={onNext}
                   onPrev={onPrev}
+                  isLastStep={isLastStep}
                 />
               </div>
             </div>
 
             <p className="text-center text-[10px] font-bold text-muted-foreground uppercase tracking-widest opacity-50">
-              Step {currentStep} of {totalSteps} • Your progress is saved automatically
+              {/* Counted against the reachable steps, so a locked tail doesn't
+                  read as progress the user still owes. Clamped for the case of
+                  landing on a locked step by URL. */}
+              Step {Math.min(currentStep, finishStep)} of {finishStep} • Your progress is saved automatically
             </p>
           </div>
 

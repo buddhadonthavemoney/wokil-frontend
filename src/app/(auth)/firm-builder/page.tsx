@@ -76,7 +76,8 @@ function FirmBuilderContent() {
   const {
     firm,
     currentStep,
-    totalSteps,
+    lockedSteps,
+    finishStep,
     updateNestedFirm,
     nextStep,
     prevStep,
@@ -111,7 +112,9 @@ function FirmBuilderContent() {
   };
 
   const handleNext = async () => {
-    if (currentStep === totalSteps) {
+    // `finishStep`, not the last step: after deployment the subdomain step is
+    // locked, so the wizard ends one step earlier.
+    if (currentStep >= finishStep) {
       await saveFirmData();
       router.push('/preview');
     } else {
@@ -135,6 +138,7 @@ function FirmBuilderContent() {
       onStepClick={goToStep}
       onFillSample={handleFillSample}
       onClear={resetCurrentStep}
+      lockedSteps={lockedSteps}
     >
       <BuilderPreview
         isEmpty={!hasFirmName}

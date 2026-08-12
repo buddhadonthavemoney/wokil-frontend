@@ -1,10 +1,14 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { FirmProfile, createBlankFirmProfile, toFirmProfile } from '@/types/firm';
 import { getMyFirm, createFirm, updateFirm, deploySite } from '@/generated/wokil-api';
 import { useToast } from '@/hooks/use-toast';
 import { FIRM_STEPS, FIRM_TOTAL_STEPS, FirmStepKey } from '@/components/form/firmSteps';
+import { lastReachableStep } from '@/components/form/lockedSteps';
 
 const initialFirm = createBlankFirmProfile();
+
+/** Found by key so reordering the wizard cannot mislocate the locked step. */
+const SUBDOMAIN_STEP = FIRM_STEPS.findIndex((s) => s.key === 'subdomainSelection') + 1;
 
 /**
  * The firm wizard's state.
@@ -29,6 +33,13 @@ export function useFirmForm({ initialStep }: UseFirmFormOptions = {}) {
   const totalSteps = FIRM_TOTAL_STEPS;
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  /**
+   * Whether the fetch below has run to completion. Distinct from `loading`,
+   * which is false both before the effect fires and after it finishes — a
+   * caller that has to tell "no such lawyer" from "not fetched yet" cannot use
+   * `loading` alone without redirecting on the first render.
+   */
+  const [loaded, setLoaded] = useState(false);
 
   const [firm, setFirm] = useState<FirmProfile>(() => ({ ...initialFirm }));
   const [currentStep, setCurrentStep] = useState(() =>
@@ -43,7 +54,10 @@ export function useFirmForm({ initialStep }: UseFirmFormOptions = {}) {
   useEffect(() => {
     const fetchFirm = async () => {
       const token = localStorage.getItem('token');
-      if (!token) return;
+      if (!token) {
+        setLoaded(true);
+        return;
+      }
 
       try {
         setLoading(true);
@@ -53,13 +67,20 @@ export function useFirmForm({ initialStep }: UseFirmFormOptions = {}) {
         if (data && data.id) {
           setFirm((prev) => toFirmProfile(data, prev));
           setFirmExists(true);
-          // Resume where they left off — unless a step was explicitly asked for.
-          if (data.slug && !initialStep) setCurrentStep(totalSteps);
+          // Resume where they left off — unless a step was explicitly asked
+          // for. Once deployed the subdomain can no longer be changed, so
+          // resuming onto it would open the wizard on a form the user cannot
+          // edit; land on the last step that is still theirs to change.
+          if (data.slug && !initialStep) {
+            const locked = data.firmProfile?.deploymentURL ? [SUBDOMAIN_STEP] : [];
+            setCurrentStep(lastReachableStep(totalSteps, locked));
+          }
         }
       } catch (error) {
         console.error('Failed to fetch firm', error);
       } finally {
         setLoading(false);
+        setLoaded(true);
       }
     };
     fetchFirm();
@@ -73,19 +94,28 @@ export function useFirmForm({ initialStep }: UseFirmFormOptions = {}) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading]);
 
-  const saveFirmData = useCallback(async () => {
-    const currentJson = JSON.stringify(firm);
+  /**
+   * @param override the firm to save instead of the one in state.
+   *
+   * A caller that changes the firm and immediately saves — the roster page's
+   * "Add a lawyer", which then navigates to the new row — cannot wait for the
+   * re-render: this callback closes over the firm as it was, so without the
+   * override it would post the state the change was meant to replace.
+   */
+  const saveFirmData = useCallback(async (override?: FirmProfile) => {
+    const target = override ?? firm;
+    const currentJson = JSON.stringify(target);
     if (currentJson === lastSavedFirm.current) return;
 
     // A firm needs a name before it can be created — the backend rejects it
     // otherwise, and the wizard would keep retrying on every step.
-    if (!firmExists && !firm.firmDetails.name.trim()) return;
+    if (!firmExists && !target.firmDetails.name.trim()) return;
 
     try {
-      const payload = { ...firm };
+      const payload = { ...target };
       // Once deployed the subdomain is locked server-side; re-sending it turns
       // an ordinary save into a 400.
-      if (firm.firmProfile?.deploymentURL) {
+      if (target.firmProfile?.deploymentURL) {
         delete (payload as Partial<FirmProfile>).subdomainSelection;
       }
 
@@ -116,6 +146,17 @@ export function useFirmForm({ initialStep }: UseFirmFormOptions = {}) {
     },
     []
   );
+
+  /**
+   * The subdomain is frozen server-side once a site is deployed, so its step
+   * becomes read-only — and, being last, it also moves where the wizard ends.
+   * Derived here so the builder page and the shell can't answer differently.
+   */
+  const lockedSteps = useMemo(
+    () => (firm.firmProfile?.deploymentURL ? [SUBDOMAIN_STEP] : []),
+    [firm.firmProfile?.deploymentURL]
+  );
+  const finishStep = lastReachableStep(totalSteps, lockedSteps);
 
   const nextStep = useCallback(async () => {
     await saveFirmData();
@@ -166,7 +207,10 @@ export function useFirmForm({ initialStep }: UseFirmFormOptions = {}) {
     firm,
     currentStep,
     totalSteps,
+    lockedSteps,
+    finishStep,
     loading,
+    loaded,
     firmExists,
     updateNestedFirm,
     nextStep,
