@@ -3,8 +3,7 @@ import { LawyerProfile } from '@/types/lawyer';
 import { getProfile, saveProfile, deploySite } from '@/generated/wokil-api';
 import { useToast } from '@/hooks/use-toast';
 import { createBlankLawyerProfile, toLawyerProfile } from '@/lib/lawyer-profile-adapter';
-import { PROFILE_STEPS, PROFILE_TOTAL_STEPS } from '@/components/form/steps';
-import { lastReachableStep } from '@/components/form/lockedSteps';
+import { PROFILE_STEPS } from '@/components/form/steps';
 
 /** Found by key so reordering the wizard cannot mislocate the locked step. */
 const SUBDOMAIN_STEP = PROFILE_STEPS.findIndex((s) => s.key === 'subdomainSelection') + 1;
@@ -26,7 +25,7 @@ const generateId = (): string => {
 const initialProfile = createBlankLawyerProfile();
 
 export function useProfileForm() {
-  const totalSteps = PROFILE_TOTAL_STEPS;
+  const totalSteps = PROFILE_STEPS.length;
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
 
@@ -76,8 +75,7 @@ export function useProfileForm() {
           // Once deployed the subdomain can no longer be changed, so resuming
           // onto its step would open the wizard on a form the user cannot
           // edit; land on the last step still theirs to change.
-          const locked = data.professionalProfile?.deploymentURL ? [SUBDOMAIN_STEP] : [];
-          setCurrentStep(lastReachableStep(totalSteps, locked));
+          setCurrentStep(data.professionalProfile?.deploymentURL ? totalSteps - 1 : totalSteps);
         }
       } catch (error) {
         console.error("Failed to fetch profile", error);
@@ -175,7 +173,9 @@ export function useProfileForm() {
     () => (profile.professionalProfile?.deploymentURL ? [SUBDOMAIN_STEP] : []),
     [profile.professionalProfile?.deploymentURL]
   );
-  const finishStep = lastReachableStep(totalSteps, lockedSteps);
+  // The subdomain is the last step, so a locked tail is exactly one step:
+  // finishing one short of the end.
+  const finishStep = lockedSteps.includes(totalSteps) ? totalSteps - 1 : totalSteps;
 
   const resetProfile = useCallback(() => {
     // Spread first: initialProfile now carries id/slug, so keeping the existing

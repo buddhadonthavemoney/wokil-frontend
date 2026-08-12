@@ -2,8 +2,7 @@ import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { FirmProfile, createBlankFirmProfile, toFirmProfile } from '@/types/firm';
 import { getMyFirm, createFirm, updateFirm, deploySite } from '@/generated/wokil-api';
 import { useToast } from '@/hooks/use-toast';
-import { FIRM_STEPS, FIRM_TOTAL_STEPS, FirmStepKey } from '@/components/form/firmSteps';
-import { lastReachableStep } from '@/components/form/lockedSteps';
+import { FIRM_STEPS, FirmStepKey } from '@/components/form/firmSteps';
 
 const initialFirm = createBlankFirmProfile();
 
@@ -30,7 +29,7 @@ interface UseFirmFormOptions {
 }
 
 export function useFirmForm({ initialStep }: UseFirmFormOptions = {}) {
-  const totalSteps = FIRM_TOTAL_STEPS;
+  const totalSteps = FIRM_STEPS.length;
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   /**
@@ -43,7 +42,7 @@ export function useFirmForm({ initialStep }: UseFirmFormOptions = {}) {
 
   const [firm, setFirm] = useState<FirmProfile>(() => ({ ...initialFirm }));
   const [currentStep, setCurrentStep] = useState(() =>
-    initialStep && initialStep >= 1 ? Math.min(initialStep, FIRM_TOTAL_STEPS) : 1
+    initialStep && initialStep >= 1 ? Math.min(initialStep, FIRM_STEPS.length) : 1
   );
 
   // Whether the firm row exists yet decides create-vs-update on save. The
@@ -68,12 +67,10 @@ export function useFirmForm({ initialStep }: UseFirmFormOptions = {}) {
           setFirm((prev) => toFirmProfile(data, prev));
           setFirmExists(true);
           // Resume where they left off — unless a step was explicitly asked
-          // for. Once deployed the subdomain can no longer be changed, so
-          // resuming onto it would open the wizard on a form the user cannot
-          // edit; land on the last step that is still theirs to change.
+          // for. Once deployed the subdomain (the last step) can no longer be
+          // changed, so land one short of it.
           if (data.slug && !initialStep) {
-            const locked = data.firmProfile?.deploymentURL ? [SUBDOMAIN_STEP] : [];
-            setCurrentStep(lastReachableStep(totalSteps, locked));
+            setCurrentStep(data.firmProfile?.deploymentURL ? totalSteps - 1 : totalSteps);
           }
         }
       } catch (error) {
@@ -156,7 +153,9 @@ export function useFirmForm({ initialStep }: UseFirmFormOptions = {}) {
     () => (firm.firmProfile?.deploymentURL ? [SUBDOMAIN_STEP] : []),
     [firm.firmProfile?.deploymentURL]
   );
-  const finishStep = lastReachableStep(totalSteps, lockedSteps);
+  // The subdomain is the last step, so a locked tail is exactly one step:
+  // finishing one short of the end.
+  const finishStep = lockedSteps.includes(totalSteps) ? totalSteps - 1 : totalSteps;
 
   const nextStep = useCallback(async () => {
     await saveFirmData();

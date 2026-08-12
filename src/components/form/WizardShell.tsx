@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { ProgressIndicator } from '@/components/form/ProgressIndicator';
 import { FormNavigation } from '@/components/form/FormNavigation';
-import { lastReachableStep } from '@/components/form/lockedSteps';
 
 /**
  * One step of a wizard: which group of `T` it edits, what the progress bar
@@ -89,10 +88,10 @@ export function WizardShell<T, K extends Extract<keyof T, string>>({
 }: WizardShellProps<T, K>) {
   const totalSteps = steps.length;
   const step = steps[currentStep - 1];
-  // Where "Continue" turns into "Preview Website". Same helper the builder
-  // pages use to decide when Next finishes, so the button and the handler
-  // cannot disagree.
-  const finishStep = lastReachableStep(totalSteps, lockedSteps);
+  // Where "Continue" turns into "Preview Website". Same decision the builder
+  // pages make, so the button and the handler cannot disagree. Locked steps
+  // are always the tail (the deployed subdomain), so never more than one.
+  const finishStep = lockedSteps.includes(totalSteps) ? totalSteps - 1 : totalSteps;
   const isLastStep = currentStep >= finishStep;
 
   useEffect(() => {

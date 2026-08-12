@@ -66,5 +66,3 @@ export const FIRM_STEPS = [
     Component: SubdomainSelectionStep,
   }),
 ] satisfies WizardStepDef<FirmProfile, FirmStepKey>[];
-
-export const FIRM_TOTAL_STEPS = FIRM_STEPS.length;

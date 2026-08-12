@@ -20,14 +20,9 @@ export type ProfileStepKey = keyof Omit<
 /**
  * The individual-lawyer wizard, in order.
  *
- * This array is the *only* place the step list lives. It used to be spelled out
- * in five places — `STEP_NAMES`, the `switch (currentStep)`, and a `stepKeys`
- * array in each of `handleFillSample` and `resetCurrentStep`, plus a
- * `totalSteps = 7` that was linked to none of them — so adding or reordering a
- * step meant five edits and four chances to silently desync.
- *
- * `defineStep` pins each entry's `Component` to the payload type of its own
- * `key`, so pairing a step with the wrong updater is a compile error here.
+ * This array is the *only* place the step list lives. `defineStep` pins each
+ * entry's `Component` to the payload type of its own `key`, so pairing a step
+ * with the wrong updater is a compile error here.
  */
 export const PROFILE_STEPS = [
   defineStep<LawyerProfile, 'basicInformation'>({
@@ -66,5 +61,3 @@ export const PROFILE_STEPS = [
     Component: SubdomainSelectionStep,
   }),
 ] satisfies WizardStepDef<LawyerProfile, ProfileStepKey>[];
-
-export const PROFILE_TOTAL_STEPS = PROFILE_STEPS.length;

@@ -9,8 +9,8 @@ interface FormNavigationProps {
   isNextDisabled?: boolean;
   nextLabel?: string;
   /**
-   * Whether Next finishes the wizard. Defaults to the last step, but a wizard
-   * with locked steps at the end finishes earlier — see `lastReachableStep`.
+   * Whether Next finishes the wizard. Defaults to the last step; a wizard
+   * with its final step locked finishes one earlier.
    */
   isLastStep?: boolean;
 }
