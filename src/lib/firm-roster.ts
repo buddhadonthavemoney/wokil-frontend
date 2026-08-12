@@ -31,6 +31,26 @@ export function memberHref(member: RosterMember, index: number): string {
   return `${TEAM_PAGE_HREF}#${memberAnchor(member, index)}`;
 }
 
+/**
+ * Which page of a site a theme is rendering.
+ *
+ * A published site is more than one HTML file, but every page is the same
+ * theme — so the theme takes this rather than there being a second, separately
+ * styled page component per page.
+ */
+export type SitePage = 'home' | 'team';
+
+/**
+ * A theme's in-page anchor, made to work from whichever page it is rendered on.
+ *
+ * Every section a theme links to lives on the home page, so from a subpage the
+ * bare `#about` resolves to an anchor that isn't there. Root-relative it is,
+ * from anywhere but home.
+ */
+export function sectionHref(page: SitePage, hash: string): string {
+  return page === 'team' ? `/${hash}` : hash;
+}
+
 /** Two initials for the avatar fallback when a member has no photo. */
 export function memberInitials(name: string): string {
   return (name ?? '')

@@ -6,7 +6,6 @@ import { LawyerProfile } from '@/types/lawyer';
 import { FirmProfile, toFirmProfile } from '@/types/firm';
 import { buildShell } from '@/lib/site-shell';
 import { ContactQrWidget, buildVCard, buildFirmVCard } from '@/components/preview/ContactQrWidget';
-import { FirmTeamPage } from '@/components/preview/themes/FirmTeamPage';
 import { resolveTheme } from '@/components/preview/themes/registry';
 import { fromFirmProfile, fromLawyerProfile } from '@/types/site-model';
 import { TEAM_PAGE_PATH } from '@/lib/firm-roster';
@@ -134,15 +133,19 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     }
     qrHtml = renderToStaticMarkup(ContactQrWidget({ vcard: buildFirmVCard(firm) }));
     title = firm.firmDetails.name;
+    googleAnalyticsId = firm.googleAnalyticsId;
 
-    // The People page: every lawyer in full, on one page. Rendered even for an
-    // empty roster, so the nav link never lands on a 404 — it carries the same
-    // "team is being introduced" state the home page shows.
+    // The People page: every lawyer in full, on one page, rendered by the same
+    // theme as the home page so the nav, chrome and footer carry over. Rendered
+    // even for an empty roster, so the nav link never lands on a 404 — it
+    // carries the same "team is being introduced" state the home page shows.
     try {
       extraPages[TEAM_PAGE_PATH] = buildShell({
-        bodyHtml: renderToStaticMarkup(FirmTeamPage({ site })),
+        bodyHtml: renderToStaticMarkup(Theme({ site, page: 'team' })),
         title: `Our Team — ${firm.firmDetails.name}`,
-        googleAnalyticsId: undefined,
+        // Tagged like the home page: buildShell emits the qr_hover listener
+        // inside the GA snippet, and this page renders its own QR widget.
+        googleAnalyticsId,
         css: THEME_CSS,
         qrHtml,
       });

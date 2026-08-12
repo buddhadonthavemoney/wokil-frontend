@@ -1,4 +1,5 @@
 import { SiteModel } from '@/types/site-model';
+import { SitePage } from '@/lib/firm-roster';
 
 import { ClassicTheme } from './ClassicTheme';
 import { ExecutiveTheme } from './ExecutiveTheme';
@@ -9,7 +10,14 @@ import { SwissInstitutionalTheme } from './SwissInstitutionalTheme';
 // Typed as a plain function component rather than ComponentType: render.ts is a
 // .ts file and calls these directly (`Component({ site })`) instead of via JSX,
 // which a class component would not support.
-export type SiteThemeComponent = (props: { site: SiteModel }) => React.ReactElement;
+//
+// `page` is what makes a theme responsible for every page of the site it
+// styles, not just the home page. It is optional and defaults to 'home', so a
+// caller that only ever renders the landing page passes nothing.
+export type SiteThemeComponent = (props: {
+  site: SiteModel;
+  page?: SitePage;
+}) => React.ReactElement;
 
 /**
  * Every theme, keyed by the id stored on the profile.

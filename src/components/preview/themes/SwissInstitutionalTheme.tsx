@@ -1,15 +1,18 @@
+/* eslint-disable @next/next/no-html-link-for-pages */
 import { TimelineEntry, formatTimelineRange } from '@/types/lawyer';
 import { SiteModel } from '@/types/site-model';
-import { TEAM_PAGE_HREF } from '@/lib/firm-roster';
+import { TEAM_PAGE_HREF, type SitePage, sectionHref } from '@/lib/firm-roster';
 import { RosterList, type RosterPalette } from './RosterSection';
+import { TeamBody, type TeamPalette } from './TeamSection';
 import {
     Phone, Mail, MapPin, Globe, Linkedin, Menu, Landmark, Briefcase, ShieldCheck,
     ChevronDown, Gavel, Building2, Users, Plane, Copyright, HeartPulse, Home, ReceiptText, ScrollText,
-    Banknote, Scale, Leaf, Stethoscope, ArrowRight, type LucideIcon,
+    Banknote, Scale, Leaf, Stethoscope, ArrowRight, ArrowLeft, type LucideIcon,
 } from 'lucide-react';
 
 interface SwissInstitutionalThemeProps {
     site: SiteModel;
+    page?: SitePage;
 }
 
 // Swiss in roster form: hard edges, hairline rules, no shadows or rounding —
@@ -29,6 +32,42 @@ const ROSTER_PALETTE: RosterPalette = {
     emptyHeading: 'text-2xl font-semibold tracking-tight uppercase text-[#05162e] mb-2',
     emptyBody: 'text-[15px] leading-6 text-[#1a1c1c] max-w-md mx-auto',
     emptyButton: 'px-6 py-3 bg-[#1b2b44] text-white text-[12px] font-bold uppercase tracking-[0.06em] hover:bg-[#05162e] transition-colors',
+};
+
+// The People page in the same idiom: hairline rules instead of shadows, square
+// avatars, uppercase labels. The timeline rails borrow the hero's border-left
+// treatment rather than the dot-on-a-line other themes use.
+const TEAM_PALETTE: TeamPalette = {
+    card: 'border border-[#c5c6ce] bg-white p-6 @sm:p-10',
+    avatar: 'w-32 h-32 bg-[#e2e2e2] grayscale',
+    avatarText: 'text-3xl font-bold text-[#05162e]',
+    name: 'text-3xl font-bold uppercase tracking-tight text-[#05162e] leading-snug',
+    title: 'text-[12px] font-bold uppercase tracking-[0.06em] text-[#5f5e5e]',
+    meta: 'text-[12px] font-bold uppercase tracking-[0.06em] text-[#75777e]',
+    body: 'text-[15px] leading-6 text-[#1a1c1c]',
+    sectionLabel: 'text-[12px] font-bold uppercase tracking-[0.1em] text-[#5f5e5e]',
+    chip: 'px-3 py-1 border border-[#c5c6ce] text-[12px] font-bold uppercase tracking-[0.06em] text-[#5f5e5e] whitespace-nowrap',
+    link: 'text-[#1a1c1c] hover:text-[#05162e] transition-colors',
+    contactRow: 'pt-4 border-t border-[#c5c6ce] mt-2',
+    icon: 'text-[#75777e]',
+
+    jumpCard: 'border border-[#c5c6ce] bg-white p-6',
+    jumpHeading: 'text-[12px] font-bold uppercase tracking-[0.1em] text-[#5f5e5e] mb-4',
+    jumpName: 'font-semibold uppercase tracking-tight text-[#05162e]',
+    jumpTitle: 'text-[12px] font-bold uppercase tracking-[0.06em] text-[#75777e]',
+
+    railList: 'border-l-4 border-[#05162e] pl-6',
+    railDot: '-left-[30px] top-2 w-2 h-2 bg-[#05162e]',
+    railTitle: 'text-lg font-semibold uppercase tracking-tight text-[#05162e] leading-snug',
+    railOrg: 'text-[15px] text-[#1a1c1c]',
+    railRange: 'text-[12px] font-bold uppercase tracking-[0.06em] text-[#75777e] mt-1',
+    railBody: 'text-[15px] leading-6 text-[#5f5e5e]',
+
+    emptyCard: 'border border-dashed border-[#c5c6ce] bg-white p-12 text-center',
+    emptyIconBox: 'w-14 h-14 mx-auto border border-[#c5c6ce] bg-[#f9f9f9] flex items-center justify-center mb-5',
+    emptyHeading: 'text-2xl font-semibold uppercase tracking-tight text-[#05162e] mb-2',
+    emptyBody: 'text-[15px] leading-6 text-[#1a1c1c] max-w-md mx-auto',
+    emptyButton: 'inline-block mt-6 px-6 py-3 bg-[#1b2b44] text-white text-[12px] font-bold uppercase tracking-[0.06em] hover:bg-[#05162e] transition-colors',
 };
 
 // Same practice-area -> glyph map as Corporate Elite; free-text areas fall
@@ -94,7 +133,7 @@ function sectionLabel(index: string, label: string) {
     );
 }
 
-export function SwissInstitutionalTheme({ site }: SwissInstitutionalThemeProps) {
+export function SwissInstitutionalTheme({ site, page = 'home' }: SwissInstitutionalThemeProps) {
     const isFirm = site.kind === 'firm';
     const lawyer = site.lawyer;
     const members = site.roster ?? [];
@@ -113,15 +152,18 @@ export function SwissInstitutionalTheme({ site }: SwissInstitutionalThemeProps) 
 
     const timeline = unifiedTimeline(lawyer);
 
+    const isTeamPage = page === 'team' && isFirm;
+    const anchor = (hash: string) => sectionHref(isTeamPage ? 'team' : 'home', hash);
+
     const navLinks = isFirm
         ? [
-            ...(areasOfPractice.length > 0 ? [{ href: '#credentials', label: site.heading.practice }] : []),
-            { href: '#team', label: 'Our Team' },
+            ...(areasOfPractice.length > 0 ? [{ href: anchor('#credentials'), label: site.heading.practice }] : []),
+            { href: isTeamPage ? TEAM_PAGE_HREF : '#team', label: 'Our Team' },
         ]
         : [
-            ...(areasOfPractice.length > 0 ? [{ href: '#credentials', label: 'Expertise' }] : []),
-            ...(timeline.length > 0 ? [{ href: '#timeline', label: 'Timeline' }] : []),
-            { href: '#faq', label: 'FAQ' },
+            ...(areasOfPractice.length > 0 ? [{ href: anchor('#credentials'), label: 'Expertise' }] : []),
+            ...(timeline.length > 0 ? [{ href: anchor('#timeline'), label: 'Timeline' }] : []),
+            { href: anchor('#faq'), label: 'FAQ' },
         ];
 
     return (
@@ -129,12 +171,22 @@ export function SwissInstitutionalTheme({ site }: SwissInstitutionalThemeProps) 
             {/* Top nav */}
             <nav data-nav className="group/nav sticky top-0 z-50 bg-[#f9f9f9]/95 backdrop-blur-sm border-b border-[#c5c6ce]">
                 <div className="container mx-auto max-w-[1280px] px-6 @md:px-12 h-16 flex items-center justify-between gap-6">
-                    <a href="#top" className="block flex-1 min-w-0 truncate hover:whitespace-normal hover:overflow-visible text-base @sm:text-lg @md:text-xl font-bold uppercase tracking-tight text-[#05162e]">
+                    <a href={anchor('#top')} className="block flex-1 min-w-0 truncate hover:whitespace-normal hover:overflow-visible text-base @sm:text-lg @md:text-xl font-bold uppercase tracking-tight text-[#05162e]">
                         {lawFirmName}
                     </a>
                     <div className="flex items-center gap-8 text-[12px] font-bold uppercase tracking-[0.06em] text-[#5f5e5e] group-data-[collapsed]/nav:hidden">
                         {navLinks.map(({ href, label }) => (
-                            <a key={href} href={href} className="hover:text-[#05162e] transition-colors">{label}</a>
+                            <a
+                                key={href}
+                                href={href}
+                                className={
+                                    isTeamPage && href === TEAM_PAGE_HREF
+                                        ? 'text-[#05162e] transition-colors'
+                                        : 'hover:text-[#05162e] transition-colors'
+                                }
+                            >
+                                {label}
+                            </a>
                         ))}
                     </div>
                     <a href="#contact" className="shrink-0 px-6 py-3 bg-[#1b2b44] text-white text-[12px] font-bold uppercase tracking-[0.06em] hover:bg-[#05162e] transition-colors whitespace-nowrap group-data-[collapsed]/nav:hidden">
@@ -155,6 +207,30 @@ export function SwissInstitutionalTheme({ site }: SwissInstitutionalThemeProps) 
             </nav>
 
             <main className="container mx-auto max-w-[1280px] px-6 @md:px-12 py-12 flex flex-col gap-24">
+                {isTeamPage ? (
+                    <>
+                        {/* Page header — the hero's typographic rhythm, sized for a subpage. */}
+                        <section className="flex flex-col gap-5 border-b border-[#c5c6ce] pb-10">
+                            <a href="/" className="inline-flex items-center gap-2 text-[12px] font-bold uppercase tracking-[0.06em] text-[#5f5e5e] hover:text-[#05162e] transition-colors">
+                                <ArrowLeft className="w-3.5 h-3.5" />
+                                Back to {lawFirmName}
+                            </a>
+                            {sectionLabel('01', 'Our Team')}
+                            <h1 className="text-4xl @sm:text-6xl @lg:text-7xl font-bold leading-[0.95] tracking-tighter uppercase text-[#05162e] break-words">
+                                Our Team
+                            </h1>
+                            {members.length > 0 && (
+                                <p className="flex items-center gap-2 text-[12px] font-bold uppercase tracking-[0.06em] text-[#5f5e5e]">
+                                    <Users className="w-4 h-4 text-[#05162e]" />
+                                    {members.length} {members.length === 1 ? 'lawyer' : 'lawyers'} at {fullName}
+                                </p>
+                            )}
+                        </section>
+
+                        <TeamBody site={site} palette={TEAM_PALETTE} />
+                    </>
+                ) : (
+                    <>
                 {/* Hero */}
                 <section id="top" className="scroll-mt-24 grid grid-cols-1 @md:grid-cols-12 gap-8 @md:gap-6 items-start @md:items-center border-b border-[#c5c6ce] pb-4 @sm:pb-16 @md:pb-24 pt-0 @sm:pt-8 min-h-[calc(100cqh-7rem)]">
                     <div className="@md:col-span-7 flex flex-col gap-3 @sm:gap-8 @md:gap-12">
@@ -373,6 +449,8 @@ export function SwissInstitutionalTheme({ site }: SwissInstitutionalThemeProps) 
                         ) : null}
                     </div>
                 </div>
+                    </>
+                )}
             </main>
 
             {/* Footer */}

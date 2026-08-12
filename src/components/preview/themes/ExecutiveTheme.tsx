@@ -1,12 +1,49 @@
+/* eslint-disable @next/next/no-html-link-for-pages */
 import { TimelineEntry, formatTimelineRange } from '@/types/lawyer';
 import { SiteModel } from '@/types/site-model';
-import { TEAM_PAGE_HREF } from '@/lib/firm-roster';
+import { TEAM_PAGE_HREF, SitePage, sectionHref } from '@/lib/firm-roster';
 import { RosterList, type RosterPalette } from './RosterSection';
-import { Phone, Mail, MapPin, Clock, Globe, Linkedin, Shield, Award, Briefcase, Scale, Building2, Users, CalendarDays, UserCheck, MessageCircle, Wallet, Menu, GraduationCap, ArrowRight, type LucideIcon } from 'lucide-react';
+import { TeamBody, type TeamPalette } from './TeamSection';
+import { Phone, Mail, MapPin, Clock, Globe, Linkedin, Shield, Award, Briefcase, Scale, Building2, Users, CalendarDays, UserCheck, MessageCircle, Wallet, Menu, GraduationCap, ArrowRight, ArrowLeft, type LucideIcon } from 'lucide-react';
 
 interface ExecutiveThemeProps {
     site: SiteModel;
+    page?: SitePage;
 }
+
+// Executive's People page: the roster palette, scaled up for full entries.
+const TEAM_PALETTE: TeamPalette = {
+    card: 'bg-white border border-slate-200 rounded-xl p-8 @md:p-10',
+    avatar: 'w-32 h-32 rounded-xl bg-slate-100 border border-slate-200',
+    avatarText: 'font-heading text-3xl font-bold text-blue-700',
+    name: 'font-heading font-bold text-3xl text-slate-900 leading-snug tracking-tight',
+    title: 'text-blue-700 text-lg font-medium',
+    meta: 'text-[10px] font-bold uppercase tracking-widest text-slate-400',
+    body: 'text-slate-600 text-lg leading-relaxed font-light',
+    sectionLabel: 'text-[10px] font-bold uppercase tracking-widest text-slate-900',
+    chip: 'px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium text-slate-700',
+    link: 'text-slate-600 hover:text-blue-700 transition-colors',
+    contactRow: 'pt-2 border-t border-slate-200 mt-2',
+    icon: 'text-blue-700',
+
+    jumpCard: 'bg-white border border-slate-200 rounded-xl p-6',
+    jumpHeading: 'font-heading font-bold text-xs text-slate-900 uppercase tracking-widest mb-4',
+    jumpName: 'font-medium text-slate-900 hover:text-blue-700 transition-colors',
+    jumpTitle: 'text-slate-500 text-xs',
+
+    railList: 'border-l border-slate-200 pl-8',
+    railDot: '-left-[37px] top-2 w-3 h-3 rounded-full bg-blue-700 ring-4 ring-slate-50',
+    railTitle: 'font-heading font-bold text-lg text-slate-900 leading-snug',
+    railOrg: 'text-slate-600 font-light',
+    railRange: 'text-xs font-bold uppercase tracking-widest text-blue-700 mt-1',
+    railBody: 'text-slate-500 text-sm leading-relaxed',
+
+    emptyCard: 'p-12 bg-white border border-dashed border-slate-300 rounded-xl text-center',
+    emptyIconBox: 'w-14 h-14 mx-auto rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center mb-5',
+    emptyHeading: 'font-heading font-bold text-xl text-slate-900 mb-2',
+    emptyBody: 'text-slate-500 leading-relaxed max-w-md mx-auto',
+    emptyButton: 'inline-block mt-6 px-5 py-2.5 bg-slate-900 text-white rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors',
+};
 
 const FACT_ICONS: Record<string, LucideIcon> = { calendar: CalendarDays, users: Users };
 
@@ -59,7 +96,7 @@ function TimelineRail({ icon: Icon, title, entries }: { icon: LucideIcon; title:
     );
 }
 
-export function ExecutiveTheme({ site }: ExecutiveThemeProps) {
+export function ExecutiveTheme({ site, page = 'home' }: ExecutiveThemeProps) {
     const isFirm = site.kind === 'firm';
     const lawyer = site.lawyer;
     const members = site.roster ?? [];
@@ -83,19 +120,26 @@ export function ExecutiveTheme({ site }: ExecutiveThemeProps) {
     const BrandIcon = isFirm ? Building2 : Scale;
     const aboutHeading = isFirm ? site.heading.about : 'Executive Summary';
 
-    // Nav mirrors whichever sections actually render below.
+    // The People page only exists for a firm; an individual site rendered with
+    // page='team' is not a state the app produces, and falling through to the
+    // home page beats inventing an error page for it.
+    const isTeamPage = page === 'team' && isFirm;
+    const anchor = (hash: string) => sectionHref(isTeamPage ? 'team' : 'home', hash);
+
+    // Nav mirrors whichever sections actually render below, and stays pointed at
+    // the home page's anchors when rendered on the People page.
     const navLinks = isFirm
         ? [
-            { href: '#about', label: aboutHeading },
-            { href: '#practice-areas', label: site.heading.practice },
-            { href: '#team', label: 'Our Team' },
+            { href: anchor('#about'), label: aboutHeading },
+            { href: anchor('#practice-areas'), label: site.heading.practice },
+            { href: isTeamPage ? TEAM_PAGE_HREF : '#team', label: 'Our Team' },
         ]
         : [
-            { href: '#about', label: aboutHeading },
-            { href: '#practice-areas', label: site.heading.practice },
-            ...(hasTimeline ? [{ href: '#timeline', label: 'Timeline' }] : []),
-            { href: '#why', label: 'Why Work With Me' },
-            { href: '#faq', label: 'FAQ' },
+            { href: anchor('#about'), label: aboutHeading },
+            { href: anchor('#practice-areas'), label: site.heading.practice },
+            ...(hasTimeline ? [{ href: anchor('#timeline'), label: 'Timeline' }] : []),
+            { href: anchor('#why'), label: 'Why Work With Me' },
+            { href: anchor('#faq'), label: 'FAQ' },
         ];
 
     return (
@@ -103,16 +147,26 @@ export function ExecutiveTheme({ site }: ExecutiveThemeProps) {
             {/* Nav */}
             <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-200">
                 <div className="container mx-auto px-6 h-16 flex items-center justify-between gap-6">
-                    <a href="#top" className="flex items-center gap-2 min-w-0 font-heading font-bold text-slate-900 tracking-tight">
+                    <a href={anchor('#top')} className="flex items-center gap-2 min-w-0 font-heading font-bold text-slate-900 tracking-tight">
                         <BrandIcon className="w-5 h-5 text-blue-700 shrink-0" />
                         <span className="truncate">{lawFirmName}</span>
                     </a>
                     <div className="hidden @lg:flex items-center gap-8 text-sm font-medium text-slate-500">
                         {navLinks.map(({ href, label }) => (
-                            <a key={href} href={href} className="hover:text-slate-900 transition-colors">{label}</a>
+                            <a
+                                key={href}
+                                href={href}
+                                className={
+                                    isTeamPage && href === TEAM_PAGE_HREF
+                                        ? 'text-slate-900 transition-colors'
+                                        : 'hover:text-slate-900 transition-colors'
+                                }
+                            >
+                                {label}
+                            </a>
                         ))}
                     </div>
-                    <a href="#contact" className="hidden @lg:block px-4 @md:px-5 py-2.5 bg-slate-900 hover:bg-blue-700 rounded-lg text-sm font-bold text-white transition-colors shrink-0">
+                    <a href={anchor('#contact')} className="hidden @lg:block px-4 @md:px-5 py-2.5 bg-slate-900 hover:bg-blue-700 rounded-lg text-sm font-bold text-white transition-colors shrink-0">
                         Request Consultation
                     </a>
                     <details className="@lg:hidden relative shrink-0">
@@ -123,7 +177,7 @@ export function ExecutiveTheme({ site }: ExecutiveThemeProps) {
                             {navLinks.map(({ href, label }) => (
                                 <a key={href} href={href} className="hover:text-slate-900 transition-colors">{label}</a>
                             ))}
-                            <a href="#contact" className="mt-1 px-4 py-2.5 bg-slate-900 hover:bg-blue-700 rounded-lg text-sm font-bold text-white text-center transition-colors">
+                            <a href={anchor('#contact')} className="mt-1 px-4 py-2.5 bg-slate-900 hover:bg-blue-700 rounded-lg text-sm font-bold text-white text-center transition-colors">
                                 Request Consultation
                             </a>
                         </div>
@@ -131,6 +185,44 @@ export function ExecutiveTheme({ site }: ExecutiveThemeProps) {
                 </div>
             </nav>
 
+            {isTeamPage ? (
+                <>
+                    {/* The hero's band, sized for a subpage rather than a full screen. */}
+                    <header className="bg-white border-b border-slate-200">
+                        <div className="container mx-auto px-6 py-16 @md:py-20 max-w-6xl space-y-4">
+                            <a href="/" className="inline-flex items-center gap-2 text-slate-400 hover:text-slate-900 transition-colors text-xs font-bold uppercase tracking-[0.25em]">
+                                <ArrowLeft className="w-3.5 h-3.5" />
+                                Back to {lawFirmName}
+                            </a>
+                            <div className="flex items-center gap-5">
+                                {profilePhoto && (
+                                    <img
+                                        src={profilePhoto}
+                                        alt={site.image?.alt ?? lawFirmName}
+                                        className="w-16 h-16 rounded-xl object-contain bg-white p-2 border border-slate-200 shrink-0"
+                                    />
+                                )}
+                                <div>
+                                    <h1 className="text-4xl @md:text-6xl font-heading font-extrabold text-slate-900 tracking-tight leading-none">
+                                        Our Team
+                                    </h1>
+                                    {members.length > 0 && (
+                                        <p className="pt-3 flex items-center gap-2 text-[10px] @md:text-xs font-bold uppercase tracking-[0.2em] text-slate-400">
+                                            <Users className="w-4 h-4 text-blue-700" />
+                                            {members.length} {members.length === 1 ? 'lawyer' : 'lawyers'} at {fullName}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </header>
+
+                    <main className="container mx-auto px-6 py-16 max-w-6xl">
+                        <TeamBody site={site} palette={TEAM_PALETTE} />
+                    </main>
+                </>
+            ) : (
+                <>
             {/* Hero Header */}
             <header id="top" className="bg-white border-b border-slate-200 scroll-mt-16 min-h-[calc(100cqh-4rem)] flex flex-col justify-start @md:justify-center">
                 <div className="container mx-auto px-6 pt-4 pb-8 @sm:pt-6 @sm:pb-12 @md:py-20">
@@ -399,6 +491,8 @@ export function ExecutiveTheme({ site }: ExecutiveThemeProps) {
                     </aside>
                 </div>
             </main>
+                </>
+            )}
 
             <footer className="bg-slate-900 text-slate-500">
                 <div className="container mx-auto px-6 py-16 max-w-6xl grid grid-cols-1 @md:grid-cols-3 gap-12">
@@ -416,7 +510,7 @@ export function ExecutiveTheme({ site }: ExecutiveThemeProps) {
                             {navLinks.map(({ href, label }) => (
                                 <li key={href}><a href={href} className="hover:text-white transition-colors">{label}</a></li>
                             ))}
-                            <li><a href="#contact" className="hover:text-white transition-colors">Contact</a></li>
+                            <li><a href={anchor('#contact')} className="hover:text-white transition-colors">Contact</a></li>
                         </ul>
                     </div>
 

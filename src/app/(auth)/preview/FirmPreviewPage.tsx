@@ -83,7 +83,9 @@ export function FirmPreviewPage() {
       currentTheme={firm.themeSelection?.theme}
       onThemeChange={handleThemeChange}
     >
-      <FirmPreview firm={firm} />
+      {/* Full-page preview, so there is room for the Home / Team switch. A
+          firm's site is two pages and both are worth seeing before publish. */}
+      <FirmPreview firm={firm} pageToggle />
     </PreviewChrome>
   );
 }

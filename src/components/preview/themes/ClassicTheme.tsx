@@ -1,16 +1,58 @@
+/* eslint-disable @next/next/no-html-link-for-pages */
 import { TimelineEntry, formatTimelineRange } from '@/types/lawyer';
 import { RosterMember } from '@/types/firm';
 import { SiteModel } from '@/types/site-model';
-import { TEAM_PAGE_HREF, memberAnchor, memberHref, memberInitials } from '@/lib/firm-roster';
+import {
+  TEAM_PAGE_HREF, SitePage, sectionHref, memberAnchor, memberHref, memberInitials,
+} from '@/lib/firm-roster';
+import { TeamBody, TeamPalette } from './TeamSection';
 import {
   Phone, Mail, MapPin, Clock, Globe, Linkedin, Scale, UserCheck, MessageCircle, Wallet, Menu,
-  GraduationCap, Briefcase, Users, Building2, CalendarDays, BadgeCheck, ArrowRight,
+  GraduationCap, Briefcase, Users, Building2, CalendarDays, BadgeCheck, ArrowRight, ArrowLeft,
   type LucideIcon,
 } from 'lucide-react';
 
 interface ClassicThemeProps {
   site: SiteModel;
+  page?: SitePage;
 }
+
+/** Classic's navy-and-gold rendering of the People page. */
+const TEAM_PALETTE: TeamPalette = {
+  card: 'bg-white rounded-2xl p-8 @md:p-10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-[#F0F0F0]',
+  avatar: 'w-32 h-32 rounded-2xl bg-[#1B2B44] border-2 border-[#C5A059]',
+  avatarText: 'font-heading text-3xl font-bold text-[#C5A059]',
+  name: 'font-heading text-3xl font-bold text-[#1B2B44] leading-snug',
+  title: 'text-[#C5A059] text-lg font-medium',
+  meta: 'text-xs font-bold uppercase tracking-widest text-[#4A4A4A]/60',
+  body: 'text-[#4A4A4A] text-lg leading-relaxed font-light',
+  sectionLabel: 'text-xs font-bold uppercase tracking-widest text-[#1B2B44]',
+  chip: 'px-3 py-1.5 bg-[#F8F9FB] border border-[#EDF0F5] rounded-lg text-sm font-medium text-[#1B2B44]',
+  link: 'text-[#4A4A4A] hover:text-[#1B2B44] transition-colors',
+  contactRow: 'pt-2 border-t border-[#F0F0F0] mt-2',
+  icon: 'text-[#C5A059]',
+
+  jumpCard: 'bg-white rounded-2xl p-6 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-[#F0F0F0]',
+  jumpHeading: 'font-heading text-xs font-bold mb-4 text-[#1B2B44] uppercase tracking-widest',
+  jumpName: 'font-medium text-[#1B2B44] hover:text-[#C5A059] transition-colors',
+  jumpTitle: 'text-[#4A4A4A]/70 text-xs',
+
+  railList: 'border-l-2 border-[#EDF0F5] pl-6',
+  railDot: '-left-[31px] top-1.5 w-3 h-3 rounded-full bg-[#C5A059] ring-4 ring-white',
+  railTitle: 'font-heading text-lg font-bold text-[#1B2B44] leading-snug',
+  railOrg: 'text-[#4A4A4A] font-light',
+  railRange: 'text-xs font-bold uppercase tracking-widest text-[#C5A059] mt-1',
+  railBody: 'text-[#4A4A4A] text-sm leading-relaxed',
+
+  emptyCard:
+    'bg-white rounded-2xl p-12 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-dashed border-[#D8DEE8] text-center',
+  emptyIconBox:
+    'w-14 h-14 mx-auto rounded-2xl bg-[#F8F9FB] border border-[#EDF0F5] flex items-center justify-center mb-5',
+  emptyHeading: 'font-heading text-xl font-bold text-[#1B2B44] mb-2',
+  emptyBody: 'text-[#4A4A4A] leading-relaxed max-w-md mx-auto',
+  emptyButton:
+    'inline-block mt-6 px-5 py-2.5 bg-[#1B2B44] text-white rounded-lg text-sm font-bold hover:bg-[#243652] transition-colors',
+};
 
 // Value points are free text, so there's no icon to store per entry — cycle
 // through these by position instead.
@@ -203,13 +245,14 @@ function EmptyRoster({ email, phone }: { email?: string; phone?: string }) {
 /**
  * Classic — navy and gold, credential-forward.
  *
- * Renders both an individual lawyer's site and a firm's from one SiteModel.
- * The shell (nav, hero, about, practice areas, courts, contact, footer) is
- * identical for both; only the middle sections differ — a lawyer's timeline,
- * value points, process and FAQ, versus a firm's roster. This used to be two
- * files, and the copy that wasn't kept in sync is where the bugs lived.
+ * Renders both an individual lawyer's site and a firm's from one SiteModel, and
+ * both pages of a firm's site from one component. The shell (nav, hero, about,
+ * practice areas, courts, contact, footer) is identical for both kinds; only
+ * the middle sections differ — a lawyer's timeline, value points, process and
+ * FAQ, versus a firm's roster. This used to be two files, and the copy that
+ * wasn't kept in sync is where the bugs lived.
  */
-export function ClassicTheme({ site }: ClassicThemeProps) {
+export function ClassicTheme({ site, page = 'home' }: ClassicThemeProps) {
   const isFirm = site.kind === 'firm';
   const lawyer = site.lawyer;
   const members = site.roster ?? [];
@@ -220,19 +263,26 @@ export function ClassicTheme({ site }: ClassicThemeProps) {
 
   const BrandIcon = isFirm ? Building2 : Scale;
 
-  // Nav mirrors whichever sections actually render below.
+  // The People page only exists for a firm; an individual site rendered with
+  // page='team' is not a state the app produces, and falling through to the
+  // home page beats inventing an error page for it.
+  const isTeamPage = page === 'team' && isFirm;
+  const anchor = (hash: string) => sectionHref(isTeamPage ? 'team' : 'home', hash);
+
+  // Nav mirrors whichever sections actually render below, and stays pointed at
+  // the home page's anchors when rendered on the People page.
   const navLinks = isFirm
     ? [
-        { href: '#about', label: 'About' },
-        { href: '#practice-areas', label: site.heading.practice },
+        { href: anchor('#about'), label: 'About' },
+        { href: anchor('#practice-areas'), label: site.heading.practice },
         { href: TEAM_PAGE_HREF, label: 'Our Team' },
       ]
     : [
-        { href: '#about', label: 'About' },
-        { href: '#practice-areas', label: site.heading.practice },
-        ...(hasTimeline ? [{ href: '#timeline', label: 'Timeline' }] : []),
-        { href: '#why', label: 'Why Work With Me' },
-        { href: '#faq', label: 'FAQ' },
+        { href: anchor('#about'), label: 'About' },
+        { href: anchor('#practice-areas'), label: site.heading.practice },
+        ...(hasTimeline ? [{ href: anchor('#timeline'), label: 'Timeline' }] : []),
+        { href: anchor('#why'), label: 'Why Work With Me' },
+        { href: anchor('#faq'), label: 'FAQ' },
       ];
 
   return (
@@ -240,16 +290,26 @@ export function ClassicTheme({ site }: ClassicThemeProps) {
       {/* Nav */}
       <nav className="sticky top-0 z-50 bg-[#1B2B44]/95 backdrop-blur-md border-b border-white/5">
         <div className="container mx-auto px-6 h-16 flex items-center justify-between gap-6">
-          <a href="#top" className="flex items-center gap-2 min-w-0 font-heading font-bold text-white tracking-tight">
+          <a href={anchor('#top')} className="flex items-center gap-2 min-w-0 font-heading font-bold text-white tracking-tight">
             <BrandIcon className="w-5 h-5 text-[#C5A059] shrink-0" />
             <span className="truncate">{site.brandName}</span>
           </a>
           <div className="hidden @lg:flex items-center gap-8 text-sm font-medium text-white/60">
             {navLinks.map(({ href, label }) => (
-              <a key={href} href={href} className="hover:text-white transition-colors">{label}</a>
+              <a
+                key={href}
+                href={href}
+                className={
+                  isTeamPage && href === TEAM_PAGE_HREF
+                    ? 'text-white transition-colors'
+                    : 'hover:text-white transition-colors'
+                }
+              >
+                {label}
+              </a>
             ))}
           </div>
-          <a href="#contact" className="hidden @lg:block px-4 @md:px-5 py-2.5 bg-[#C5A059] hover:bg-[#B18F4A] rounded-lg text-sm font-bold text-[#1B2B44] transition-colors shrink-0">
+          <a href={anchor('#contact')} className="hidden @lg:block px-4 @md:px-5 py-2.5 bg-[#C5A059] hover:bg-[#B18F4A] rounded-lg text-sm font-bold text-[#1B2B44] transition-colors shrink-0">
             Request Consultation
           </a>
           <details className="@lg:hidden relative shrink-0">
@@ -260,7 +320,7 @@ export function ClassicTheme({ site }: ClassicThemeProps) {
               {navLinks.map(({ href, label }) => (
                 <a key={href} href={href} className="hover:text-white transition-colors">{label}</a>
               ))}
-              <a href="#contact" className="mt-1 px-4 py-2.5 bg-[#C5A059] hover:bg-[#B18F4A] rounded-lg text-sm font-bold text-[#1B2B44] text-center transition-colors">
+              <a href={anchor('#contact')} className="mt-1 px-4 py-2.5 bg-[#C5A059] hover:bg-[#B18F4A] rounded-lg text-sm font-bold text-[#1B2B44] text-center transition-colors">
                 Request Consultation
               </a>
             </div>
@@ -268,6 +328,48 @@ export function ClassicTheme({ site }: ClassicThemeProps) {
         </div>
       </nav>
 
+      {isTeamPage ? (
+        <>
+          {/* The hero's band, sized for a subpage rather than a full screen. */}
+          <header className="bg-[#1B2B44] text-white relative overflow-hidden">
+            <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]" />
+            <div className="container mx-auto px-6 py-16 @md:py-24 relative z-10">
+              <div className="max-w-6xl mx-auto space-y-4">
+                <a
+                  href="/"
+                  className="inline-flex items-center gap-2 text-white/50 hover:text-white transition-colors text-xs font-bold uppercase tracking-widest"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  Back to {site.brandName}
+                </a>
+                <div className="flex items-center gap-5">
+                  {site.image?.src && (
+                    <img
+                      src={site.image.src}
+                      alt={site.image.alt}
+                      className="w-16 h-16 rounded-xl object-contain bg-white p-2 border-2 border-[#C5A059] shrink-0"
+                    />
+                  )}
+                  <div>
+                    <h1 className="font-heading text-4xl @md:text-6xl font-bold tracking-tight">Our Team</h1>
+                    {members.length > 0 && (
+                      <p className="text-white/60 text-xs @sm:text-sm uppercase tracking-[0.2em] font-medium pt-2 flex items-center gap-2">
+                        <Users className="w-4 h-4 text-[#C5A059]" />
+                        {members.length} {members.length === 1 ? 'lawyer' : 'lawyers'} at {site.name}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </header>
+
+          <main className="container mx-auto px-6 py-16">
+            <TeamBody site={site} palette={TEAM_PALETTE} />
+          </main>
+        </>
+      ) : (
+        <>
       {/* Hero */}
       <header id="top" className="bg-[#1B2B44] text-white relative overflow-hidden scroll-mt-16 min-h-[calc(100cqh-4rem)] flex flex-col justify-center">
         <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]" />
@@ -534,6 +636,8 @@ export function ClassicTheme({ site }: ClassicThemeProps) {
           </aside>
         </div>
       </main>
+        </>
+      )}
 
       {/* Footer */}
       <footer className="bg-[#1B2B44] border-t border-white/5">
@@ -552,7 +656,7 @@ export function ClassicTheme({ site }: ClassicThemeProps) {
               {navLinks.map(({ href, label }) => (
                 <li key={href}><a href={href} className="hover:text-white transition-colors">{label}</a></li>
               ))}
-              <li><a href="#contact" className="hover:text-white transition-colors">Contact</a></li>
+              <li><a href={anchor('#contact')} className="hover:text-white transition-colors">Contact</a></li>
             </ul>
           </div>
 

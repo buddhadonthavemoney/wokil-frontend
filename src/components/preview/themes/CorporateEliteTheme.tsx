@@ -1,16 +1,53 @@
+/* eslint-disable @next/next/no-html-link-for-pages */
 import { TimelineEntry, formatTimelineRange } from '@/types/lawyer';
 import { SiteModel } from '@/types/site-model';
-import { TEAM_PAGE_HREF } from '@/lib/firm-roster';
+import { TEAM_PAGE_HREF, SitePage, sectionHref } from '@/lib/firm-roster';
 import { RosterList, type RosterPalette } from './RosterSection';
+import { TeamBody, type TeamPalette } from './TeamSection';
 import {
     Phone, Mail, MapPin, Globe, Linkedin, Menu, Landmark, Verified, Handshake, Briefcase, ShieldCheck,
     ChevronDown, Gavel, Building2, Users, Plane, Copyright, HeartPulse, Home, ReceiptText, ScrollText,
-    Banknote, Scale, Leaf, Stethoscope, ArrowRight, type LucideIcon,
+    Banknote, Scale, Leaf, Stethoscope, ArrowRight, ArrowLeft, type LucideIcon,
 } from 'lucide-react';
 
 interface CorporateEliteThemeProps {
     site: SiteModel;
+    page?: SitePage;
 }
+
+// Corporate Elite's People page: the roster palette at full-entry scale.
+const TEAM_PALETTE: TeamPalette = {
+    card: 'bg-[#faf9f8] p-8 @md:p-10 rounded-lg border border-[#c5c6ce]/20 shadow-[0_4px_12px_rgba(27,43,68,0.08)]',
+    avatar: 'w-32 h-32 rounded-lg bg-[#1b2b44]/10',
+    avatarText: 'font-heading text-3xl text-[#05162e]',
+    name: 'font-heading text-3xl text-[#05162e] leading-snug',
+    title: 'text-lg font-semibold text-[#05162e]',
+    meta: 'text-[12px] font-semibold uppercase tracking-[0.1em] text-[#44474d]',
+    body: 'text-[#44474d] text-lg leading-relaxed',
+    sectionLabel: 'text-[12px] font-semibold uppercase tracking-[0.1em] text-[#05162e]',
+    chip: 'px-3 py-1.5 rounded-full bg-white border border-[#c5c6ce]/40 text-sm font-medium text-[#44474d] whitespace-nowrap',
+    link: 'text-[#44474d] hover:text-[#05162e] transition-colors',
+    contactRow: 'pt-2 border-t border-[#c5c6ce]/30 mt-2',
+    icon: 'text-[#05162e]',
+
+    jumpCard: 'bg-white p-6 rounded-lg border border-[#c5c6ce]/20 shadow-[0_4px_12px_rgba(27,43,68,0.08)]',
+    jumpHeading: 'font-heading text-[12px] font-semibold uppercase tracking-[0.1em] text-[#05162e] mb-4',
+    jumpName: 'font-semibold text-[#05162e]',
+    jumpTitle: 'text-[#44474d] text-xs',
+
+    railList: 'border-l border-[#c5c6ce]/40 pl-6',
+    railDot: '-left-[31px] top-2 w-3 h-3 rounded-full bg-[#05162e] ring-4 ring-[#faf9f8]',
+    railTitle: 'font-heading text-lg text-[#05162e] leading-snug',
+    railOrg: 'text-[#44474d]',
+    railRange: 'text-[12px] font-semibold uppercase tracking-[0.1em] text-[#44474d] mt-1',
+    railBody: 'text-[#44474d] text-sm leading-relaxed',
+
+    emptyCard: 'bg-[#faf9f8] p-12 rounded-lg border border-dashed border-[#c5c6ce] text-center',
+    emptyIconBox: 'w-14 h-14 mx-auto rounded-lg bg-white border border-[#c5c6ce]/40 flex items-center justify-center mb-5',
+    emptyHeading: 'font-heading text-2xl text-[#05162e] mb-2',
+    emptyBody: 'text-[#44474d] leading-relaxed max-w-md mx-auto',
+    emptyButton: 'inline-block mt-6 px-6 py-3 rounded-lg bg-[#05162e] text-white text-[12px] font-semibold uppercase tracking-[0.1em] hover:opacity-90 transition-opacity',
+};
 
 // Corporate Elite in roster form: soft off-white cards on the theme's warm
 // grey, navy headings, the same 12px uppercase meta as the rest of the page.
@@ -83,7 +120,7 @@ function unifiedTimeline(lawyer: SiteModel['lawyer']) {
         });
 }
 
-export function CorporateEliteTheme({ site }: CorporateEliteThemeProps) {
+export function CorporateEliteTheme({ site, page = 'home' }: CorporateEliteThemeProps) {
     const isFirm = site.kind === 'firm';
     const lawyer = site.lawyer;
     const members = site.roster ?? [];
@@ -105,15 +142,21 @@ export function CorporateEliteTheme({ site }: CorporateEliteThemeProps) {
     const aboutHeading = isFirm ? site.heading.about : 'Professional Bio';
     const practiceHeading = isFirm ? site.heading.practice : 'Core Practice Areas';
 
+    // The People page only exists for a firm; an individual site rendered with
+    // page='team' is not a state the app produces, and falling through to the
+    // home page beats inventing an error page for it.
+    const isTeamPage = page === 'team' && isFirm;
+    const anchor = (hash: string) => sectionHref(isTeamPage ? 'team' : 'home', hash);
+
     const navLinks = isFirm
         ? [
-            { href: '#credentials', label: 'Credentials' },
-            { href: '#team', label: 'Our Team' },
+            { href: anchor('#credentials'), label: 'Credentials' },
+            { href: isTeamPage ? TEAM_PAGE_HREF : '#team', label: 'Our Team' },
         ]
         : [
-            ...(timeline.length > 0 ? [{ href: '#timeline', label: 'Timeline' }] : []),
-            { href: '#credentials', label: 'Credentials' },
-            { href: '#faq', label: 'FAQ' },
+            ...(timeline.length > 0 ? [{ href: anchor('#timeline'), label: 'Timeline' }] : []),
+            { href: anchor('#credentials'), label: 'Credentials' },
+            { href: anchor('#faq'), label: 'FAQ' },
         ];
 
     return (
@@ -129,12 +172,22 @@ export function CorporateEliteTheme({ site }: CorporateEliteThemeProps) {
                 which is the pre-existing look. */}
             <nav data-nav className="group/nav sticky top-0 z-50 bg-[#faf9f8]/95 backdrop-blur-md border-b border-[#c5c6ce]/40">
                 <div className="container mx-auto px-6 h-20 flex items-center justify-between gap-6">
-                    <a href="#top" className="block flex-1 min-w-0 truncate hover:whitespace-normal hover:overflow-visible font-heading font-bold text-xl @md:text-2xl text-[#05162e] tracking-tight">
+                    <a href={anchor('#top')} className="block flex-1 min-w-0 truncate hover:whitespace-normal hover:overflow-visible font-heading font-bold text-xl @md:text-2xl text-[#05162e] tracking-tight">
                         {lawFirmName}
                     </a>
                     <div className="flex items-center gap-6 text-[12px] font-semibold uppercase tracking-[0.1em] text-[#44474d] group-data-[collapsed]/nav:hidden">
                         {navLinks.map(({ href, label }) => (
-                            <a key={href} href={href} className="hover:text-[#05162e] transition-colors">{label}</a>
+                            <a
+                                key={href}
+                                href={href}
+                                className={
+                                    isTeamPage && href === TEAM_PAGE_HREF
+                                        ? 'text-[#05162e] transition-colors'
+                                        : 'hover:text-[#05162e] transition-colors'
+                                }
+                            >
+                                {label}
+                            </a>
                         ))}
                     </div>
                     <div className="flex items-center gap-2 shrink-0 group-data-[collapsed]/nav:hidden">
@@ -162,6 +215,29 @@ export function CorporateEliteTheme({ site }: CorporateEliteThemeProps) {
             </nav>
 
             <main>
+                {isTeamPage ? (
+                    <>
+                        {/* Page header — the hero's rhythm, sized for a subpage. */}
+                        <section className="container mx-auto max-w-[1280px] px-6 py-16 @md:py-20 space-y-5 border-b border-[#c5c6ce]/40">
+                            <a href="/" className="inline-flex items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.1em] text-[#44474d] hover:text-[#05162e] transition-colors">
+                                <ArrowLeft className="w-3.5 h-3.5" />
+                                Back to {lawFirmName}
+                            </a>
+                            <h1 className="font-heading text-4xl @md:text-6xl text-[#05162e] tracking-tight">Our Team</h1>
+                            {members.length > 0 && (
+                                <p className="flex items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.1em] text-[#44474d]">
+                                    <Users className="w-4 h-4 text-[#05162e]" />
+                                    {members.length} {members.length === 1 ? 'lawyer' : 'lawyers'} at {fullName}
+                                </p>
+                            )}
+                        </section>
+
+                        <section className="container mx-auto max-w-[1280px] px-6 py-16">
+                            <TeamBody site={site} palette={TEAM_PALETTE} />
+                        </section>
+                    </>
+                ) : (
+                    <>
                 {/* Hero */}
                 <section id="top" className="container mx-auto max-w-[1280px] px-6 pt-4 pb-8 @sm:pt-6 @md:py-20 grid grid-cols-1 @md:grid-cols-2 gap-10 items-start @md:items-center scroll-mt-24 min-h-[calc(100cqh-5rem)]">
                     <div>
@@ -381,6 +457,8 @@ export function CorporateEliteTheme({ site }: CorporateEliteThemeProps) {
                         ))}
                     </div>
                 </section>
+                )}
+                    </>
                 )}
             </main>
 

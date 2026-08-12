@@ -1,12 +1,49 @@
+/* eslint-disable @next/next/no-html-link-for-pages */
 import { TimelineEntry, formatTimelineRange } from '@/types/lawyer';
 import { SiteModel } from '@/types/site-model';
-import { TEAM_PAGE_HREF } from '@/lib/firm-roster';
+import { TEAM_PAGE_HREF, SitePage, sectionHref } from '@/lib/firm-roster';
 import { RosterList, type RosterPalette } from './RosterSection';
-import { Phone, Mail, MapPin, Clock, Globe, Linkedin, Scale, BookOpen, PenTool as Pen, Gavel, Building2, UserCheck, MessageCircle, Wallet, Menu, GraduationCap, Briefcase, ArrowRight, type LucideIcon } from 'lucide-react';
+import { TeamBody, type TeamPalette } from './TeamSection';
+import { Phone, Mail, MapPin, Clock, Globe, Linkedin, Scale, BookOpen, PenTool as Pen, Gavel, Building2, Users, UserCheck, MessageCircle, Wallet, Menu, GraduationCap, Briefcase, ArrowRight, ArrowLeft, type LucideIcon } from 'lucide-react';
 
 interface LegalCraftThemeProps {
     site: SiteModel;
+    page?: SitePage;
 }
+
+// LegalCraft's People page: the same cream panels with the left tan rule.
+const TEAM_PALETTE: TeamPalette = {
+    card: 'p-8 @md:p-10 bg-[#F5F2ED] border-l-4 border-[#D4A373]',
+    avatar: 'w-32 h-32 rounded-sm bg-white border border-[#E5E5E5]',
+    avatarText: 'font-heading text-3xl font-bold text-[#D4A373]',
+    name: 'text-3xl font-bold text-[#1A120B] font-heading leading-snug',
+    title: 'text-[#D4A373] text-lg font-heading italic font-medium',
+    meta: 'text-[10px] font-bold uppercase tracking-[0.2em] text-[#3C2A21]/50',
+    body: 'text-[#3C2A21]/70 text-lg leading-relaxed font-light',
+    sectionLabel: 'text-[10px] font-bold uppercase tracking-[0.2em] text-[#1A120B]',
+    chip: 'px-3 py-1.5 bg-white border border-[#E5E5E5] rounded-sm text-sm font-medium text-[#1A120B]',
+    link: 'text-[#3C2A21] hover:text-[#D4A373] transition-colors',
+    contactRow: 'pt-2 border-t border-[#E5E5E5] mt-2',
+    icon: 'text-[#D4A373]',
+
+    jumpCard: 'p-6 bg-[#F5F2ED] border-l-4 border-[#D4A373]',
+    jumpHeading: 'font-heading text-xs font-bold text-[#1A120B] uppercase tracking-[0.2em] mb-4',
+    jumpName: 'font-medium text-[#1A120B] hover:text-[#D4A373] transition-colors',
+    jumpTitle: 'text-[#3C2A21]/60 text-xs italic',
+
+    railList: 'border-l border-[#E5E5E5] pl-6',
+    railDot: '-left-[31px] top-2 w-3 h-3 rounded-full bg-[#D4A373] ring-4 ring-[#F5F2ED]',
+    railTitle: 'font-heading text-lg font-bold text-[#1A120B] leading-snug',
+    railOrg: 'text-[#3C2A21]/70 font-light',
+    railRange: 'text-xs font-bold uppercase tracking-[0.2em] text-[#D4A373] mt-1',
+    railBody: 'text-[#3C2A21]/70 text-sm leading-relaxed',
+
+    emptyCard: 'p-12 bg-[#F5F2ED] border-l-4 border-[#D4A373] text-center',
+    emptyIconBox: 'w-14 h-14 mx-auto rounded-sm bg-white border border-[#E5E5E5] flex items-center justify-center mb-5',
+    emptyHeading: 'font-heading text-xl font-bold text-[#1A120B] mb-2',
+    emptyBody: 'text-[#3C2A21]/70 leading-relaxed max-w-md mx-auto',
+    emptyButton: 'inline-block mt-6 px-5 py-2.5 bg-[#3C2A21] text-white rounded-sm text-sm font-bold uppercase tracking-wide hover:bg-[#1A120B] transition-colors',
+};
 
 // LegalCraft in roster form: warm cream panels with the theme's left tan rule.
 const ROSTER_PALETTE: RosterPalette = {
@@ -56,7 +93,7 @@ function TimelineRail({ icon: Icon, title, entries }: { icon: LucideIcon; title:
     );
 }
 
-export function LegalCraftTheme({ site }: LegalCraftThemeProps) {
+export function LegalCraftTheme({ site, page = 'home' }: LegalCraftThemeProps) {
     const isFirm = site.kind === 'firm';
     const lawyer = site.lawyer;
     const members = site.roster ?? [];
@@ -80,18 +117,24 @@ export function LegalCraftTheme({ site }: LegalCraftThemeProps) {
     const aboutHeading = isFirm ? site.heading.about : 'Professional Philosophy';
     const practiceHeading = isFirm ? site.heading.practice : 'Crafted Expertise';
 
+    // The People page only exists for a firm; an individual site rendered with
+    // page='team' is not a state the app produces, and falling through to the
+    // home page beats inventing an error page for it.
+    const isTeamPage = page === 'team' && isFirm;
+    const anchor = (hash: string) => sectionHref(isTeamPage ? 'team' : 'home', hash);
+
     const navLinks = isFirm
         ? [
-            { href: '#about', label: aboutHeading },
-            { href: '#practice-areas', label: practiceHeading },
-            { href: '#team', label: 'Our Team' },
+            { href: anchor('#about'), label: aboutHeading },
+            { href: anchor('#practice-areas'), label: practiceHeading },
+            { href: isTeamPage ? TEAM_PAGE_HREF : '#team', label: 'Our Team' },
         ]
         : [
-            { href: '#about', label: 'Philosophy' },
-            { href: '#practice-areas', label: 'Expertise' },
-            ...(hasTimeline ? [{ href: '#timeline', label: 'Timeline' }] : []),
-            { href: '#why', label: 'Why Work With Me' },
-            { href: '#faq', label: 'FAQ' },
+            { href: anchor('#about'), label: 'Philosophy' },
+            { href: anchor('#practice-areas'), label: 'Expertise' },
+            ...(hasTimeline ? [{ href: anchor('#timeline'), label: 'Timeline' }] : []),
+            { href: anchor('#why'), label: 'Why Work With Me' },
+            { href: anchor('#faq'), label: 'FAQ' },
         ];
 
     return (
@@ -102,16 +145,26 @@ export function LegalCraftTheme({ site }: LegalCraftThemeProps) {
             {/* Nav */}
             <nav className="sticky top-0 z-50 bg-[#FDFBF7]/90 backdrop-blur-md border-b border-[#E5E5E5]">
                 <div className="container mx-auto px-6 h-16 flex items-center justify-between gap-6">
-                    <a href="#top" className="flex items-center gap-2 min-w-0 font-heading font-bold text-[#1A120B] tracking-tight">
+                    <a href={anchor('#top')} className="flex items-center gap-2 min-w-0 font-heading font-bold text-[#1A120B] tracking-tight">
                         <BrandIcon className="w-5 h-5 text-[#D4A373] shrink-0" />
                         <span className="truncate">{site.brandName}</span>
                     </a>
                     <div className="hidden @lg:flex items-center gap-8 text-sm font-medium text-[#3C2A21]/60">
                         {navLinks.map(({ href, label }) => (
-                            <a key={href} href={href} className="hover:text-[#1A120B] transition-colors">{label}</a>
+                            <a
+                                key={href}
+                                href={href}
+                                className={
+                                    isTeamPage && href === TEAM_PAGE_HREF
+                                        ? 'text-[#1A120B] transition-colors'
+                                        : 'hover:text-[#1A120B] transition-colors'
+                                }
+                            >
+                                {label}
+                            </a>
                         ))}
                     </div>
-                    <a href="#contact" className="hidden @lg:block px-4 @md:px-5 py-2.5 bg-[#3C2A21] hover:bg-[#1A120B] rounded-sm text-sm font-bold text-white tracking-wide uppercase transition-colors shrink-0">
+                    <a href={anchor('#contact')} className="hidden @lg:block px-4 @md:px-5 py-2.5 bg-[#3C2A21] hover:bg-[#1A120B] rounded-sm text-sm font-bold text-white tracking-wide uppercase transition-colors shrink-0">
                         Request Interview
                     </a>
                     <details className="@lg:hidden relative shrink-0">
@@ -122,7 +175,7 @@ export function LegalCraftTheme({ site }: LegalCraftThemeProps) {
                             {navLinks.map(({ href, label }) => (
                                 <a key={href} href={href} className="hover:text-[#1A120B] transition-colors">{label}</a>
                             ))}
-                            <a href="#contact" className="mt-1 px-4 py-2.5 bg-[#3C2A21] hover:bg-[#1A120B] rounded-sm text-sm font-bold text-white tracking-wide uppercase text-center transition-colors">
+                            <a href={anchor('#contact')} className="mt-1 px-4 py-2.5 bg-[#3C2A21] hover:bg-[#1A120B] rounded-sm text-sm font-bold text-white tracking-wide uppercase text-center transition-colors">
                                 Request Interview
                             </a>
                         </div>
@@ -130,6 +183,39 @@ export function LegalCraftTheme({ site }: LegalCraftThemeProps) {
                 </div>
             </nav>
 
+            {isTeamPage ? (
+                <>
+                    {/* The hero's band, sized for a subpage rather than a full screen. */}
+                    <header className="relative py-16 @md:py-24 overflow-hidden border-b border-[#E5E5E5]">
+                        <div className="absolute top-0 right-0 w-1/3 h-full bg-[#3C2A21]/[0.02] -skew-x-12 transform translate-x-1/2" />
+                        <div className="container mx-auto px-6 relative max-w-6xl space-y-5">
+                            <a href="/" className="inline-flex items-center gap-2 text-[#3C2A21]/50 hover:text-[#1A120B] transition-colors text-xs font-bold uppercase tracking-[0.2em]">
+                                <ArrowLeft className="w-3.5 h-3.5" />
+                                Back to {site.brandName}
+                            </a>
+                            <div className="flex items-center gap-5">
+                                <span className="h-px w-12 bg-[#D4A373] shrink-0" />
+                                <div>
+                                    <h1 className="font-heading text-4xl @md:text-6xl font-bold text-[#1A120B] tracking-tight">
+                                        Our Team
+                                    </h1>
+                                    {members.length > 0 && (
+                                        <p className="pt-3 flex items-center gap-2 text-[10px] @md:text-xs font-bold uppercase tracking-[0.2em] text-[#3C2A21]/50">
+                                            <Users className="w-4 h-4 text-[#D4A373]" />
+                                            {members.length} {members.length === 1 ? 'lawyer' : 'lawyers'} at {fullName}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </header>
+
+                    <main className="container mx-auto px-6 py-16 max-w-6xl">
+                        <TeamBody site={site} palette={TEAM_PALETTE} />
+                    </main>
+                </>
+            ) : (
+                <>
             {/* Hero Section */}
             <header id="top" className="relative pt-8 pb-10 @sm:pt-16 @sm:pb-20 @md:pt-24 @md:pb-32 overflow-hidden border-b border-[#E5E5E5] scroll-mt-16 min-h-[calc(100cqh-4rem)] flex flex-col justify-center">
                 <div className="absolute top-0 right-0 w-1/3 h-full bg-[#3C2A21]/[0.02] -skew-x-12 transform translate-x-1/2" />
@@ -372,6 +458,8 @@ export function LegalCraftTheme({ site }: LegalCraftThemeProps) {
                     </div>
                 </div>
             </main>
+                </>
+            )}
 
             <footer className="bg-[#1A120B] text-[#D4A373]/80 border-t-8 border-[#D4A373]">
                 <div className="container mx-auto px-6 py-16 max-w-6xl grid grid-cols-1 @md:grid-cols-3 gap-12">
@@ -389,7 +477,7 @@ export function LegalCraftTheme({ site }: LegalCraftThemeProps) {
                             {navLinks.map(({ href, label }) => (
                                 <li key={href}><a href={href} className="hover:text-white transition-colors">{label}</a></li>
                             ))}
-                            <li><a href="#contact" className="hover:text-white transition-colors">Contact</a></li>
+                            <li><a href={anchor('#contact')} className="hover:text-white transition-colors">Contact</a></li>
                         </ul>
                     </div>
 
