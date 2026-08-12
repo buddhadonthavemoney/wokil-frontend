@@ -9,48 +9,32 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
-import { cn } from '@/lib/utils'
+import { cn, siteHref } from '@/lib/utils'
 import QRCode from "react-qr-code";
 import {
   Scale,
   User,
-  Eye,
-  Users,
   QrCode,
   ExternalLink,
   Copy,
   Edit,
-  TrendingUp,
   Calendar,
   Globe,
   Plus,
   Shield,
   ArrowLeft,
-  Clock,
   MapPin,
   Gavel
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { InfoModal } from '@/components/InfoModal';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { getProfile, getSiteAnalytics } from '@/generated/wokil-api';
-import { useDeployStream } from '@/hooks/useDeployStream';
+import { getProfile } from '@/generated/wokil-api';
+import { useDeployHandoff } from '@/hooks/useDeployHandoff';
+import { useRequireAccountType } from '@/hooks/useAccountType';
 import { DeployProgressModal } from '@/components/deploy/DeployProgressModal';
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell
-} from 'recharts';
+import { InsightsSection } from '@/components/dashboard/InsightsSection';
 import AuthGuard from '@/components/auth/AuthGuard';
-
-const COLORS = ['#1B2B44', '#C5A059', '#4B5563', '#059669', '#4338ca'];
 
 export default function Dashboard() {
   return (
@@ -61,6 +45,11 @@ export default function Dashboard() {
 }
 
 function DashboardContent() {
+  // This whole page reads getProfile, which a firm account has no rows behind —
+  // it would render an empty name, an empty avatar and empty stats rather than
+  // an error. The firm's equivalent home is /firm-dashboard.
+  const { redirecting } = useRequireAccountType('individual', '/firm-dashboard');
+
   const [highlightViewSite, setHighlightViewSite] = useState(false);
   const [showGuideArrow, setShowGuideArrow] = useState(false);
 
@@ -96,13 +85,6 @@ function DashboardContent() {
     },
   });
 
-  const { data: analytics } = useQuery({
-    queryKey: ['analytics'],
-    queryFn: async () => (await getSiteAnalytics({ throwOnError: true })).data,
-    enabled: !!profile?.googleAnalyticsId,
-    refetchInterval: 30000,
-  });
-
   useEffect(() => {
     if (!searchParams) return;
     const showInfo = searchParams.get('showInfoModal');
@@ -122,33 +104,19 @@ function DashboardContent() {
     }
   }, [searchParams, router]);
 
-  const [activeDeployment, setActiveDeployment] = useState(false);
-
-  useEffect(() => {
-    if (!searchParams) return;
-    const isDeploying = searchParams.get('deploying');
-    if (isDeploying === 'true') {
-      setActiveDeployment(true);
-      const newParams = new URLSearchParams(searchParams.toString());
-      newParams.delete('deploying');
-      router.replace(`/dashboard?${newParams.toString()}`, { scroll: false });
-    }
-  }, [searchParams, router]);
-
-  const deployStream = useDeployStream({
-    active: activeDeployment,
-    onDeactivate: () => setActiveDeployment(false),
-    confirmAlreadyDone: async () => {
-      // Disambiguates the stream's "no ongoing deployment" 400: only trust it
-      // as a finished deploy if the profile itself confirms publish, so a
-      // subscribe that raced a deploy which never actually ran doesn't get
-      // reported as a success.
+  const deployStream = useDeployHandoff({
+    redirectTo: '/dashboard',
+    // Disambiguates the stream's "no ongoing deployment" 400: only trust it
+    // as a finished deploy if the profile itself confirms publish, so a
+    // subscribe that raced a deploy which never actually ran doesn't get
+    // reported as a success.
+    confirmPublished: async () => {
       const data = (await getProfile({ throwOnError: true })).data;
       return !!(data && (data.isPublished || data.professionalProfile?.deploymentURL));
     },
+    // Refetch regardless of outcome: a failed deploy can still have rolled
+    // some state forward (or back) that the profile needs to reflect.
     onDone: async (status) => {
-      // Refetch regardless of outcome: a failed deploy can still have rolled
-      // some state forward (or back) that the profile needs to reflect.
       await fetchProfile();
       if (status !== 'success') return;
       setShowGuideArrow(true);
@@ -162,9 +130,7 @@ function DashboardContent() {
 
   const getPublicUrl = () => {
     if (!profile || !profile.siteUrl) return '';
-    const url = profile.siteUrl;
-    if (url.startsWith('http://') || url.startsWith('https://')) return url;
-    return `https://${url}`;
+    return siteHref(profile.siteUrl);
   };
 
   const copyUrl = () => {
@@ -177,7 +143,9 @@ function DashboardContent() {
     }
   };
 
-  if (loading) {
+  // `redirecting` holds the loading state for a firm account on its way to
+  // /firm-dashboard, so it never flashes the empty lawyer dashboard first.
+  if (loading || redirecting) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="animate-pulse text-muted-foreground">Loading...</div>
@@ -377,112 +345,7 @@ function DashboardContent() {
             </Card>
           </section>
 
-          <section className="space-y-6 relative">
-             <div className="flex items-center justify-between">
-                <h2 className="font-heading text-2xl font-bold tracking-tight text-foreground">Insights</h2>
-                <div className="text-xs text-muted-foreground font-medium uppercase tracking-widest flex items-center gap-2">
-                  <TrendingUp className="w-3.5 h-3.5 text-green-600" />
-                  Live Activity
-                </div>
-              </div>
-
-            {!analytics && !profile?.googleAnalyticsId ? (
-                <div className="bg-card border border-border rounded-xl p-10 md:p-16 text-center shadow-premium">
-                    <div className="w-16 h-16 bg-primary/5 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <TrendingUp className="w-8 h-8 text-primary" />
-                    </div>
-                    <h3 className="text-xl font-bold mb-3">Enable Site Analytics</h3>
-                    <p className="text-muted-foreground max-w-md mx-auto mb-8">
-                        Get detailed insights about your visitors, page views, and traffic sources by enabling Google Analytics integration in Settings.
-                    </p>
-                    <Button 
-                        size="lg" 
-                        onClick={() => router.push('/settings')}
-                        className="px-8"
-                    >
-                        Go to Settings
-                    </Button>
-                </div>
-            ) : (
-                <div className="space-y-6 animate-fade-in">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        <div className="bg-card border border-border rounded-xl p-8 shadow-premium hover:shadow-md transition-shadow">
-                            <div className="flex items-center justify-between mb-4">
-                                <span className="text-sm font-medium text-muted-foreground">Total Views</span>
-                                <Eye className="w-4 h-4 text-blue-500" />
-                            </div>
-                            <div className="text-3xl font-bold">{analytics?.totalViews || 0}</div>
-                        </div>
-                        <div className="bg-card border border-border rounded-xl p-8 shadow-premium hover:shadow-md transition-shadow">
-                            <div className="flex items-center justify-between mb-4">
-                                <span className="text-sm font-medium text-muted-foreground">Unique Visitors</span>
-                                <Users className="w-4 h-4 text-green-500" />
-                            </div>
-                            <div className="text-3xl font-bold">{analytics?.visitors || 0}</div>
-                        </div>
-                        {/* Placeholders for future stats */}
-                        <div className="bg-card border border-border rounded-xl p-8 shadow-premium opacity-60">
-                            <div className="flex items-center justify-between mb-4">
-                                <span className="text-sm font-medium text-muted-foreground">QR Scans</span>
-                                <QrCode className="w-4 h-4 text-purple-500" />
-                            </div>
-                            <div className="text-3xl font-bold">-</div>
-                            <p className="text-xs text-muted-foreground mt-2">Coming Soon</p>
-                        </div>
-                        <div className="bg-card border border-border rounded-xl p-8 shadow-premium opacity-60">
-                            <div className="flex items-center justify-between mb-4">
-                                <span className="text-sm font-medium text-muted-foreground">Avg. Time</span>
-                                <Clock className="w-4 h-4 text-orange-500" />
-                            </div>
-                            <div className="text-3xl font-bold">-</div>
-                            <p className="text-xs text-muted-foreground mt-2">Coming Soon</p>
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        <div className="lg:col-span-2 bg-card border border-border rounded-xl p-8 shadow-premium">
-                            <h3 className="font-bold mb-6 flex items-center gap-2">
-                                <TrendingUp className="w-4 h-4 text-primary" />
-                                Traffic History
-                            </h3>
-                            <div className="h-[300px] w-full">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <LineChart data={analytics?.history || []}>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                                        <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fill: '#888', fontSize: 12}} dy={10} />
-                                        <YAxis axisLine={false} tickLine={false} tick={{fill: '#888', fontSize: 12}} />
-                                        <Tooltip contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}} />
-                                        <Line type="monotone" dataKey="views" stroke="#1B2B44" strokeWidth={3} dot={false} activeDot={{r: 6, fill: '#1B2B44', strokeWidth: 0}} />
-                                    </LineChart>
-                                </ResponsiveContainer>
-                            </div>
-                        </div>
-
-                        <div className="bg-card border border-border rounded-xl p-8 shadow-premium">
-                            <h3 className="font-bold mb-6 flex items-center gap-2">
-                                <Globe className="w-4 h-4 text-primary" />
-                                Traffic Sources
-                            </h3>
-                            <div className="h-[300px] w-full">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <PieChart>
-                                        <Pie
-                                            data={Object.entries(analytics?.sources || {}).map(([name, value]) => ({ name, value }))}
-                                            cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value"
-                                        >
-                                            {Object.entries(analytics?.sources || {}).map((entry, index) => (
-                                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                            ))}
-                                        </Pie>
-                                        <Tooltip />
-                                    </PieChart>
-                                </ResponsiveContainer>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-          </section>
+          <InsightsSection enabled={!!profile?.googleAnalyticsId} />
 
           {profile.publishedAt && (
             <footer className="pt-8 border-t border-border/50 flex flex-col sm:flex-row items-center gap-4 sm:gap-6 text-[10px] text-muted-foreground font-bold uppercase tracking-widest">

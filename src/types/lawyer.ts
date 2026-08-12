@@ -25,7 +25,14 @@ export interface LawyerProfile {
   basicInformation: {
     fullName: string;
     professionalTitle: string;
+    /** Display name of the firm. The only thing the themes render. */
     lawFirmName?: string;
+    /**
+     * The firm picked from the typeahead, when one was. Kept distinct from
+     * lawFirmName so affiliation stays display-only today and an invite flow
+     * can layer on later without a data migration.
+     */
+    firmId?: number;
     yearsOfExperience: number;
   };
   practiceDetails: {

@@ -16,6 +16,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { googleLogin } from '@/generated/wokil-api';
 import type { PublicDirectoryResponse } from '@/generated/wokil-api';
+import { siteHref } from '@/lib/utils';
 
 interface ProfessionalsClientProps {
     professionals: PublicDirectoryResponse;
@@ -46,8 +47,7 @@ export function ProfessionalsClient({ professionals: initialProfessionals }: Pro
 
     const getProfileUrl = (domain: string) => {
         if (!domain) return '#';
-        if (domain.startsWith('http')) return domain;
-        return `https://${domain}`;
+        return siteHref(domain);
     };
 
     const getInitials = (name: string) => {

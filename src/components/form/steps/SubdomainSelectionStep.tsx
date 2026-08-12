@@ -6,7 +6,15 @@ import { checkDomainAvailability } from '@/generated/wokil-api';
 import { Check, X, Loader2, Globe, CheckCircle2, Shield } from 'lucide-react';
 
 interface SubdomainSelectionStepProps {
-    profile: LawyerProfile;
+    // Structural rather than the whole LawyerProfile, so the firm wizard shares
+    // this step. deploymentURL is where "a site is already live" is recorded -
+    // lawyers keep it on professionalProfile, firms on firmProfile - and once
+    // it is set the address is locked either way.
+    profile: {
+        subdomainSelection: LawyerProfile['subdomainSelection'];
+        professionalProfile?: { deploymentURL?: string };
+        firmProfile?: { deploymentURL?: string };
+    };
     onUpdate: (fields: Partial<LawyerProfile['subdomainSelection']>) => void;
 }
 
@@ -16,7 +24,7 @@ export function SubdomainSelectionStep({ profile, onUpdate }: SubdomainSelection
     const [isValidating, setIsValidating] = useState(false);
     const [isAvailable, setIsAvailable] = useState<boolean | null>(null);
     const [error, setError] = useState<string | null>(null);
-    const isDeployed = !!profile.professionalProfile?.deploymentURL;
+    const isDeployed = !!(profile.professionalProfile?.deploymentURL || profile.firmProfile?.deploymentURL);
 
     useEffect(() => {
         if (isDeployed || !subdomain || subdomain.length < 3) {

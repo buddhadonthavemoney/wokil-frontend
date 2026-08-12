@@ -1,10 +1,11 @@
+import { FirmProfile } from '@/types/firm';
 import { LawyerProfile } from '@/types/lawyer';
 import { ChevronUp, QrCode } from 'lucide-react';
 
 // Shared by the dashboard preview and the published page's shell, so it must
 // stay stateless — the deployed page ships zero React and never hydrates.
 
-function buildVCard(profile: LawyerProfile): string {
+export function buildVCard(profile: LawyerProfile): string {
   const basic = profile.basicInformation;
   const contact = profile.contactInformation;
   const online = profile.onlinePresence;
@@ -28,17 +29,46 @@ function buildVCard(profile: LawyerProfile): string {
     .join('\n');
 }
 
+/**
+ * The firm's own card. A firm has no single person to name, so the org line
+ * carries the firm and FN falls back to it too - a vCard with no FN is
+ * rejected outright by most address books.
+ */
+export function buildFirmVCard(firm: FirmProfile): string {
+  const { firmDetails, contactInformation, onlinePresence, practiceDetails } = firm;
+  const areas = practiceDetails?.areasOfPractice ?? [];
+  const name = firmDetails?.name ?? '';
+
+  return [
+    'BEGIN:VCARD',
+    'VERSION:3.0',
+    `FN:${name}`,
+    `ORG:${name}`,
+    firmDetails?.tagline ? `TITLE:${firmDetails.tagline}` : '',
+    `TEL;TYPE=WORK:${contactInformation?.phoneNumber ?? ''}`,
+    `EMAIL:${contactInformation?.email ?? ''}`,
+    `ADR;TYPE=WORK:;;${(contactInformation?.officeAddress ?? '').replace(/\n/g, ', ')};;;;`,
+    onlinePresence?.website ? `URL:${onlinePresence.website}` : '',
+    onlinePresence?.linkedIn ? `X-SOCIALPROFILE;TYPE=linkedin:${onlinePresence.linkedIn}` : '',
+    areas.length ? `NOTE:${areas.join(', ')}` : '',
+    'END:VCARD',
+  ]
+    .filter(Boolean)
+    .join('\n');
+}
+
 interface ContactQrWidgetProps {
-  profile: LawyerProfile;
+  /** Pre-built vCard text. Use buildVCard or buildFirmVCard. */
+  vcard: string;
   // `fixed` pins to the viewport on the published page; the preview passes
   // `absolute` so the widget stays inside the phone mockup instead of escaping
   // to the dashboard's viewport.
   className?: string;
 }
 
-export function ContactQrWidget({ profile, className = 'fixed' }: ContactQrWidgetProps) {
+export function ContactQrWidget({ vcard, className = 'fixed' }: ContactQrWidgetProps) {
   const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
-    buildVCard(profile)
+    vcard
   )}`;
 
   return (
@@ -47,7 +77,10 @@ export function ContactQrWidget({ profile, className = 'fixed' }: ContactQrWidge
     // page without either side shipping a toggle script.
     // ponytail: macOS Safari doesn't focus buttons on click, so touch-open leans
     // on iOS Safari (which does). Swap in a real toggle if that proves too thin.
+    // data-qr is the hook the published shell's GA snippet binds to; it does
+    // nothing in the dashboard preview, which never loads gtag.
     <div
+      data-qr
       className={`${className} group bottom-6 right-6 z-50 flex flex-col items-end @sm:bottom-10 @sm:right-10 pointer-events-none`}
     >
       <div className="pointer-events-auto mb-4 bg-white/80 backdrop-blur-xl border border-white/50 p-5 rounded-3xl shadow-2xl transform origin-bottom-right transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] opacity-0 scale-90 invisible translate-y-4 group-hover:opacity-100 group-hover:scale-100 group-hover:visible group-hover:translate-y-0 group-focus-within:opacity-100 group-focus-within:scale-100 group-focus-within:visible group-focus-within:translate-y-0">

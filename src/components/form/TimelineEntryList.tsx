@@ -15,6 +15,12 @@ interface TimelineEntryListProps {
   titleLabel: string;
   organizationLabel: string;
   addLabel: string;
+  /**
+   * Namespace for the rows' DOM ids. Defaults to `label`, which is unique on
+   * the individual timeline step but not on the firm roster, where every member
+   * renders its own Education and Experience lists on one page.
+   */
+  idPrefix?: string;
   entries: TimelineEntry[];
   onChange: (entries: TimelineEntry[]) => void;
 }
@@ -35,9 +41,11 @@ export function TimelineEntryList({
   titleLabel,
   organizationLabel,
   addLabel,
+  idPrefix,
   entries,
   onChange,
 }: TimelineEntryListProps) {
+  const ids = idPrefix ?? label;
   const updateEntry = (index: number, fields: Partial<TimelineEntry>) => {
     onChange(entries.map((entry, i) => (i === index ? { ...entry, ...fields } : entry)));
   };
@@ -68,17 +76,17 @@ export function TimelineEntryList({
 
             <div className="grid gap-4 sm:grid-cols-2 pr-10">
               <div className="space-y-2">
-                <Label htmlFor={`${label}-title-${index}`}>{titleLabel}</Label>
+                <Label htmlFor={`${ids}-title-${index}`}>{titleLabel}</Label>
                 <Input
-                  id={`${label}-title-${index}`}
+                  id={`${ids}-title-${index}`}
                   value={entry.title ?? ''}
                   onChange={(e) => updateEntry(index, { title: e.target.value })}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor={`${label}-org-${index}`}>{organizationLabel}</Label>
+                <Label htmlFor={`${ids}-org-${index}`}>{organizationLabel}</Label>
                 <Input
-                  id={`${label}-org-${index}`}
+                  id={`${ids}-org-${index}`}
                   value={entry.organization ?? ''}
                   onChange={(e) => updateEntry(index, { organization: e.target.value })}
                 />
@@ -87,18 +95,18 @@ export function TimelineEntryList({
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor={`${label}-start-${index}`}>From</Label>
+                <Label htmlFor={`${ids}-start-${index}`}>From</Label>
                 <Input
-                  id={`${label}-start-${index}`}
+                  id={`${ids}-start-${index}`}
                   placeholder="2014"
                   value={entry.startYear ?? ''}
                   onChange={(e) => updateEntry(index, { startYear: e.target.value })}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor={`${label}-end-${index}`}>To</Label>
+                <Label htmlFor={`${ids}-end-${index}`}>To</Label>
                 <Input
-                  id={`${label}-end-${index}`}
+                  id={`${ids}-end-${index}`}
                   placeholder="2018"
                   value={entry.current ? '' : entry.endYear ?? ''}
                   onChange={(e) => updateEntry(index, { endYear: e.target.value })}
@@ -109,7 +117,7 @@ export function TimelineEntryList({
 
             <div className="flex items-center gap-2">
               <Checkbox
-                id={`${label}-current-${index}`}
+                id={`${ids}-current-${index}`}
                 checked={Boolean(entry.current)}
                 onCheckedChange={(checked) =>
                   // Drop endYear when marking current, so a stale year can't
@@ -117,15 +125,15 @@ export function TimelineEntryList({
                   updateEntry(index, checked === true ? { current: true, endYear: '' } : { current: false })
                 }
               />
-              <Label htmlFor={`${label}-current-${index}`} className="font-normal text-muted-foreground">
+              <Label htmlFor={`${ids}-current-${index}`} className="font-normal text-muted-foreground">
                 I&apos;m currently here
               </Label>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor={`${label}-description-${index}`}>Description</Label>
+              <Label htmlFor={`${ids}-description-${index}`}>Description</Label>
               <Textarea
-                id={`${label}-description-${index}`}
+                id={`${ids}-description-${index}`}
                 placeholder="Optional — what you did, notable matters, honours."
                 value={entry.description ?? ''}
                 onChange={(e) => updateEntry(index, { description: e.target.value })}

@@ -8,6 +8,11 @@ interface FormNavigationProps {
   onPrev: () => void;
   isNextDisabled?: boolean;
   nextLabel?: string;
+  /**
+   * Whether Next finishes the wizard. Defaults to the last step; a wizard
+   * with its final step locked finishes one earlier.
+   */
+  isLastStep?: boolean;
 }
 
 export function FormNavigation({
@@ -17,9 +22,9 @@ export function FormNavigation({
   onPrev,
   isNextDisabled = false,
   nextLabel,
+  isLastStep = currentStep === totalSteps,
 }: FormNavigationProps) {
   const isFirstStep = currentStep === 1;
-  const isLastStep = currentStep === totalSteps;
 
   return (
     <div className="flex justify-between pt-10 mt-10 border-t border-border/60">

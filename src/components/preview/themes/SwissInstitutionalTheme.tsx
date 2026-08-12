@@ -1,13 +1,73 @@
-import { LawyerProfile, TimelineEntry, formatTimelineRange, resolveSiteContent } from '@/types/lawyer';
+/* eslint-disable @next/next/no-html-link-for-pages */
+import { TimelineEntry, formatTimelineRange } from '@/types/lawyer';
+import { SiteModel } from '@/types/site-model';
+import { TEAM_PAGE_HREF, type SitePage, sectionHref } from '@/lib/firm-roster';
+import { RosterList, TeamBody, type RosterPalette } from './RosterSection';
 import {
     Phone, Mail, MapPin, Globe, Linkedin, Menu, Landmark, Briefcase, ShieldCheck,
     ChevronDown, Gavel, Building2, Users, Plane, Copyright, HeartPulse, Home, ReceiptText, ScrollText,
-    Banknote, Scale, Leaf, Stethoscope, ArrowRight, type LucideIcon,
+    Banknote, Scale, Leaf, Stethoscope, ArrowRight, ArrowLeft, type LucideIcon,
 } from 'lucide-react';
 
 interface SwissInstitutionalThemeProps {
-    profile: LawyerProfile;
+    site: SiteModel;
+    page?: SitePage;
 }
+
+// Swiss in roster form: hard edges, hairline rules, no shadows or rounding —
+// the whole point of the theme is that nothing is soft.
+const ROSTER_PALETTE: RosterPalette = {
+    card: 'border border-[#c5c6ce] bg-white p-6 @sm:p-8 flex flex-col @sm:flex-row gap-6',
+    avatar: 'w-24 h-24 bg-[#e2e2e2] grayscale',
+    avatarText: 'text-2xl font-bold text-[#05162e]',
+    name: 'text-2xl font-semibold tracking-tight uppercase text-[#05162e] leading-snug',
+    title: 'text-[12px] font-bold uppercase tracking-[0.06em] text-[#5f5e5e]',
+    meta: 'text-[12px] font-bold uppercase tracking-[0.06em] text-[#75777e] mt-1',
+    body: 'text-[15px] leading-6 text-[#1a1c1c]',
+    chip: 'px-3 py-1 border border-[#c5c6ce] text-[12px] font-bold uppercase tracking-[0.06em] text-[#5f5e5e] whitespace-nowrap',
+    link: 'text-[#1a1c1c] hover:text-[#05162e] transition-colors',
+    icon: 'text-[#75777e]',
+    emptyCard: 'border border-dashed border-[#c5c6ce] bg-white p-12 text-center',
+    emptyHeading: 'text-2xl font-semibold tracking-tight uppercase text-[#05162e] mb-2',
+    emptyBody: 'text-[15px] leading-6 text-[#1a1c1c] max-w-md mx-auto',
+    emptyButton: 'px-6 py-3 bg-[#1b2b44] text-white text-[12px] font-bold uppercase tracking-[0.06em] hover:bg-[#05162e] transition-colors',
+};
+
+// The People page in the same idiom: hairline rules instead of shadows, square
+// avatars, uppercase labels. The timeline rails borrow the hero's border-left
+// treatment rather than the dot-on-a-line other themes use.
+const TEAM_PALETTE: RosterPalette = {
+    card: 'border border-[#c5c6ce] bg-white p-6 @sm:p-10',
+    avatar: 'w-32 h-32 bg-[#e2e2e2] grayscale',
+    avatarText: 'text-3xl font-bold text-[#05162e]',
+    name: 'text-3xl font-bold uppercase tracking-tight text-[#05162e] leading-snug',
+    title: 'text-[12px] font-bold uppercase tracking-[0.06em] text-[#5f5e5e]',
+    meta: 'text-[12px] font-bold uppercase tracking-[0.06em] text-[#75777e]',
+    body: 'text-[15px] leading-6 text-[#1a1c1c]',
+    sectionLabel: 'text-[12px] font-bold uppercase tracking-[0.1em] text-[#5f5e5e]',
+    chip: 'px-3 py-1 border border-[#c5c6ce] text-[12px] font-bold uppercase tracking-[0.06em] text-[#5f5e5e] whitespace-nowrap',
+    link: 'text-[#1a1c1c] hover:text-[#05162e] transition-colors',
+    contactRow: 'pt-4 border-t border-[#c5c6ce] mt-2',
+    icon: 'text-[#75777e]',
+
+    jumpCard: 'border border-[#c5c6ce] bg-white p-6',
+    jumpHeading: 'text-[12px] font-bold uppercase tracking-[0.1em] text-[#5f5e5e] mb-4',
+    jumpName: 'font-semibold uppercase tracking-tight text-[#05162e]',
+    jumpTitle: 'text-[12px] font-bold uppercase tracking-[0.06em] text-[#75777e]',
+
+    railList: 'border-l-4 border-[#05162e] pl-6',
+    railDot: '-left-[30px] top-2 w-2 h-2 bg-[#05162e]',
+    railTitle: 'text-lg font-semibold uppercase tracking-tight text-[#05162e] leading-snug',
+    railOrg: 'text-[15px] text-[#1a1c1c]',
+    railRange: 'text-[12px] font-bold uppercase tracking-[0.06em] text-[#75777e] mt-1',
+    railBody: 'text-[15px] leading-6 text-[#5f5e5e]',
+
+    emptyCard: 'border border-dashed border-[#c5c6ce] bg-white p-12 text-center',
+    emptyIconBox: 'w-14 h-14 mx-auto border border-[#c5c6ce] bg-[#f9f9f9] flex items-center justify-center mb-5',
+    emptyHeading: 'text-2xl font-semibold uppercase tracking-tight text-[#05162e] mb-2',
+    emptyBody: 'text-[15px] leading-6 text-[#1a1c1c] max-w-md mx-auto',
+    emptyButton: 'inline-block mt-6 px-6 py-3 bg-[#1b2b44] text-white text-[12px] font-bold uppercase tracking-[0.06em] hover:bg-[#05162e] transition-colors',
+};
 
 // Same practice-area -> glyph map as Corporate Elite; free-text areas fall
 // back to the generic briefcase.
@@ -36,10 +96,10 @@ function startYearOf(entry: TimelineEntry): number {
     return match ? Number(match[0]) : -Infinity;
 }
 
-function unifiedTimeline(profile: LawyerProfile) {
+function unifiedTimeline(lawyer: SiteModel['lawyer']) {
     const tagged = [
-        ...(profile.timeline?.experience ?? []).map((entry) => ({ entry, kind: 'Career' as const })),
-        ...(profile.timeline?.education ?? []).map((entry) => ({ entry, kind: 'Degree' as const })),
+        ...(lawyer?.experience ?? []).map((entry) => ({ entry, kind: 'Career' as const })),
+        ...(lawyer?.education ?? []).map((entry) => ({ entry, kind: 'Degree' as const })),
     ];
     return tagged
         .map((row, index) => ({ ...row, index }))
@@ -72,40 +132,61 @@ function sectionLabel(index: string, label: string) {
     );
 }
 
-export function SwissInstitutionalTheme({ profile }: SwissInstitutionalThemeProps) {
-    const { basicInformation, practiceDetails, contactInformation, professionalProfile, onlinePresence } = profile;
+export function SwissInstitutionalTheme({ site, page = 'home' }: SwissInstitutionalThemeProps) {
+    const isFirm = site.kind === 'firm';
+    const lawyer = site.lawyer;
+    const members = site.roster ?? [];
 
-    const fullName = basicInformation.fullName || 'Professional Advocate';
-    const professionalTitle = basicInformation.professionalTitle || 'Principal Attorney';
-    const lawFirmName = basicInformation.lawFirmName || fullName;
-    const yearsOfExperience = basicInformation.yearsOfExperience;
+    const fullName = site.name;
+    const professionalTitle = site.tagline;
+    const lawFirmName = site.brandName;
 
-    const areasOfPractice = practiceDetails.areasOfPractice || [];
-    const jurisdictions = practiceDetails.jurisdictions || [];
+    const areasOfPractice = site.areasOfPractice;
+    const jurisdictions = site.jurisdictions;
 
-    const { phoneNumber, email, officeAddress } = contactInformation;
-    const { bio, profilePhoto, officeHours } = professionalProfile;
-    const { website, linkedIn } = onlinePresence;
+    const { phoneNumber, email, officeAddress, officeHours } = site.contact;
+    const bio = site.about;
+    const profilePhoto = site.image?.src;
+    const { website, linkedIn } = site.online;
 
-    const timeline = unifiedTimeline(profile);
+    const timeline = unifiedTimeline(lawyer);
 
-    const { valuePoints, processSteps, faqs } = resolveSiteContent(profile, {
-        expertiseSection: 'Core Expertise',
-        cta: 'Book Consultation',
-    });
+    const isTeamPage = page === 'team' && isFirm;
+    const anchor = (hash: string) => sectionHref(isTeamPage ? 'team' : 'home', hash);
+
+    const navLinks = isFirm
+        ? [
+            ...(areasOfPractice.length > 0 ? [{ href: anchor('#credentials'), label: site.heading.practice }] : []),
+            { href: isTeamPage ? TEAM_PAGE_HREF : '#team', label: 'Our Team' },
+        ]
+        : [
+            ...(areasOfPractice.length > 0 ? [{ href: anchor('#credentials'), label: 'Expertise' }] : []),
+            ...(timeline.length > 0 ? [{ href: anchor('#timeline'), label: 'Timeline' }] : []),
+            { href: anchor('#faq'), label: 'FAQ' },
+        ];
 
     return (
         <div className="min-h-screen bg-[#f9f9f9] font-body text-[#1a1c1c] selection:bg-[#05162e]/10" style={GRID_BG}>
             {/* Top nav */}
             <nav data-nav className="group/nav sticky top-0 z-50 bg-[#f9f9f9]/95 backdrop-blur-sm border-b border-[#c5c6ce]">
                 <div className="container mx-auto max-w-[1280px] px-6 @md:px-12 h-16 flex items-center justify-between gap-6">
-                    <a href="#top" className="block flex-1 min-w-0 truncate hover:whitespace-normal hover:overflow-visible text-base @sm:text-lg @md:text-xl font-bold uppercase tracking-tight text-[#05162e]">
+                    <a href={anchor('#top')} className="block flex-1 min-w-0 truncate hover:whitespace-normal hover:overflow-visible text-base @sm:text-lg @md:text-xl font-bold uppercase tracking-tight text-[#05162e]">
                         {lawFirmName}
                     </a>
                     <div className="flex items-center gap-8 text-[12px] font-bold uppercase tracking-[0.06em] text-[#5f5e5e] group-data-[collapsed]/nav:hidden">
-                        {areasOfPractice.length > 0 && <a href="#credentials" className="hover:text-[#05162e] transition-colors">Expertise</a>}
-                        {timeline.length > 0 && <a href="#timeline" className="hover:text-[#05162e] transition-colors">Timeline</a>}
-                        <a href="#faq" className="hover:text-[#05162e] transition-colors">FAQ</a>
+                        {navLinks.map(({ href, label }) => (
+                            <a
+                                key={href}
+                                href={href}
+                                className={
+                                    isTeamPage && href === TEAM_PAGE_HREF
+                                        ? 'text-[#05162e] transition-colors'
+                                        : 'hover:text-[#05162e] transition-colors'
+                                }
+                            >
+                                {label}
+                            </a>
+                        ))}
                     </div>
                     <a href="#contact" className="shrink-0 px-6 py-3 bg-[#1b2b44] text-white text-[12px] font-bold uppercase tracking-[0.06em] hover:bg-[#05162e] transition-colors whitespace-nowrap group-data-[collapsed]/nav:hidden">
                         Book Consultation
@@ -115,9 +196,9 @@ export function SwissInstitutionalTheme({ profile }: SwissInstitutionalThemeProp
                             <Menu className="w-5 h-5" />
                         </summary>
                         <div className="absolute right-0 top-full w-56 bg-white border border-[#c5c6ce] p-4 flex flex-col gap-3 text-sm font-medium text-[#1a1c1c] z-50">
-                            {areasOfPractice.length > 0 && <a href="#credentials" className="hover:text-[#05162e] transition-colors">Expertise</a>}
-                            {timeline.length > 0 && <a href="#timeline" className="hover:text-[#05162e] transition-colors">Timeline</a>}
-                            <a href="#faq" className="hover:text-[#05162e] transition-colors">FAQ</a>
+                            {navLinks.map(({ href, label }) => (
+                                <a key={href} href={href} className="hover:text-[#05162e] transition-colors">{label}</a>
+                            ))}
                             <a href="#contact" className="mt-1 px-4 py-2.5 bg-[#1b2b44] text-white text-sm font-bold text-center">Book Consultation</a>
                         </div>
                     </details>
@@ -125,27 +206,57 @@ export function SwissInstitutionalTheme({ profile }: SwissInstitutionalThemeProp
             </nav>
 
             <main className="container mx-auto max-w-[1280px] px-6 @md:px-12 py-12 flex flex-col gap-24">
+                {isTeamPage ? (
+                    <>
+                        {/* Page header — the hero's typographic rhythm, sized for a subpage. */}
+                        <section className="flex flex-col gap-5 border-b border-[#c5c6ce] pb-10">
+                            <a href="/" className="inline-flex items-center gap-2 text-[12px] font-bold uppercase tracking-[0.06em] text-[#5f5e5e] hover:text-[#05162e] transition-colors">
+                                <ArrowLeft className="w-3.5 h-3.5" />
+                                Back to {lawFirmName}
+                            </a>
+                            {sectionLabel('01', 'Our Team')}
+                            <h1 className="text-4xl @sm:text-6xl @lg:text-7xl font-bold leading-[0.95] tracking-tighter uppercase text-[#05162e] break-words">
+                                Our Team
+                            </h1>
+                            {members.length > 0 && (
+                                <p className="flex items-center gap-2 text-[12px] font-bold uppercase tracking-[0.06em] text-[#5f5e5e]">
+                                    <Users className="w-4 h-4 text-[#05162e]" />
+                                    {members.length} {members.length === 1 ? 'lawyer' : 'lawyers'} at {fullName}
+                                </p>
+                            )}
+                        </section>
+
+                        <TeamBody site={site} palette={TEAM_PALETTE} />
+                    </>
+                ) : (
+                    <>
                 {/* Hero */}
                 <section id="top" className="scroll-mt-24 grid grid-cols-1 @md:grid-cols-12 gap-8 @md:gap-6 items-start @md:items-center border-b border-[#c5c6ce] pb-4 @sm:pb-16 @md:pb-24 pt-0 @sm:pt-8 min-h-[calc(100cqh-7rem)]">
                     <div className="@md:col-span-7 flex flex-col gap-3 @sm:gap-8 @md:gap-12">
                         <h1 className="text-4xl @sm:text-6xl @lg:text-8xl font-bold leading-[0.95] tracking-tighter uppercase text-[#05162e] break-words">
                             {fullName}
                         </h1>
-                        {yearsOfExperience > 0 && (
-                            <div className="flex items-center gap-4 border-l-4 border-[#05162e] pl-4">
-                                <span className="text-3xl @sm:text-4xl @md:text-5xl font-semibold tracking-tight text-[#05162e]">{yearsOfExperience}+</span>
-                                <span className="text-lg @sm:text-xl @md:text-2xl font-semibold uppercase tracking-tight leading-tight text-[#5f5e5e] max-w-[220px]">
-                                    Years Experience
-                                </span>
+                        {site.facts.length > 0 && (
+                            <div className="flex flex-col gap-3">
+                                {site.facts.map(({ label }) => (
+                                    <div key={label} className="flex items-center gap-4 border-l-4 border-[#05162e] pl-4">
+                                        <span className="text-lg @sm:text-xl @md:text-2xl font-semibold uppercase tracking-tight leading-tight text-[#5f5e5e]">
+                                            {label}
+                                        </span>
+                                    </div>
+                                ))}
                             </div>
                         )}
                         <div className="border border-[#c5c6ce] p-4 @sm:p-8 bg-white max-w-2xl">
-                            <h2 className="text-[12px] font-bold uppercase tracking-[0.06em] text-[#5f5e5e] mb-4">
-                                {professionalTitle}{basicInformation.lawFirmName ? ` — ${basicInformation.lawFirmName}` : ''}
-                            </h2>
-                            <p className="text-lg leading-7 tracking-[-0.01em] text-[#1a1c1c] line-clamp-4 hover:line-clamp-none">
-                                {bio || 'Professional brief will be curated here.'}
-                            </p>
+                            {professionalTitle && (
+                                <h2 className="text-[12px] font-bold uppercase tracking-[0.06em] text-[#5f5e5e] mb-4">
+                                    {professionalTitle}{site.affiliation ? ` — ${site.affiliation}` : ''}
+                                </h2>
+                            )}
+                            <p className="text-lg leading-7 tracking-[-0.01em] text-[#1a1c1c] line-clamp-4 hover:line-clamp-none">{bio}</p>
+                            {site.aboutNote && (
+                                <p className="mt-4 text-[12px] font-bold uppercase tracking-[0.06em] text-[#75777e]">{site.aboutNote}</p>
+                            )}
                         </div>
                         <a href="#contact" className="inline-block w-fit px-6 py-3 bg-[#1b2b44] text-white text-[12px] font-bold uppercase tracking-[0.06em] hover:bg-[#05162e] transition-colors">
                             Book Consultation
@@ -153,7 +264,11 @@ export function SwissInstitutionalTheme({ profile }: SwissInstitutionalThemeProp
                     </div>
                     <div className="hidden @md:block @md:col-span-5 h-[600px] bg-[#e2e2e2] relative overflow-hidden">
                         {profilePhoto ? (
-                            <img src={profilePhoto} alt={fullName} className="absolute inset-0 w-full h-full object-cover grayscale" />
+                            <img
+                                src={profilePhoto}
+                                alt={site.image?.alt ?? fullName}
+                                className={`absolute inset-0 w-full h-full ${isFirm ? 'object-contain bg-white p-16' : 'object-cover grayscale'}`}
+                            />
                         ) : (
                             <div className="absolute inset-0 flex items-center justify-center">
                                 <Landmark className="w-24 h-24 text-[#c5c6ce]" />
@@ -206,7 +321,7 @@ export function SwissInstitutionalTheme({ profile }: SwissInstitutionalThemeProp
                             <section id="credentials" className="scroll-mt-24">
                                 <div className="flex flex-col @sm:flex-row @sm:items-baseline justify-between border-b border-[#c5c6ce] pb-4 mb-8 gap-1 @sm:gap-4">
                                     <h2 className="text-2xl font-semibold tracking-tight uppercase text-[#05162e]">Core Expertise</h2>
-                                    {sectionLabel('01', 'PRACTICE AREAS')}
+                                    {sectionLabel('01', site.heading.practice.toUpperCase())}
                                 </div>
                                 <div className="grid grid-cols-1 @md:grid-cols-2 gap-px" style={{ backgroundColor: HAIRLINE }}>
                                     {areasOfPractice.map((area, i) => {
@@ -225,6 +340,26 @@ export function SwissInstitutionalTheme({ profile }: SwissInstitutionalThemeProp
                             </section>
                         )}
 
+                        {/* The one part that genuinely differs by site kind. */}
+                        {isFirm ? (
+                            <section id="team" className="scroll-mt-24">
+                                <div className="flex flex-col @sm:flex-row @sm:items-baseline justify-between border-b border-[#c5c6ce] pb-4 mb-8 gap-1 @sm:gap-4">
+                                    <h2 className="text-2xl font-semibold tracking-tight uppercase text-[#05162e]">Our Team</h2>
+                                    {sectionLabel('02', 'TEAM')}
+                                </div>
+                                <RosterList members={members} palette={ROSTER_PALETTE} email={email} phone={phoneNumber} />
+                                {members.length > 0 && (
+                                    <a
+                                        href={TEAM_PAGE_HREF}
+                                        className="mt-8 inline-flex items-center gap-2 text-[12px] font-bold uppercase tracking-[0.06em] text-[#05162e] hover:opacity-70 transition-opacity group"
+                                    >
+                                        Meet the full team
+                                        <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                                    </a>
+                                )}
+                            </section>
+                        ) : lawyer ? (
+                            <>
                         {/* Timeline */}
                         {timeline.length > 0 && (
                             <section id="timeline" className="scroll-mt-24">
@@ -260,7 +395,7 @@ export function SwissInstitutionalTheme({ profile }: SwissInstitutionalThemeProp
                                 {sectionLabel('03', 'WHY WORK WITH ME')}
                             </div>
                             <div className="grid grid-cols-1 @md:grid-cols-3 gap-8">
-                                {valuePoints.map(({ title, description }, i) => (
+                                {lawyer.valuePoints.map(({ title, description }, i) => (
                                     <div key={title} className="border border-[#c5c6ce] p-6 bg-white flex flex-col h-full">
                                         <span className="text-[14px] font-bold tracking-[0.1em] text-[#75777e] mb-6 block border-b border-[#c5c6ce] pb-2">
                                             {String(i + 1).padStart(2, '0')}
@@ -279,7 +414,7 @@ export function SwissInstitutionalTheme({ profile }: SwissInstitutionalThemeProp
                                 {sectionLabel('04', 'PROCESS')}
                             </div>
                             <div className="grid grid-cols-1 @md:grid-cols-3 gap-px" style={{ backgroundColor: HAIRLINE }}>
-                                {processSteps.map(({ title, description }, i) => (
+                                {lawyer.processSteps.map(({ title, description }, i) => (
                                     <div key={title} className="bg-white p-6">
                                         <span className="text-[14px] font-bold tracking-[0.1em] text-[#05162e] block mb-4">
                                             {String(i + 1).padStart(2, '0')}
@@ -298,7 +433,7 @@ export function SwissInstitutionalTheme({ profile }: SwissInstitutionalThemeProp
                                 {sectionLabel('05', 'FAQ')}
                             </div>
                             <div className="divide-y divide-[#c5c6ce] border-b border-[#c5c6ce]">
-                                {faqs.map(({ question, answer }) => (
+                                {lawyer.faqs.map(({ question, answer }) => (
                                     <details key={question} className="group">
                                         <summary className="flex justify-between items-center gap-4 py-4 cursor-pointer list-none text-lg font-bold tracking-[-0.01em] text-[#05162e] [&::-webkit-details-marker]:hidden">
                                             {question}
@@ -309,8 +444,12 @@ export function SwissInstitutionalTheme({ profile }: SwissInstitutionalThemeProp
                                 ))}
                             </div>
                         </section>
+                            </>
+                        ) : null}
                     </div>
                 </div>
+                    </>
+                )}
             </main>
 
             {/* Footer */}

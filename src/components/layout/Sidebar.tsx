@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
+import { useAccountType } from '@/hooks/useAccountType';
 import {
   Scale,
   LayoutDashboard,
@@ -98,7 +99,10 @@ function NavGroup({
   pathname: string | null;
   onNavigate: () => void;
 }) {
-  const hasActiveChild = items.some((item) => item.path === pathname);
+  // Sub-routes count as the parent: /firm-roster/2 is still "Roster".
+  const isChildActive = (path: string) =>
+    pathname === path || Boolean(pathname?.startsWith(`${path}/`));
+  const hasActiveChild = items.some((item) => isChildActive(item.path));
   const [isOpen, setIsOpen] = useState(hasActiveChild);
 
   return (
@@ -133,7 +137,7 @@ function NavGroup({
               onClick={onNavigate}
               className={`
                 py-2 text-sm transition-colors
-                ${item.path === pathname
+                ${isChildActive(item.path)
                   ? 'text-accent font-semibold'
                   : 'text-muted-foreground hover:text-accent'
                 }
@@ -163,6 +167,8 @@ export default function Sidebar() {
   const router = useRouter();
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { accountType } = useAccountType();
+  const isFirm = accountType === 'firm';
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -239,28 +245,49 @@ export default function Sidebar() {
 
         {/* Navigation */}
         <nav className="flex-1 px-4 pt-4 overflow-y-auto">
+          {/*
+            Nav follows the account type: an individual has no firm to manage,
+            and a firm account has no lawyer profile behind /profile-builder —
+            linking to the other type's pages only offers a bounce back.
+          */}
           <NavSection label="General">
             <div onClick={handleNavClick}>
-              <NavLink icon={<LayoutDashboard className="w-5 h-5" />} label="Dashboard" path="/dashboard" isActive={pathname === '/dashboard'} />
+              <NavLink
+                icon={<LayoutDashboard className="w-5 h-5" />}
+                label="Dashboard"
+                path={isFirm ? '/firm-dashboard' : '/dashboard'}
+                isActive={pathname === (isFirm ? '/firm-dashboard' : '/dashboard')}
+              />
             </div>
-            <NavGroup
-              icon={<User className="w-5 h-5" />}
-              label="Profile"
-              pathname={pathname}
-              onNavigate={handleNavClick}
-              items={[
-                { label: 'Builder', path: '/profile-builder' },
-                { label: 'All Details', path: '/profile-details' },
-              ]}
-            />
+            {isFirm ? (
+              <NavGroup
+                icon={<Building2 className="w-5 h-5" />}
+                label="Firm"
+                pathname={pathname}
+                onNavigate={handleNavClick}
+                items={[
+                  { label: 'Builder', path: '/firm-builder' },
+                  { label: 'Roster', path: '/firm-roster' },
+                  { label: 'All Details', path: '/firm-details' },
+                ]}
+              />
+            ) : (
+              <NavGroup
+                icon={<User className="w-5 h-5" />}
+                label="Profile"
+                pathname={pathname}
+                onNavigate={handleNavClick}
+                items={[
+                  { label: 'Builder', path: '/profile-builder' },
+                  { label: 'All Details', path: '/profile-details' },
+                ]}
+              />
+            )}
           </NavSection>
 
           <NavSection label="Management">
             <div onClick={handleNavClick}>
               <NavLink icon={<Globe className="w-5 h-5" />} label="Sites" path="/sites" isActive={pathname === '/sites'} />
-            </div>
-            <div onClick={handleNavClick}>
-              <ComingSoonLink icon={<Building2 className="w-5 h-5" />} label="Firm Dashboard" path="/firm-dashboard" isActive={pathname === '/firm-dashboard'} />
             </div>
             <div onClick={handleNavClick}>
               <NavLink icon={<IdCard className="w-5 h-5" />} label="Business Cards" path="/business-cards" isActive={pathname === '/business-cards'} />

@@ -48,7 +48,7 @@ export type Theme = {
     name: string;
     description: NullString;
     thumbnail_url: NullString;
-    category: 'individual';
+    category: 'individual' | 'firm';
 };
 
 export type Submission = {
@@ -79,7 +79,14 @@ export type CreateFormRequest = {
 
 export type BasicInformation = {
     fullName?: string;
+    /**
+     * Display name of the lawyer's firm. Free text, and the only thing the themes render. Kept separate from firmId so that affiliation stays purely cosmetic today, and an invite/membership flow can be layered on later without a data migration.
+     */
     lawFirmName?: string;
+    /**
+     * The firms row this lawyer is affiliated with, when they picked one from the typeahead rather than typing a name. Display-only - it grants no access to the firm and creates no membership.
+     */
+    firmId?: number;
     professionalTitle?: string;
     yearsOfExperience?: number;
 };
@@ -119,6 +126,28 @@ export type ThemeSelection = {
 };
 
 /**
+ * A heading plus a paragraph — one "Why Work With Me" reason or one "How It Works" step.
+ */
+export type ContentBlock = {
+    title: string;
+    description: string;
+};
+
+export type FaqItem = {
+    question: string;
+    answer: string;
+};
+
+/**
+ * Marketing copy the themes render in their "Why Work With Me", "How It Works" and FAQ sections. Every list is optional — the themes fall back to their own default copy when one is empty, so a profile that never sets this renders as it always did. Process-step numbers are not stored; the themes derive them from position.
+ */
+export type SiteContent = {
+    valuePoints?: Array<ContentBlock>;
+    processSteps?: Array<ContentBlock>;
+    faqs?: Array<FaqItem>;
+};
+
+/**
  * One row of career history — a degree or a job. Both use the same shape; only the labels differ in the UI.
  */
 export type TimelineEntry = {
@@ -150,28 +179,6 @@ export type Timeline = {
     experience?: Array<TimelineEntry>;
 };
 
-/**
- * A heading plus a paragraph — one "Why Work With Me" reason or one "How It Works" step.
- */
-export type ContentBlock = {
-    title: string;
-    description: string;
-};
-
-export type FaqItem = {
-    question: string;
-    answer: string;
-};
-
-/**
- * Marketing copy the themes render in their "Why Work With Me", "How It Works" and FAQ sections. Every list is optional — the themes fall back to their own default copy when one is empty, so a profile that never sets this renders as it always did. Process-step numbers are not stored; the themes derive them from position.
- */
-export type SiteContent = {
-    valuePoints?: Array<ContentBlock>;
-    processSteps?: Array<ContentBlock>;
-    faqs?: Array<FaqItem>;
-};
-
 export type LawyerProfile = {
     basicInformation?: BasicInformation;
     contactInformation?: ContactInformation;
@@ -180,8 +187,8 @@ export type LawyerProfile = {
     onlinePresence?: OnlinePresence;
     subdomainSelection?: SubdomainSelection;
     themeSelection?: ThemeSelection;
-    timeline?: Timeline;
     siteContent?: SiteContent;
+    timeline?: Timeline;
     googleAnalyticsId?: string;
     isPublic?: boolean;
     /**
@@ -255,12 +262,103 @@ export type AnalyticsData = {
     totalViews: number;
     visitors: number;
     /**
+     * Times a visitor opened the contact QR panel (hover or tap)
+     */
+    qrHovers: number;
+    /**
      * Views by referrer, e.g. {"google": 12, "direct": 5}
      */
     sources: {
         [key: string]: number;
     };
     history: Array<DailyMetric>;
+};
+
+export type FirmSummary = {
+    id: number;
+    name: string;
+    slug: string;
+};
+
+export type FirmDetails = {
+    name?: string;
+    registrationNumber?: string;
+    /**
+     * Free text, not a date — firms give Gregorian and Bikram Sambat years alike, and nothing sorts or compares them.
+     */
+    foundedYear?: string;
+    tagline?: string;
+};
+
+/**
+ * The firm's own "about" section — the counterpart of a lawyer's professionalProfile.
+ */
+export type FirmAbout = {
+    about?: string;
+    logo?: string;
+    officeHours?: string;
+    /**
+     * Derived from the sites table on read — never stored on the firm.
+     */
+    readonly deploymentURL?: string;
+};
+
+/**
+ * One lawyer as the firm entered them. Only fullName and professionalTitle are expected; the rest render when present and are simply omitted when not.
+ */
+export type RosterMember = {
+    fullName?: string;
+    professionalTitle?: string;
+    yearsOfExperience?: number;
+    photo?: string;
+    bio?: string;
+    areasOfPractice?: Array<string>;
+    email?: string;
+    phone?: string;
+    linkedIn?: string;
+    /**
+     * This lawyer's own education and career history — the same shape a solo lawyer's profile carries, since the firm wizard edits it with the same component. Rendered on the firm's People page only; the home-page roster stays a summary.
+     */
+    timeline?: Timeline;
+};
+
+export type FirmProfile = {
+    firmDetails?: FirmDetails;
+    practiceDetails?: PracticeDetails;
+    contactInformation?: ContactInformation;
+    firmProfile?: FirmAbout;
+    /**
+     * The firm's lawyers, as entered by the firm itself. These are plain directory entries, not user accounts — nobody on this list can sign in, and an empty roster is a valid, deployable state.
+     */
+    roster?: Array<RosterMember>;
+    onlinePresence?: OnlinePresence;
+    subdomainSelection?: SubdomainSelection;
+    themeSelection?: ThemeSelection;
+    readonly id?: number;
+    slug?: string;
+    /**
+     * Whether the firm has a live deployed site. Derived from the sites table on read — never stored on the firm and ignored if sent on write.
+     */
+    readonly isPublished?: boolean;
+    /**
+     * Live domain of the firm's deployed site. Derived from the sites table on read — never stored on the firm and ignored if sent on write.
+     */
+    readonly siteUrl?: string;
+    /**
+     * Shared GA4 measurement ID, present only once the firm has opted into analytics. Derived from firms.ga_enabled on read — never stored on the firm and ignored if sent on write.
+     */
+    readonly googleAnalyticsId?: string;
+};
+
+export type AccountTypeResponse = {
+    /**
+     * null when the user has signed in but not yet chosen.
+     */
+    accountType: 'individual' | 'firm';
+};
+
+export type AccountTypeRequest = {
+    accountType: 'individual' | 'firm';
 };
 
 export type ProfessionalProfileWritable = {
@@ -277,11 +375,35 @@ export type LawyerProfileWritable = {
     onlinePresence?: OnlinePresence;
     subdomainSelection?: SubdomainSelection;
     themeSelection?: ThemeSelection;
-    timeline?: Timeline;
     siteContent?: SiteContent;
+    timeline?: Timeline;
     googleAnalyticsId?: string;
     isPublic?: boolean;
     showPicture?: boolean;
+    slug?: string;
+};
+
+/**
+ * The firm's own "about" section — the counterpart of a lawyer's professionalProfile.
+ */
+export type FirmAboutWritable = {
+    about?: string;
+    logo?: string;
+    officeHours?: string;
+};
+
+export type FirmProfileWritable = {
+    firmDetails?: FirmDetails;
+    practiceDetails?: PracticeDetails;
+    contactInformation?: ContactInformation;
+    firmProfile?: FirmAboutWritable;
+    /**
+     * The firm's lawyers, as entered by the firm itself. These are plain directory entries, not user accounts — nobody on this list can sign in, and an empty roster is a valid, deployable state.
+     */
+    roster?: Array<RosterMember>;
+    onlinePresence?: OnlinePresence;
+    subdomainSelection?: SubdomainSelection;
+    themeSelection?: ThemeSelection;
     slug?: string;
 };
 
@@ -395,7 +517,12 @@ export type GetPublicDirectoryResponse = GetPublicDirectoryResponses[keyof GetPu
 export type ListThemesData = {
     body?: never;
     path?: never;
-    query?: never;
+    query?: {
+        /**
+         * Restrict to themes for this kind of account.
+         */
+        category?: 'individual' | 'firm';
+    };
     url: '/api/themes';
 };
 
@@ -981,6 +1108,205 @@ export type GetSiteAnalyticsResponses = {
 };
 
 export type GetSiteAnalyticsResponse = GetSiteAnalyticsResponses[keyof GetSiteAnalyticsResponses];
+
+export type SearchFirmsData = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Partial firm name.
+         */
+        search: string;
+    };
+    url: '/api/firms';
+};
+
+export type SearchFirmsErrors = {
+    /**
+     * Invalid request
+     */
+    400: string;
+    /**
+     * Internal server error
+     */
+    500: string;
+};
+
+export type SearchFirmsError = SearchFirmsErrors[keyof SearchFirmsErrors];
+
+export type SearchFirmsResponses = {
+    /**
+     * Matching firms, best match first (empty when none)
+     */
+    200: Array<FirmSummary>;
+};
+
+export type SearchFirmsResponse = SearchFirmsResponses[keyof SearchFirmsResponses];
+
+export type CreateFirmData = {
+    body: FirmProfileWritable;
+    path?: never;
+    query?: never;
+    url: '/api/firms';
+};
+
+export type CreateFirmErrors = {
+    /**
+     * Invalid request
+     */
+    400: string;
+    /**
+     * Missing or invalid bearer token
+     */
+    401: string;
+    /**
+     * Conflicts with existing state
+     */
+    409: string;
+    /**
+     * Internal server error
+     */
+    500: string;
+};
+
+export type CreateFirmError = CreateFirmErrors[keyof CreateFirmErrors];
+
+export type CreateFirmResponses = {
+    /**
+     * Created
+     */
+    201: FirmProfile;
+};
+
+export type CreateFirmResponse = CreateFirmResponses[keyof CreateFirmResponses];
+
+export type GetMyFirmData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/firms/me';
+};
+
+export type GetMyFirmErrors = {
+    /**
+     * Missing or invalid bearer token
+     */
+    401: string;
+    /**
+     * Internal server error
+     */
+    500: string;
+};
+
+export type GetMyFirmError = GetMyFirmErrors[keyof GetMyFirmErrors];
+
+export type GetMyFirmResponses = {
+    /**
+     * OK (empty object when the caller has no firm yet)
+     */
+    200: FirmProfile;
+};
+
+export type GetMyFirmResponse = GetMyFirmResponses[keyof GetMyFirmResponses];
+
+export type UpdateFirmData = {
+    body: FirmProfileWritable;
+    path?: never;
+    query?: never;
+    url: '/api/firms/me';
+};
+
+export type UpdateFirmErrors = {
+    /**
+     * Invalid request
+     */
+    400: string;
+    /**
+     * Missing or invalid bearer token
+     */
+    401: string;
+    /**
+     * Resource not found
+     */
+    404: string;
+    /**
+     * Internal server error
+     */
+    500: string;
+};
+
+export type UpdateFirmError = UpdateFirmErrors[keyof UpdateFirmErrors];
+
+export type UpdateFirmResponses = {
+    /**
+     * Updated firm
+     */
+    200: FirmProfile;
+};
+
+export type UpdateFirmResponse = UpdateFirmResponses[keyof UpdateFirmResponses];
+
+export type GetAccountTypeData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/user/account-type';
+};
+
+export type GetAccountTypeErrors = {
+    /**
+     * Missing or invalid bearer token
+     */
+    401: string;
+    /**
+     * Internal server error
+     */
+    500: string;
+};
+
+export type GetAccountTypeError = GetAccountTypeErrors[keyof GetAccountTypeErrors];
+
+export type GetAccountTypeResponses = {
+    /**
+     * OK
+     */
+    200: AccountTypeResponse;
+};
+
+export type GetAccountTypeResponse = GetAccountTypeResponses[keyof GetAccountTypeResponses];
+
+export type SetAccountTypeData = {
+    body: AccountTypeRequest;
+    path?: never;
+    query?: never;
+    url: '/api/user/account-type';
+};
+
+export type SetAccountTypeErrors = {
+    /**
+     * Invalid request
+     */
+    400: string;
+    /**
+     * Missing or invalid bearer token
+     */
+    401: string;
+    /**
+     * Internal server error
+     */
+    500: string;
+};
+
+export type SetAccountTypeError = SetAccountTypeErrors[keyof SetAccountTypeErrors];
+
+export type SetAccountTypeResponses = {
+    /**
+     * OK
+     */
+    200: AccountTypeResponse;
+};
+
+export type SetAccountTypeResponse = SetAccountTypeResponses[keyof SetAccountTypeResponses];
 
 export type UploadFileData = {
     body: {

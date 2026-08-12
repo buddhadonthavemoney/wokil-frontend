@@ -3,28 +3,19 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { LawyerProfile } from '@/types/lawyer';
+import { FirmProfile, toFirmProfile } from '@/types/firm';
 import { buildShell } from '@/lib/site-shell';
-import { ContactQrWidget } from '@/components/preview/ContactQrWidget';
-import { ClassicTheme } from '@/components/preview/themes/ClassicTheme';
-import { ExecutiveTheme } from '@/components/preview/themes/ExecutiveTheme';
-import { LegalCraftTheme } from '@/components/preview/themes/LegalCraftTheme';
-import { CorporateEliteTheme } from '@/components/preview/themes/CorporateEliteTheme';
-import { SwissInstitutionalTheme } from '@/components/preview/themes/SwissInstitutionalTheme';
-
-const THEME_COMPONENTS: Record<string, (props: { profile: LawyerProfile }) => React.ReactElement> = {
-  classic: ClassicTheme,
-  executive: ExecutiveTheme,
-  'legal-craft': LegalCraftTheme,
-  'corporate-elite': CorporateEliteTheme,
-  'swiss-institutional': SwissInstitutionalTheme,
-};
+import { ContactQrWidget, buildVCard, buildFirmVCard } from '@/components/preview/ContactQrWidget';
+import { resolveTheme } from '@/components/preview/themes/registry';
+import { fromFirmProfile, fromLawyerProfile } from '@/types/site-model';
+import { TEAM_PAGE_PATH } from '@/lib/firm-roster';
 
 // Compiled once at frontend build time (pnpm run build:theme-css), read once at
 // module load and cached in memory for the life of the server process.
 const THEME_CSS = readFileSync(join(process.cwd(), 'src/generated/theme-styles.css'), 'utf-8');
 
-// The theme components (e.g. ClassicTheme.tsx:17, `basicInformation.fullName`)
-// assume every top-level group is present, not just individual leaf fields.
+// The mappers in site-model.ts (and the unmigrated themes) assume every
+// top-level group is present, not just individual leaf fields.
 // The Go side marshals LawyerProfile with `omitempty` pointer sub-structs, so an
 // incomplete profile can arrive with groups entirely missing — normalize before
 // rendering rather than trusting the incoming shape.
@@ -77,6 +68,13 @@ function normalizeProfile(input: Partial<LawyerProfile>): LawyerProfile {
   };
 }
 
+type RenderBody = {
+  kind?: 'individual' | 'firm';
+  profile?: Partial<LawyerProfile>;
+  firm?: Partial<FirmProfile>;
+  theme?: string;
+};
+
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
@@ -92,28 +90,71 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(401).json({ error: 'unauthorized' });
   }
 
-  const body = req.body as { profile?: Partial<LawyerProfile>; theme?: string };
-  const theme = body.theme ?? 'classic';
-  const Component = THEME_COMPONENTS[theme];
-  if (!Component) {
-    return res.status(400).json({ error: `unknown or unmigrated theme: ${theme}` });
-  }
-  if (!body.profile) {
-    return res.status(400).json({ error: 'missing profile' });
-  }
-
-  const profile = normalizeProfile(body.profile);
+  const body = req.body as RenderBody;
+  // `kind` is explicit on the wire so the payload shape is never inferred from
+  // which field happens to be present. Older callers omit it and are always
+  // individual.
+  const kind = body.kind ?? 'individual';
 
   let bodyHtml: string;
+  let qrHtml: string;
+  let title: string;
+  let googleAnalyticsId: string | undefined;
+  // Extra pages beyond index.html, as relative path -> full HTML document. The
+  // deploy pipeline walks the workspace recursively, so nested paths upload
+  // as-is.
+  const extraPages: Record<string, string> = {};
+
+  const themeId = body.theme ?? 'classic';
+  const Theme = resolveTheme(themeId);
+  if (!Theme) {
+    return res.status(400).json({ error: `unknown theme: ${themeId}` });
+  }
+
   try {
-    bodyHtml = renderToStaticMarkup(Component({ profile }));
+    if (kind === 'firm') {
+      if (!body.firm) {
+        return res.status(400).json({ error: 'missing firm' });
+      }
+
+      const firm = toFirmProfile(body.firm);
+      const site = fromFirmProfile(firm);
+      bodyHtml = renderToStaticMarkup(Theme({ site }));
+      qrHtml = renderToStaticMarkup(ContactQrWidget({ vcard: buildFirmVCard(firm) }));
+      title = firm.firmDetails.name;
+      googleAnalyticsId = firm.googleAnalyticsId;
+
+      // The People page: every lawyer in full, on one page, rendered by the
+      // same theme as the home page so the nav, chrome and footer carry over.
+      // Rendered even for an empty roster, so the nav link never lands on a
+      // 404 — it carries the same "team is being introduced" state the home
+      // page shows.
+      extraPages[TEAM_PAGE_PATH] = buildShell({
+        bodyHtml: renderToStaticMarkup(Theme({ site, page: 'team' })),
+        title: `Our Team — ${firm.firmDetails.name}`,
+        // Tagged like the home page: buildShell emits the qr_hover listener
+        // inside the GA snippet, and this page renders its own QR widget.
+        googleAnalyticsId,
+        css: THEME_CSS,
+        qrHtml,
+      });
+    } else {
+      if (!body.profile) {
+        return res.status(400).json({ error: 'missing profile' });
+      }
+
+      const profile = normalizeProfile(body.profile);
+      bodyHtml = renderToStaticMarkup(Theme({ site: fromLawyerProfile(profile) }));
+      qrHtml = renderToStaticMarkup(ContactQrWidget({ vcard: buildVCard(profile) }));
+      title = profile.basicInformation.fullName;
+      googleAnalyticsId = profile.googleAnalyticsId;
+    }
   } catch (err) {
     console.error('[render] render failed', err);
     return res.status(500).json({ error: 'render failed' });
   }
 
-  const qrHtml = renderToStaticMarkup(ContactQrWidget({ profile }));
-  const html = buildShell({ bodyHtml, profile, css: THEME_CSS, qrHtml });
+  const html = buildShell({ bodyHtml, title, googleAnalyticsId, css: THEME_CSS, qrHtml });
 
-  return res.status(200).json({ files: { 'index.html': html } });
+  return res.status(200).json({ files: { 'index.html': html, ...extraPages } });
 }

@@ -1,8 +1,12 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { LawyerProfile } from '@/types/lawyer';
 import { getProfile, saveProfile, deploySite } from '@/generated/wokil-api';
 import { useToast } from '@/hooks/use-toast';
 import { createBlankLawyerProfile, toLawyerProfile } from '@/lib/lawyer-profile-adapter';
+import { PROFILE_STEPS } from '@/components/form/steps';
+
+/** Found by key so reordering the wizard cannot mislocate the locked step. */
+const SUBDOMAIN_STEP = PROFILE_STEPS.findIndex((s) => s.key === 'subdomainSelection') + 1;
 
 const generateSlug = (name: string): string => {
   return name
@@ -21,7 +25,7 @@ const generateId = (): string => {
 const initialProfile = createBlankLawyerProfile();
 
 export function useProfileForm() {
-  const totalSteps = 7;
+  const totalSteps = PROFILE_STEPS.length;
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
 
@@ -68,7 +72,10 @@ export function useProfileForm() {
         const data = (await getProfile({ throwOnError: true })).data;
         setProfile(prev => toLawyerProfile(data, prev));
         if (data.slug) {
-          setCurrentStep(totalSteps);
+          // Once deployed the subdomain can no longer be changed, so resuming
+          // onto its step would open the wizard on a form the user cannot
+          // edit; land on the last step still theirs to change.
+          setCurrentStep(data.professionalProfile?.deploymentURL ? totalSteps - 1 : totalSteps);
         }
       } catch (error) {
         console.error("Failed to fetch profile", error);
@@ -157,6 +164,19 @@ export function useProfileForm() {
     }
   }, [profile, toast]);
 
+  /**
+   * The subdomain is frozen server-side once a site is deployed, so its step
+   * becomes read-only — and, being last, it also moves where the wizard ends.
+   * Derived here so the builder page and the shell can't answer differently.
+   */
+  const lockedSteps = useMemo(
+    () => (profile.professionalProfile?.deploymentURL ? [SUBDOMAIN_STEP] : []),
+    [profile.professionalProfile?.deploymentURL]
+  );
+  // The subdomain is the last step, so a locked tail is exactly one step:
+  // finishing one short of the end.
+  const finishStep = lockedSteps.includes(totalSteps) ? totalSteps - 1 : totalSteps;
+
   const resetProfile = useCallback(() => {
     // Spread first: initialProfile now carries id/slug, so keeping the existing
     // id (to overwrite the same record if saved) means overriding after it.
@@ -170,17 +190,7 @@ export function useProfileForm() {
   }, [profile.id, toast]);
 
   const resetCurrentStep = useCallback(() => {
-    const stepKeys: (keyof Omit<LawyerProfile, 'id' | 'slug' | 'isPublished' | 'publishedAt' | 'siteUrl'>)[] = [
-      'basicInformation',
-      'practiceDetails',
-      'contactInformation',
-      'professionalProfile',
-      'timeline',
-      'onlinePresence',
-      'subdomainSelection'
-    ];
-
-    const key = stepKeys[currentStep - 1];
+    const key = PROFILE_STEPS[currentStep - 1]?.key;
     if (key) {
       setProfile(prev => ({
         ...prev,
@@ -198,6 +208,8 @@ export function useProfileForm() {
     profile,
     currentStep,
     totalSteps,
+    lockedSteps,
+    finishStep,
     loading,
     updateProfile,
     updateNestedProfile,

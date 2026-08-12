@@ -1,193 +1,247 @@
-import { Building2, Crown, Mail, Palette, Receipt, ShieldCheck, UserPlus } from 'lucide-react';
+'use client';
+
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { useQuery } from '@tanstack/react-query';
+import {
+  Building2, Users, UserPlus, Globe, ExternalLink, Pencil, Loader2, CalendarDays, BadgeCheck,
+} from 'lucide-react';
+
 import { PageHeader } from '@/components/layout/PageHeader';
-import { ComingSoonOverlay } from '@/components/layout/ComingSoonOverlay';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-
-interface FirmMember {
-  name: string;
-  email: string;
-  title: string;
-  role: 'Owner' | 'Admin' | 'Member';
-  status: 'Live' | 'Pending';
-}
-
-const members: FirmMember[] = [
-  {
-    name: 'Jane Whitfield',
-    email: 'jane.whitfield@harrowlaw.com',
-    title: 'Managing Partner',
-    role: 'Owner',
-    status: 'Live',
-  },
-  {
-    name: 'Robert Okafor',
-    email: 'robert.okafor@harrowlaw.com',
-    title: 'Senior Associate, Corporate Law',
-    role: 'Admin',
-    status: 'Live',
-  },
-  {
-    name: 'Priya Nair',
-    email: 'priya.nair@harrowlaw.com',
-    title: 'Associate, Litigation',
-    role: 'Member',
-    status: 'Live',
-  },
-  {
-    name: 'sarah.diallo@harrowlaw.com',
-    email: 'Invitation sent 2 days ago',
-    title: 'Associate, Family Law',
-    role: 'Member',
-    status: 'Pending',
-  },
-];
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { getMyFirmOptions } from '@/generated/wokil-api/@tanstack/react-query.gen';
+import { getMyFirm } from '@/generated/wokil-api';
+import { FirmProfile, toFirmProfile } from '@/types/firm';
+import { memberInitials } from '@/lib/firm-roster';
+import { siteHref } from '@/lib/utils';
+import { useDeployHandoff } from '@/hooks/useDeployHandoff';
+import { DeployProgressModal } from '@/components/deploy/DeployProgressModal';
+import { InsightsSection } from '@/components/dashboard/InsightsSection';
 
 export default function FirmDashboardPage() {
-  return (
-    <ComingSoonOverlay
-      title="Firm Dashboard"
-      description="Soon firms will be able to invite team members, manage a shared firm site, and see everyone's status in one place."
-    >
+  const router = useRouter();
+  const { data, isLoading, refetch } = useQuery(getMyFirmOptions());
+
+  const raw = data as Partial<FirmProfile> | undefined;
+  const firm: FirmProfile = toFirmProfile(raw);
+  // getMyFirm answers {} when the caller has no firm, so an id is what
+  // distinguishes "no firm yet" from "a firm with nothing filled in".
+  const hasFirm = Boolean(raw?.id);
+  const roster = firm.roster ?? [];
+
+  const deployStream = useDeployHandoff({
+    redirectTo: '/firm-dashboard',
+    // Mirrors the individual dashboard: the stream's "no ongoing deployment"
+    // 400 only counts as a finished deploy if the firm itself confirms it,
+    // so subscribing after a deploy that never ran isn't reported as success.
+    confirmPublished: async () => {
+      const firmData = (await getMyFirm({ throwOnError: true })).data as
+        | Partial<FirmProfile>
+        | undefined;
+      return !!(firmData && (firmData.isPublished || firmData.siteUrl));
+    },
+    // Refetched on failure too: a failed deploy can still have moved state
+    // that the cards above render.
+    onDone: async () => {
+      await refetch();
+    },
+  });
+
+  // Rendered alongside every branch below, including the loading one: the
+  // navigation from the preview lands here while getMyFirm is still in flight,
+  // and a spinner that swallowed the deploy modal is exactly the "SSE isn't
+  // working" the user sees.
+  const deployModal = (
+    <DeployProgressModal
+      phase={deployStream.phase}
+      steps={deployStream.steps}
+      message={deployStream.message}
+      onClose={deployStream.reset}
+      siteUrl={firm.siteUrl ? siteHref(firm.siteUrl) : undefined}
+    />
+  );
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center gap-3 text-muted-foreground">
+        <Loader2 className="w-5 h-5 animate-spin" />
+        Loading your firm…
+        {deployModal}
+      </div>
+    );
+  }
+
+  // A real state, not an error: an individual account, or a firm account that
+  // left the wizard before its first save.
+  if (!hasFirm) {
+    return (
       <div className="min-h-screen bg-background pb-20">
-        <main className="container mx-auto px-6 py-8 max-w-7xl">
-          <PageHeader
-            icon={<Building2 />}
-            title="Firm Management"
-            description="Manage your firm presence and team members."
-            actions={
-              <Button size="sm" className="gap-2 rounded-lg font-medium">
-                <UserPlus className="w-4 h-4" />
-                Invite Member
-              </Button>
-            }
-          />
-
-          <Card className="border border-border shadow-sm bg-card rounded-xl overflow-hidden mb-8">
-            <div className="p-6 md:p-8 border-b border-border bg-muted/30 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-xl bg-primary/10 flex items-center justify-center border border-border">
-                  <Building2 className="w-8 h-8 text-primary" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-heading font-bold text-foreground">Harrow &amp; Whitfield LLP</h3>
-                  <p className="text-sm text-muted-foreground mt-1">Corporate Law &amp; Litigation</p>
-                </div>
-              </div>
-              <Badge variant="outline" className="border-accent text-primary font-semibold uppercase tracking-widest text-[10px] px-3 py-1">
-                Active Subscription
-              </Badge>
+        <main className="container mx-auto px-6 py-8 max-w-3xl">
+          <Card className="p-10 text-center space-y-4 shadow-premium">
+            <div className="w-14 h-14 mx-auto rounded-2xl bg-primary/5 flex items-center justify-center">
+              <Building2 className="w-7 h-7 text-primary/50" />
             </div>
+            <h1 className="text-xl font-bold text-foreground">No firm set up yet</h1>
+            <p className="text-muted-foreground max-w-md mx-auto">
+              Create your firm to manage its site and the lawyers who appear on it.
+            </p>
+            <Button onClick={() => router.push('/firm-builder')} className="gap-2">
+              <Building2 className="w-4 h-4" />
+              Set up your firm
+            </Button>
+          </Card>
+        </main>
+        {deployModal}
+      </div>
+    );
+  }
 
-            <CardContent className="p-0">
-              <div className="hidden md:grid grid-cols-12 gap-4 p-4 border-b border-border bg-muted/20 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                <div className="col-span-5 pl-4">Member</div>
-                <div className="col-span-3">Role</div>
-                <div className="col-span-2">Status</div>
-                <div className="col-span-2 text-right pr-4">Actions</div>
+  return (
+    <div className="min-h-screen bg-background pb-20">
+      <main className="container mx-auto px-6 py-8 max-w-7xl">
+        <PageHeader
+          icon={<Building2 />}
+          title={firm.firmDetails.name || 'Your Firm'}
+          description={firm.firmDetails.tagline || 'Manage your firm presence and team.'}
+          actions={
+            <div className="flex items-center gap-3">
+              {firm.siteUrl && (
+                <Button variant="outline" asChild className="gap-2">
+                  <a href={siteHref(firm.siteUrl)} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="w-4 h-4" />
+                    View Site
+                  </a>
+                </Button>
+              )}
+              <Button onClick={() => router.push('/firm-builder')} className="gap-2">
+                <Pencil className="w-4 h-4" />
+                Edit Firm
+              </Button>
+            </div>
+          }
+        />
+
+        <div className="grid gap-6 md:grid-cols-3 mb-8">
+          <Card className="shadow-premium">
+            <CardContent className="p-6 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-muted-foreground">Lawyers</span>
+                <Users className="w-4 h-4 text-primary" />
               </div>
-
-              <div className="flex flex-col divide-y divide-border">
-                {members.map((member) => (
-                  <div
-                    key={member.name}
-                    className="grid grid-cols-1 md:grid-cols-12 gap-4 p-4 items-center"
-                  >
-                    <div className="col-span-1 md:col-span-5 flex items-center gap-4 md:pl-4">
-                      <Avatar>
-                        {member.status === 'Pending' ? (
-                          <AvatarFallback className="border border-dashed border-border bg-muted">
-                            <Mail className="w-4 h-4 text-muted-foreground" />
-                          </AvatarFallback>
-                        ) : (
-                          <AvatarFallback className="bg-primary/10 text-primary font-heading font-semibold">
-                            {member.name.split(' ').map((n) => n[0]).join('')}
-                          </AvatarFallback>
-                        )}
-                      </Avatar>
-                      <div>
-                        <p
-                          className={`text-sm font-semibold text-foreground ${
-                            member.status === 'Pending' ? 'italic text-muted-foreground' : ''
-                          }`}
-                        >
-                          {member.name}
-                        </p>
-                        <p className="text-xs text-muted-foreground">{member.email}</p>
-                      </div>
-                    </div>
-
-                    <div className="col-span-1 md:col-span-3">
-                      <span className="inline-flex items-center gap-1.5 text-sm text-foreground">
-                        {member.role === 'Owner' && <Crown className="w-3.5 h-3.5 text-accent" />}
-                        {member.role}
-                      </span>
-                      <p className="text-xs text-muted-foreground">{member.title}</p>
-                    </div>
-
-                    <div className="col-span-1 md:col-span-2">
-                      <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
-                        <span
-                          className={`w-2 h-2 rounded-full ${
-                            member.status === 'Live' ? 'bg-accent' : 'border border-border'
-                          }`}
-                        />
-                        {member.status}
-                      </span>
-                    </div>
-
-                    <div className="col-span-1 md:col-span-2 flex justify-end pr-0 md:pr-4">
-                      <Button variant="ghost" size="sm">
-                        {member.status === 'Pending' ? 'Resend' : 'Manage'}
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="p-4 border-t border-border text-xs text-muted-foreground">
-                Showing {members.length} of {members.length} members
-              </div>
+              <div className="text-3xl font-bold">{roster.length}</div>
             </CardContent>
           </Card>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <Card className="border border-border bg-card rounded-xl p-6 flex flex-col">
-              <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-                <Palette className="w-5 h-5 text-primary" />
+          <Card className="shadow-premium">
+            <CardContent className="p-6 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-muted-foreground">Site</span>
+                <Globe className="w-4 h-4 text-primary" />
               </div>
-              <h4 className="font-heading font-semibold text-foreground mb-2">Firm Branding</h4>
-              <p className="text-sm text-muted-foreground flex-1">
-                Update your firm&apos;s logo, colors, and typography across every member profile.
-              </p>
-              <span className="text-xs font-semibold uppercase tracking-widest text-accent mt-4">
-                Configure
-              </span>
-            </Card>
-
-            <Card className="border border-border bg-card rounded-xl p-6 flex flex-col">
-              <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-                <Receipt className="w-5 h-5 text-primary" />
+              <div className="text-lg font-bold truncate">
+                {firm.siteUrl || (
+                  <span className="text-muted-foreground font-normal">Not published</span>
+                )}
               </div>
-              <h4 className="font-heading font-semibold text-foreground mb-2">Billing &amp; Seats</h4>
-              <p className="text-sm text-muted-foreground flex-1">
-                Manage payment methods, view invoices, and adjust your total active seats.
-              </p>
-              <span className="text-xs font-semibold uppercase tracking-widest text-accent mt-4">
-                Manage
-              </span>
-            </Card>
+              {firm.isPublished && <Badge variant="secondary" className="mt-1">Live</Badge>}
+            </CardContent>
+          </Card>
 
-            <div className="border-2 border-dashed border-border rounded-xl p-6 flex flex-col items-center justify-center text-center min-h-[180px]">
-              <ShieldCheck className="w-7 h-7 text-muted-foreground mb-2" />
-              <h4 className="text-sm font-semibold text-foreground mb-1">Firm-wide Permissions</h4>
-              <p className="text-xs text-muted-foreground">Control what each role can see and edit</p>
+          <Card className="shadow-premium">
+            <CardContent className="p-6 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-muted-foreground">Established</span>
+                <CalendarDays className="w-4 h-4 text-primary" />
+              </div>
+              <div className="text-3xl font-bold">
+                {firm.firmDetails.foundedYear || (
+                  <span className="text-muted-foreground font-normal text-lg">—</span>
+                )}
+              </div>
+              {firm.firmDetails.registrationNumber && (
+                <p className="text-xs text-muted-foreground flex items-center gap-1.5 pt-1">
+                  <BadgeCheck className="w-3.5 h-3.5" />
+                  Reg. {firm.firmDetails.registrationNumber}
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card className="shadow-premium">
+          <CardContent className="p-6 space-y-6">
+            <div className="flex items-center justify-between gap-4 flex-wrap">
+              <div>
+                <h2 className="text-lg font-bold text-foreground">Our Team</h2>
+                <p className="text-sm text-muted-foreground">
+                  The lawyers shown on your firm&apos;s site.
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                onClick={() => router.push('/firm-roster')}
+                className="gap-2"
+              >
+                <UserPlus className="w-4 h-4" />
+                Edit roster
+              </Button>
             </div>
-          </div>
-        </main>
-      </div>
-    </ComingSoonOverlay>
+
+            {roster.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-border bg-muted/20 p-10 text-center space-y-2">
+                <div className="w-12 h-12 mx-auto rounded-xl bg-primary/5 flex items-center justify-center">
+                  <Users className="w-6 h-6 text-primary/40" />
+                </div>
+                <p className="font-medium text-foreground">No lawyers added yet</p>
+                <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                  Your site is still publishable — visitors are invited to contact the firm until
+                  you add your team.
+                </p>
+              </div>
+            ) : (
+              <ul className="divide-y divide-border">
+                {/*
+                  Keyed by index, matching RosterMemberList: members carry no id,
+                  and the only mutations are append and remove-at-index.
+                */}
+                {roster.map((member, index) => (
+                  <li key={index}>
+                    <Link
+                      href={`/firm-roster/${index}`}
+                      className="flex items-center gap-4 py-4 -mx-2 px-2 rounded-lg hover:bg-muted/40 transition-colors"
+                    >
+                      <Avatar className="h-10 w-10">
+                        {member.photo && <AvatarImage src={member.photo} alt={member.fullName} />}
+                        <AvatarFallback>{memberInitials(member.fullName)}</AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-foreground truncate">{member.fullName}</p>
+                        <p className="text-sm text-muted-foreground truncate">
+                          {member.professionalTitle}
+                          {member.email ? ` · ${member.email}` : ''}
+                        </p>
+                      </div>
+                      {member.yearsOfExperience ? (
+                        <Badge variant="secondary" className="shrink-0">
+                          {member.yearsOfExperience}+ yrs
+                        </Badge>
+                      ) : null}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+
+        <div className="mt-8">
+          <InsightsSection enabled={!!firm.googleAnalyticsId} />
+        </div>
+      </main>
+      {deployModal}
+    </div>
   );
 }
