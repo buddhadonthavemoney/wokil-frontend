@@ -68,14 +68,6 @@ function normalizeProfile(input: Partial<LawyerProfile>): LawyerProfile {
   };
 }
 
-// normalizeProfile's sibling, for exactly the same reason: Go's `omitempty`
-// pointers drop whole groups, and fromFirmProfile reads
-// `firmDetails.name` / `practiceDetails.areasOfPractice` directly. Without
-// this a firm that never filled in a step nil-derefs at deploy time.
-function normalizeFirm(input: Partial<FirmProfile>): FirmProfile {
-  return toFirmProfile(input);
-}
-
 type RenderBody = {
   kind?: 'individual' | 'firm';
   profile?: Partial<LawyerProfile>;
@@ -113,33 +105,30 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
   // as-is.
   const extraPages: Record<string, string> = {};
 
-  if (kind === 'firm') {
-    const themeId = body.theme ?? 'classic';
-    const Theme = resolveTheme(themeId);
-    if (!Theme) {
-      return res.status(400).json({ error: `unknown firm theme: ${themeId}` });
-    }
-    if (!body.firm) {
-      return res.status(400).json({ error: 'missing firm' });
-    }
+  const themeId = body.theme ?? 'classic';
+  const Theme = resolveTheme(themeId);
+  if (!Theme) {
+    return res.status(400).json({ error: `unknown theme: ${themeId}` });
+  }
 
-    const firm = normalizeFirm(body.firm);
-    const site = fromFirmProfile(firm);
-    try {
+  try {
+    if (kind === 'firm') {
+      if (!body.firm) {
+        return res.status(400).json({ error: 'missing firm' });
+      }
+
+      const firm = toFirmProfile(body.firm);
+      const site = fromFirmProfile(firm);
       bodyHtml = renderToStaticMarkup(Theme({ site }));
-    } catch (err) {
-      console.error('[render] firm render failed', err);
-      return res.status(500).json({ error: 'render failed' });
-    }
-    qrHtml = renderToStaticMarkup(ContactQrWidget({ vcard: buildFirmVCard(firm) }));
-    title = firm.firmDetails.name;
-    googleAnalyticsId = firm.googleAnalyticsId;
+      qrHtml = renderToStaticMarkup(ContactQrWidget({ vcard: buildFirmVCard(firm) }));
+      title = firm.firmDetails.name;
+      googleAnalyticsId = firm.googleAnalyticsId;
 
-    // The People page: every lawyer in full, on one page, rendered by the same
-    // theme as the home page so the nav, chrome and footer carry over. Rendered
-    // even for an empty roster, so the nav link never lands on a 404 — it
-    // carries the same "team is being introduced" state the home page shows.
-    try {
+      // The People page: every lawyer in full, on one page, rendered by the
+      // same theme as the home page so the nav, chrome and footer carry over.
+      // Rendered even for an empty roster, so the nav link never lands on a
+      // 404 — it carries the same "team is being introduced" state the home
+      // page shows.
       extraPages[TEAM_PAGE_PATH] = buildShell({
         bodyHtml: renderToStaticMarkup(Theme({ site, page: 'team' })),
         title: `Our Team — ${firm.firmDetails.name}`,
@@ -149,30 +138,20 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
         css: THEME_CSS,
         qrHtml,
       });
-    } catch (err) {
-      console.error('[render] firm team page render failed', err);
-      return res.status(500).json({ error: 'render failed' });
-    }
-  } else {
-    const themeId = body.theme ?? 'classic';
-    const Theme = resolveTheme(themeId);
-    if (!Theme) {
-      return res.status(400).json({ error: `unknown theme: ${themeId}` });
-    }
-    if (!body.profile) {
-      return res.status(400).json({ error: 'missing profile' });
-    }
+    } else {
+      if (!body.profile) {
+        return res.status(400).json({ error: 'missing profile' });
+      }
 
-    const profile = normalizeProfile(body.profile);
-    try {
+      const profile = normalizeProfile(body.profile);
       bodyHtml = renderToStaticMarkup(Theme({ site: fromLawyerProfile(profile) }));
-    } catch (err) {
-      console.error('[render] render failed', err);
-      return res.status(500).json({ error: 'render failed' });
+      qrHtml = renderToStaticMarkup(ContactQrWidget({ vcard: buildVCard(profile) }));
+      title = profile.basicInformation.fullName;
+      googleAnalyticsId = profile.googleAnalyticsId;
     }
-    qrHtml = renderToStaticMarkup(ContactQrWidget({ vcard: buildVCard(profile) }));
-    title = profile.basicInformation.fullName;
-    googleAnalyticsId = profile.googleAnalyticsId;
+  } catch (err) {
+    console.error('[render] render failed', err);
+    return res.status(500).json({ error: 'render failed' });
   }
 
   const html = buildShell({ bodyHtml, title, googleAnalyticsId, css: THEME_CSS, qrHtml });

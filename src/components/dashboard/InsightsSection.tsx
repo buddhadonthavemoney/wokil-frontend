@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { getSiteAnalytics } from '@/generated/wokil-api';
+import { getSiteAnalyticsOptions } from '@/generated/wokil-api/@tanstack/react-query.gen';
 import { Button } from '@/components/ui/button';
 import { Clock, Eye, Globe, QrCode, TrendingUp, Users } from 'lucide-react';
 import {
@@ -40,8 +40,7 @@ export function InsightsSection({ enabled }: InsightsSectionProps) {
   const router = useRouter();
 
   const { data: analytics } = useQuery({
-    queryKey: ['analytics'],
-    queryFn: async () => (await getSiteAnalytics({ throwOnError: true })).data,
+    ...getSiteAnalyticsOptions(),
     enabled,
     refetchInterval: 30000,
   });

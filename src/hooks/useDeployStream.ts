@@ -43,7 +43,7 @@ interface UseDeployStreamOptions {
   confirmAlreadyDone?: () => Promise<boolean>;
 }
 
-interface DeployStreamState {
+export interface DeployStreamState {
   phase: DeployPhase;
   /** Ordered steps, oldest first. The last one is in-flight while phase === 'running'. */
   steps: DeployStep[];

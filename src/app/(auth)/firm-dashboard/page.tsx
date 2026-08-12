@@ -1,7 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -16,22 +15,14 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getMyFirmOptions } from '@/generated/wokil-api/@tanstack/react-query.gen';
 import { getMyFirm } from '@/generated/wokil-api';
 import { FirmProfile, toFirmProfile } from '@/types/firm';
-import { useDeployStream } from '@/hooks/useDeployStream';
+import { memberInitials } from '@/lib/firm-roster';
+import { siteHref } from '@/lib/utils';
+import { useDeployHandoff } from '@/hooks/useDeployHandoff';
 import { DeployProgressModal } from '@/components/deploy/DeployProgressModal';
 import { InsightsSection } from '@/components/dashboard/InsightsSection';
 
-function initials(name: string): string {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? '')
-    .join('');
-}
-
 export default function FirmDashboardPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { data, isLoading, refetch } = useQuery(getMyFirmOptions());
 
   const raw = data as Partial<FirmProfile> | undefined;
@@ -41,43 +32,20 @@ export default function FirmDashboardPage() {
   const hasFirm = Boolean(raw?.id);
   const roster = firm.roster ?? [];
 
-  // The firm preview hands the deploy off by navigating here with
-  // ?deploying=true — the publish call has already returned, and the work
-  // continues server-side. Subscribing to the stream is what turns that into
-  // visible progress; the param is consumed immediately so a refresh (or a
-  // shared URL) doesn't re-open the modal over a deploy that already ended.
-  // Read in the initializer rather than an effect: the preview reaches this
-  // page through a client-side router.push, so the param is already there on
-  // the first render, and arming in an effect would both cost a render and
-  // race the strip below.
-  const [activeDeployment, setActiveDeployment] = useState(
-    () => searchParams?.get('deploying') === 'true',
-  );
-
-  useEffect(() => {
-    if (!searchParams) return;
-    if (searchParams.get('deploying') !== 'true') return;
-    const newParams = new URLSearchParams(searchParams.toString());
-    newParams.delete('deploying');
-    const query = newParams.toString();
-    router.replace(query ? `/firm-dashboard?${query}` : '/firm-dashboard', { scroll: false });
-  }, [searchParams, router]);
-
-  const deployStream = useDeployStream({
-    active: activeDeployment,
-    onDeactivate: () => setActiveDeployment(false),
-    confirmAlreadyDone: async () => {
-      // Mirrors the individual dashboard: the stream's "no ongoing deployment"
-      // 400 only counts as a finished deploy if the firm itself confirms it,
-      // so subscribing after a deploy that never ran isn't reported as success.
+  const deployStream = useDeployHandoff({
+    redirectTo: '/firm-dashboard',
+    // Mirrors the individual dashboard: the stream's "no ongoing deployment"
+    // 400 only counts as a finished deploy if the firm itself confirms it,
+    // so subscribing after a deploy that never ran isn't reported as success.
+    confirmPublished: async () => {
       const firmData = (await getMyFirm({ throwOnError: true })).data as
         | Partial<FirmProfile>
         | undefined;
       return !!(firmData && (firmData.isPublished || firmData.siteUrl));
     },
+    // Refetched on failure too: a failed deploy can still have moved state
+    // that the cards above render.
     onDone: async () => {
-      // Refetched on failure too: a failed deploy can still have moved state
-      // that the cards above render.
       await refetch();
     },
   });
@@ -92,7 +60,7 @@ export default function FirmDashboardPage() {
       steps={deployStream.steps}
       message={deployStream.message}
       onClose={deployStream.reset}
-      siteUrl={firm.siteUrl ? `https://${firm.siteUrl}` : undefined}
+      siteUrl={firm.siteUrl ? siteHref(firm.siteUrl) : undefined}
     />
   );
 
@@ -142,7 +110,7 @@ export default function FirmDashboardPage() {
             <div className="flex items-center gap-3">
               {firm.siteUrl && (
                 <Button variant="outline" asChild className="gap-2">
-                  <a href={`https://${firm.siteUrl}`} target="_blank" rel="noopener noreferrer">
+                  <a href={siteHref(firm.siteUrl)} target="_blank" rel="noopener noreferrer">
                     <ExternalLink className="w-4 h-4" />
                     View Site
                   </a>
@@ -247,7 +215,7 @@ export default function FirmDashboardPage() {
                     >
                       <Avatar className="h-10 w-10">
                         {member.photo && <AvatarImage src={member.photo} alt={member.fullName} />}
-                        <AvatarFallback>{initials(member.fullName)}</AvatarFallback>
+                        <AvatarFallback>{memberInitials(member.fullName)}</AvatarFallback>
                       </Avatar>
                       <div className="min-w-0 flex-1">
                         <p className="font-medium text-foreground truncate">{member.fullName}</p>

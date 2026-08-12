@@ -8,6 +8,7 @@ import { toLawyerProfile } from '@/lib/lawyer-profile-adapter';
 import { FirmProfile, toFirmProfile } from '@/types/firm';
 import { LawyerProfile } from '@/types/lawyer';
 import { rosterCardProfile, rosterCardUrl } from '@/lib/roster-card';
+import { siteHref } from '@/lib/utils';
 import { memberInitials } from '@/lib/firm-roster';
 import { useReactToPrint } from 'react-to-print';
 import { BusinessCard, CardLayout, CardColor } from '@/components/BusinessCard';
@@ -246,9 +247,7 @@ function IndividualBusinessCards() {
 
   const getPublicUrl = () => {
     if (!profile.siteUrl) return '';
-    const url = profile.siteUrl;
-    if (url.startsWith('http://') || url.startsWith('https://')) return url;
-    return `https://${url}`;
+    return siteHref(profile.siteUrl);
   };
 
   return (

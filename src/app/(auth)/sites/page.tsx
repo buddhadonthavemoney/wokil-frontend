@@ -8,7 +8,7 @@ import { getProfile, listSites, createSite, deleteSite, verifyDns, getVerificati
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
+import { cn, siteHref } from '@/lib/utils';
 import { useState, useEffect, useRef } from 'react';
 import {
   Dialog,
@@ -267,10 +267,7 @@ export default function Sites() {
 
   const getPublicUrl = (domain: string) => {
     if (!domain) return '';
-    if (domain.startsWith('http://') || domain.startsWith('https://')) {
-      return domain;
-    }
-    return `https://${domain}`;
+    return siteHref(domain);
   };
 
   const statusConfig: Record<string, { label: string; dot: string; className: string }> = {

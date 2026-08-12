@@ -9,7 +9,7 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
-import { cn } from '@/lib/utils'
+import { cn, siteHref } from '@/lib/utils'
 import QRCode from "react-qr-code";
 import {
   Scale,
@@ -30,7 +30,7 @@ import { useToast } from '@/hooks/use-toast';
 import { InfoModal } from '@/components/InfoModal';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getProfile } from '@/generated/wokil-api';
-import { useDeployStream } from '@/hooks/useDeployStream';
+import { useDeployHandoff } from '@/hooks/useDeployHandoff';
 import { useRequireAccountType } from '@/hooks/useAccountType';
 import { DeployProgressModal } from '@/components/deploy/DeployProgressModal';
 import { InsightsSection } from '@/components/dashboard/InsightsSection';
@@ -104,33 +104,19 @@ function DashboardContent() {
     }
   }, [searchParams, router]);
 
-  const [activeDeployment, setActiveDeployment] = useState(false);
-
-  useEffect(() => {
-    if (!searchParams) return;
-    const isDeploying = searchParams.get('deploying');
-    if (isDeploying === 'true') {
-      setActiveDeployment(true);
-      const newParams = new URLSearchParams(searchParams.toString());
-      newParams.delete('deploying');
-      router.replace(`/dashboard?${newParams.toString()}`, { scroll: false });
-    }
-  }, [searchParams, router]);
-
-  const deployStream = useDeployStream({
-    active: activeDeployment,
-    onDeactivate: () => setActiveDeployment(false),
-    confirmAlreadyDone: async () => {
-      // Disambiguates the stream's "no ongoing deployment" 400: only trust it
-      // as a finished deploy if the profile itself confirms publish, so a
-      // subscribe that raced a deploy which never actually ran doesn't get
-      // reported as a success.
+  const deployStream = useDeployHandoff({
+    redirectTo: '/dashboard',
+    // Disambiguates the stream's "no ongoing deployment" 400: only trust it
+    // as a finished deploy if the profile itself confirms publish, so a
+    // subscribe that raced a deploy which never actually ran doesn't get
+    // reported as a success.
+    confirmPublished: async () => {
       const data = (await getProfile({ throwOnError: true })).data;
       return !!(data && (data.isPublished || data.professionalProfile?.deploymentURL));
     },
+    // Refetch regardless of outcome: a failed deploy can still have rolled
+    // some state forward (or back) that the profile needs to reflect.
     onDone: async (status) => {
-      // Refetch regardless of outcome: a failed deploy can still have rolled
-      // some state forward (or back) that the profile needs to reflect.
       await fetchProfile();
       if (status !== 'success') return;
       setShowGuideArrow(true);
@@ -144,9 +130,7 @@ function DashboardContent() {
 
   const getPublicUrl = () => {
     if (!profile || !profile.siteUrl) return '';
-    const url = profile.siteUrl;
-    if (url.startsWith('http://') || url.startsWith('https://')) return url;
-    return `https://${url}`;
+    return siteHref(profile.siteUrl);
   };
 
   const copyUrl = () => {

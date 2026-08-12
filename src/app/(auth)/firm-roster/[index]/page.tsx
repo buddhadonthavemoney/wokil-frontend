@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { RosterMemberFields } from '@/components/form/RosterMemberFields';
 import { memberHref } from '@/lib/firm-roster';
+import { siteHref } from '@/lib/utils';
 import { RosterMember } from '@/types/firm';
 
 /**
@@ -87,7 +88,7 @@ export default function RosterMemberPage() {
             firm.siteUrl ? (
               <Button variant="outline" size="sm" asChild className="gap-2">
                 <a
-                  href={`https://${firm.siteUrl}${memberHref(member, index)}`}
+                  href={`${siteHref(firm.siteUrl)}${memberHref(member, index)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                 >

@@ -2,6 +2,7 @@ import { FirmProfile, RosterMember } from '@/types/firm';
 import { LawyerProfile } from '@/types/lawyer';
 import { createBlankLawyerProfile } from '@/lib/lawyer-profile-adapter';
 import { memberHref } from '@/lib/firm-roster';
+import { siteHref } from '@/lib/utils';
 
 /**
  * A roster member as the business card sees them: their own details in front,
@@ -66,6 +67,5 @@ export function rosterCardProfile(firm: FirmProfile, member: RosterMember): Lawy
  */
 export function rosterCardUrl(firm: FirmProfile, member: RosterMember, index: number): string {
   if (!firm.siteUrl) return '';
-  const base = /^https?:\/\//.test(firm.siteUrl) ? firm.siteUrl : `https://${firm.siteUrl}`;
-  return `${base}${memberHref(member, index)}`;
+  return `${siteHref(firm.siteUrl)}${memberHref(member, index)}`;
 }
