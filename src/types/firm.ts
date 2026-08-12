@@ -1,4 +1,4 @@
-import { LawyerProfile } from '@/types/lawyer';
+import { LawyerProfile, TimelineEntry } from '@/types/lawyer';
 
 /**
  * One lawyer as the firm entered them.
@@ -18,6 +18,13 @@ export interface RosterMember {
   email?: string;
   phone?: string;
   linkedIn?: string;
+  /**
+   * This lawyer's own education and career history — the same shape a solo
+   * lawyer's profile carries, edited by the same {@link TimelineEntryList}.
+   * Rendered on the firm's People page only; the home-page roster stays a
+   * summary, so a twelve-lawyer firm's landing page isn't a wall of dates.
+   */
+  timeline?: { education: TimelineEntry[]; experience: TimelineEntry[] };
 }
 
 /**
@@ -58,6 +65,11 @@ export interface FirmProfile {
   slug?: string;
   siteUrl?: string;
   isPublished?: boolean;
+  /**
+   * Shared GA4 measurement ID, present only once the firm has opted in.
+   * Derived from firms.ga_enabled server-side and stripped on write.
+   */
+  googleAnalyticsId?: string;
 }
 
 /** Search hit for the firm typeahead in the individual wizard. */

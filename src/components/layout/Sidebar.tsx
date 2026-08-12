@@ -99,7 +99,10 @@ function NavGroup({
   pathname: string | null;
   onNavigate: () => void;
 }) {
-  const hasActiveChild = items.some((item) => item.path === pathname);
+  // Sub-routes count as the parent: /firm-roster/2 is still "Roster".
+  const isChildActive = (path: string) =>
+    pathname === path || Boolean(pathname?.startsWith(`${path}/`));
+  const hasActiveChild = items.some((item) => isChildActive(item.path));
   const [isOpen, setIsOpen] = useState(hasActiveChild);
 
   return (
@@ -134,7 +137,7 @@ function NavGroup({
               onClick={onNavigate}
               className={`
                 py-2 text-sm transition-colors
-                ${item.path === pathname
+                ${isChildActive(item.path)
                   ? 'text-accent font-semibold'
                   : 'text-muted-foreground hover:text-accent'
                 }
@@ -257,9 +260,17 @@ export default function Sidebar() {
               />
             </div>
             {isFirm ? (
-              <div onClick={handleNavClick}>
-                <NavLink icon={<Building2 className="w-5 h-5" />} label="Firm Builder" path="/firm-builder" isActive={pathname === '/firm-builder'} />
-              </div>
+              <NavGroup
+                icon={<Building2 className="w-5 h-5" />}
+                label="Firm"
+                pathname={pathname}
+                onNavigate={handleNavClick}
+                items={[
+                  { label: 'Builder', path: '/firm-builder' },
+                  { label: 'Roster', path: '/firm-roster' },
+                  { label: 'All Details', path: '/firm-details' },
+                ]}
+              />
             ) : (
               <NavGroup
                 icon={<User className="w-5 h-5" />}

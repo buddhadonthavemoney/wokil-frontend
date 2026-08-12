@@ -266,7 +266,8 @@ export const zRosterMember = z.object({
     areasOfPractice: z.array(z.string()).optional(),
     email: z.string().optional(),
     phone: z.string().optional(),
-    linkedIn: z.string().optional()
+    linkedIn: z.string().optional(),
+    timeline: zTimeline.optional()
 });
 
 export const zFirmProfile = z.object({
@@ -281,7 +282,8 @@ export const zFirmProfile = z.object({
     id: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).readonly().optional(),
     slug: z.string().optional(),
     isPublished: z.boolean().readonly().optional(),
-    siteUrl: z.string().readonly().optional()
+    siteUrl: z.string().readonly().optional(),
+    googleAnalyticsId: z.string().readonly().optional()
 });
 
 export const zAccountTypeResponse = z.object({

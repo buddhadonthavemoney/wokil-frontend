@@ -316,6 +316,10 @@ export type RosterMember = {
     email?: string;
     phone?: string;
     linkedIn?: string;
+    /**
+     * This lawyer's own education and career history — the same shape a solo lawyer's profile carries, since the firm wizard edits it with the same component. Rendered on the firm's People page only; the home-page roster stays a summary.
+     */
+    timeline?: Timeline;
 };
 
 export type FirmProfile = {
@@ -340,6 +344,10 @@ export type FirmProfile = {
      * Live domain of the firm's deployed site. Derived from the sites table on read — never stored on the firm and ignored if sent on write.
      */
     readonly siteUrl?: string;
+    /**
+     * Shared GA4 measurement ID, present only once the firm has opted into analytics. Derived from firms.ga_enabled on read — never stored on the firm and ignored if sent on write.
+     */
+    readonly googleAnalyticsId?: string;
 };
 
 export type AccountTypeResponse = {

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import {
   Building2, Users, UserPlus, Globe, ExternalLink, Pencil, Loader2, CalendarDays, BadgeCheck,
@@ -15,16 +16,9 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getMyFirmOptions } from '@/generated/wokil-api/@tanstack/react-query.gen';
 import { getMyFirm } from '@/generated/wokil-api';
 import { FirmProfile, toFirmProfile } from '@/types/firm';
-import { FIRM_STEPS } from '@/components/form/firmSteps';
 import { useDeployStream } from '@/hooks/useDeployStream';
 import { DeployProgressModal } from '@/components/deploy/DeployProgressModal';
-
-/**
- * Deep-links into the wizard at the roster step, found by key rather than
- * hardcoded, so reordering the steps cannot silently send "Edit roster"
- * somewhere else.
- */
-const ROSTER_STEP = FIRM_STEPS.findIndex((s) => s.key === 'roster') + 1;
+import { InsightsSection } from '@/components/dashboard/InsightsSection';
 
 function initials(name: string): string {
   return name
@@ -220,7 +214,7 @@ export default function FirmDashboardPage() {
               </div>
               <Button
                 variant="outline"
-                onClick={() => router.push(`/firm-builder?step=${ROSTER_STEP}`)}
+                onClick={() => router.push('/firm-roster')}
                 className="gap-2"
               >
                 <UserPlus className="w-4 h-4" />
@@ -246,29 +240,38 @@ export default function FirmDashboardPage() {
                   and the only mutations are append and remove-at-index.
                 */}
                 {roster.map((member, index) => (
-                  <li key={index} className="flex items-center gap-4 py-4">
-                    <Avatar className="h-10 w-10">
-                      {member.photo && <AvatarImage src={member.photo} alt={member.fullName} />}
-                      <AvatarFallback>{initials(member.fullName)}</AvatarFallback>
-                    </Avatar>
-                    <div className="min-w-0 flex-1">
-                      <p className="font-medium text-foreground truncate">{member.fullName}</p>
-                      <p className="text-sm text-muted-foreground truncate">
-                        {member.professionalTitle}
-                        {member.email ? ` · ${member.email}` : ''}
-                      </p>
-                    </div>
-                    {member.yearsOfExperience ? (
-                      <Badge variant="secondary" className="shrink-0">
-                        {member.yearsOfExperience}+ yrs
-                      </Badge>
-                    ) : null}
+                  <li key={index}>
+                    <Link
+                      href={`/firm-roster/${index}`}
+                      className="flex items-center gap-4 py-4 -mx-2 px-2 rounded-lg hover:bg-muted/40 transition-colors"
+                    >
+                      <Avatar className="h-10 w-10">
+                        {member.photo && <AvatarImage src={member.photo} alt={member.fullName} />}
+                        <AvatarFallback>{initials(member.fullName)}</AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-foreground truncate">{member.fullName}</p>
+                        <p className="text-sm text-muted-foreground truncate">
+                          {member.professionalTitle}
+                          {member.email ? ` · ${member.email}` : ''}
+                        </p>
+                      </div>
+                      {member.yearsOfExperience ? (
+                        <Badge variant="secondary" className="shrink-0">
+                          {member.yearsOfExperience}+ yrs
+                        </Badge>
+                      ) : null}
+                    </Link>
                   </li>
                 ))}
               </ul>
             )}
           </CardContent>
         </Card>
+
+        <div className="mt-8">
+          <InsightsSection enabled={!!firm.googleAnalyticsId} />
+        </div>
       </main>
       {deployModal}
     </div>

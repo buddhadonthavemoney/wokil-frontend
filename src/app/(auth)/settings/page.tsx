@@ -11,6 +11,8 @@ import { useToast } from '@/hooks/use-toast';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Label } from '@/components/ui/label';
 import { AccountTypeSetting } from '@/components/settings/AccountTypeSetting';
+import { useAccountType } from '@/hooks/useAccountType';
+import { getMyFirmOptions } from '@/generated/wokil-api/@tanstack/react-query.gen';
 
 export default function Settings() {
   const router = useRouter();
@@ -23,15 +25,25 @@ export default function Settings() {
     queryFn: async () => (await getProfile({ throwOnError: true })).data,
   });
 
+  // A firm's analytics flag lives on the firm, not the profile — `getProfile`
+  // returns an empty object for a firm account, so reading googleAnalyticsId
+  // from it would leave this card stuck on "not enabled" forever.
+  const { accountType } = useAccountType();
+  const isFirm = accountType === 'firm';
+  const firmQuery = getMyFirmOptions();
+  const { data: firm } = useQuery({ ...firmQuery, enabled: isFirm });
+  const analyticsId = isFirm ? firm?.googleAnalyticsId : profile?.googleAnalyticsId;
+
   // Enable Analytics Mutation
   const enableAnalyticsMutation = useMutation({
     mutationFn: async () => (await createGaProperty({ throwOnError: true })).data,
     onSuccess: () => {
       toast({
         title: "Analytics Enabled",
-        description: "Google Analytics has been successfully enabled for your site.",
+        description:
+          "Google Analytics has been enabled. Collection starts after your next publish — the measurement ID is baked into the site when it renders.",
       });
-      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      queryClient.invalidateQueries({ queryKey: isFirm ? firmQuery.queryKey : ['profile'] });
     },
     onError: (error: any) => {
       toast({
@@ -156,7 +168,7 @@ export default function Settings() {
                     </div>
                 </div>
 
-                {!profile?.googleAnalyticsId ? (
+                {!analyticsId ? (
                 <div className="bg-card border-none rounded-xl p-10 md:p-14 text-center shadow-premium">
                     <div className="w-16 h-16 bg-primary/5 rounded-full flex items-center justify-center mx-auto mb-6">
                         <TrendingUp className="w-8 h-8 text-primary" />
@@ -186,7 +198,7 @@ export default function Settings() {
                     </p>
                     <Button 
                         variant="outline"
-                        onClick={() => router.push('/dashboard')} 
+                        onClick={() => router.push(isFirm ? '/firm-dashboard' : '/dashboard')} 
                     >
                         Go to Dashboard
                     </Button>
