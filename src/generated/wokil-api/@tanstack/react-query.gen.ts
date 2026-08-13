@@ -3,8 +3,8 @@
 import { type DefaultError, queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { checkDomainAvailability, createFirm, createForm, createGaProperty, createSite, deleteSite, deploySite, getAccountType, getMyFirm, getProfile, getPublicDirectory, getSiteAnalytics, getVerificationRecords, googleCallback, googleLogin, listForms, listSites, listSubmissions, listThemes, listUsers, type Options, saveProfile, searchFirms, setAccountType, submitForm, updateFirm, updateProfileVisibility, uploadFile, verifyDns } from '../sdk.gen';
-import type { CheckDomainAvailabilityData, CheckDomainAvailabilityError, CheckDomainAvailabilityResponse, CreateFirmData, CreateFirmError, CreateFirmResponse, CreateFormData, CreateFormError, CreateFormResponse, CreateGaPropertyData, CreateGaPropertyError, CreateGaPropertyResponse, CreateSiteData, CreateSiteError, CreateSiteResponse, DeleteSiteData, DeleteSiteError, DeleteSiteResponse, DeploySiteData, DeploySiteError, DeploySiteResponse, GetAccountTypeData, GetAccountTypeError, GetAccountTypeResponse, GetMyFirmData, GetMyFirmError, GetMyFirmResponse, GetProfileData, GetProfileError, GetProfileResponse, GetPublicDirectoryData, GetPublicDirectoryError, GetPublicDirectoryResponse, GetSiteAnalyticsData, GetSiteAnalyticsError, GetSiteAnalyticsResponse, GetVerificationRecordsData, GetVerificationRecordsError, GetVerificationRecordsResponse, GoogleCallbackData, GoogleCallbackError, GoogleCallbackResponse, GoogleLoginData, GoogleLoginResponse, ListFormsData, ListFormsError, ListFormsResponse, ListSitesData, ListSitesError, ListSitesResponse, ListSubmissionsData, ListSubmissionsError, ListSubmissionsResponse, ListThemesData, ListThemesError, ListThemesResponse, ListUsersData, ListUsersError, ListUsersResponse, SaveProfileData, SaveProfileError, SaveProfileResponse, SearchFirmsData, SearchFirmsError, SearchFirmsResponse, SetAccountTypeData, SetAccountTypeError, SetAccountTypeResponse, SubmitFormData, SubmitFormError, SubmitFormResponse, UpdateFirmData, UpdateFirmError, UpdateFirmResponse, UpdateProfileVisibilityData, UpdateProfileVisibilityError, UpdateProfileVisibilityResponse, UploadFileData, UploadFileError, UploadFileResponse, VerifyDnsData, VerifyDnsError, VerifyDnsResponse } from '../types.gen';
+import { chatLegalResearch, checkDomainAvailability, createFirm, createForm, createGaProperty, createSite, deleteSite, deploySite, getAccountType, getMyFirm, getProfile, getPublicDirectory, getSiteAnalytics, getVerificationRecords, googleCallback, googleLogin, listForms, listLegalResearchConversations, listSites, listSubmissions, listThemes, listUsers, type Options, saveProfile, searchFirms, setAccountType, submitForm, updateFirm, updateProfileVisibility, uploadFile, verifyDns } from '../sdk.gen';
+import type { ChatLegalResearchData, ChatLegalResearchError, ChatLegalResearchResponse, CheckDomainAvailabilityData, CheckDomainAvailabilityError, CheckDomainAvailabilityResponse, CreateFirmData, CreateFirmError, CreateFirmResponse, CreateFormData, CreateFormError, CreateFormResponse, CreateGaPropertyData, CreateGaPropertyError, CreateGaPropertyResponse, CreateSiteData, CreateSiteError, CreateSiteResponse, DeleteSiteData, DeleteSiteError, DeleteSiteResponse, DeploySiteData, DeploySiteError, DeploySiteResponse, GetAccountTypeData, GetAccountTypeError, GetAccountTypeResponse, GetMyFirmData, GetMyFirmError, GetMyFirmResponse, GetProfileData, GetProfileError, GetProfileResponse, GetPublicDirectoryData, GetPublicDirectoryError, GetPublicDirectoryResponse, GetSiteAnalyticsData, GetSiteAnalyticsError, GetSiteAnalyticsResponse, GetVerificationRecordsData, GetVerificationRecordsError, GetVerificationRecordsResponse, GoogleCallbackData, GoogleCallbackError, GoogleCallbackResponse, GoogleLoginData, GoogleLoginResponse, ListFormsData, ListFormsError, ListFormsResponse, ListLegalResearchConversationsData, ListLegalResearchConversationsError, ListLegalResearchConversationsResponse, ListSitesData, ListSitesError, ListSitesResponse, ListSubmissionsData, ListSubmissionsError, ListSubmissionsResponse, ListThemesData, ListThemesError, ListThemesResponse, ListUsersData, ListUsersError, ListUsersResponse, SaveProfileData, SaveProfileError, SaveProfileResponse, SearchFirmsData, SearchFirmsError, SearchFirmsResponse, SetAccountTypeData, SetAccountTypeError, SetAccountTypeResponse, SubmitFormData, SubmitFormError, SubmitFormResponse, UpdateFirmData, UpdateFirmError, UpdateFirmResponse, UpdateProfileVisibilityData, UpdateProfileVisibilityError, UpdateProfileVisibilityResponse, UploadFileData, UploadFileError, UploadFileResponse, VerifyDnsData, VerifyDnsError, VerifyDnsResponse } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -546,3 +546,42 @@ export const uploadFileMutation = (options?: Partial<Options<UploadFileData>>): 
     };
     return mutationOptions;
 };
+
+/**
+ * Ask the legal corpus a question
+ *
+ * Thin proxy to the wokil-rag service. The corpus (Najir decisions, Nepal Law Commission acts) is owned by wokil-rag; this endpoint owns the conversation and forwards history once persistence lands.
+ */
+export const chatLegalResearchMutation = (options?: Partial<Options<ChatLegalResearchData>>): UseMutationOptions<ChatLegalResearchResponse, ChatLegalResearchError, Options<ChatLegalResearchData>> => {
+    const mutationOptions: UseMutationOptions<ChatLegalResearchResponse, ChatLegalResearchError, Options<ChatLegalResearchData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await chatLegalResearch({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const listLegalResearchConversationsQueryKey = (options?: Options<ListLegalResearchConversationsData>) => createQueryKey('listLegalResearchConversations', options);
+
+/**
+ * List the user's legal-research conversations
+ *
+ * The calling user's conversations, most recently updated first. Powers the "Recent Research" section. Each entry carries a last_question preview and message count so the list renders without a second round trip.
+ */
+export const listLegalResearchConversationsOptions = (options?: Options<ListLegalResearchConversationsData>) => queryOptions<ListLegalResearchConversationsResponse, ListLegalResearchConversationsError, ListLegalResearchConversationsResponse, ReturnType<typeof listLegalResearchConversationsQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await listLegalResearchConversations({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: listLegalResearchConversationsQueryKey(options)
+});
