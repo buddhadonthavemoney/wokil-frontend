@@ -423,6 +423,50 @@ export type LegalResearchConversation = {
     last_question?: string | null;
 };
 
+/**
+ * One persisted exchange of a conversation (wokil-go's table).
+ */
+export type LegalResearchMessage = {
+    id: number;
+    turn_index: number;
+    question: string;
+    answer: string;
+    /**
+     * Point-in-time citation snapshot of this turn (same shape as LegalResearchFile).
+     */
+    sources: Array<LegalResearchFile>;
+    from_general_knowledge: boolean;
+    created_at: string;
+};
+
+export type LegalResearchDocumentChunk = {
+    chunk_index: number;
+    section_path?: string | null;
+    main_clause_number?: string | null;
+    page_start?: number | null;
+    text: string;
+};
+
+/**
+ * Metadata plus full text of one corpus document, proxied from wokil-rag (RAG's /documents/{id} + /documents/{id}/chunks). Enables opening a cited source from the chat transcript.
+ */
+export type LegalResearchDocument = {
+    document_id: number;
+    title: string;
+    filename?: string;
+    collection?: string | null;
+    category?: string | null;
+    doc_type?: string | null;
+    jurisdiction?: string | null;
+    summary?: string | null;
+    doc_year?: number | null;
+    /**
+     * Original source web page when the corpus record carries one.
+     */
+    source_url?: string | null;
+    chunks: Array<LegalResearchDocumentChunk>;
+};
+
 export type ProfessionalProfileWritable = {
     bio?: string;
     officeHours?: string;
@@ -1480,3 +1524,81 @@ export type ListLegalResearchConversationsResponses = {
 };
 
 export type ListLegalResearchConversationsResponse = ListLegalResearchConversationsResponses[keyof ListLegalResearchConversationsResponses];
+
+export type ListLegalResearchConversationMessagesData = {
+    body?: never;
+    path: {
+        conversation_id: number;
+    };
+    query?: never;
+    url: '/api/legal-research/conversations/{conversation_id}/messages';
+};
+
+export type ListLegalResearchConversationMessagesErrors = {
+    /**
+     * Missing or invalid bearer token
+     */
+    401: string;
+    /**
+     * Resource not found
+     */
+    404: string;
+    /**
+     * Internal server error
+     */
+    500: string;
+};
+
+export type ListLegalResearchConversationMessagesError = ListLegalResearchConversationMessagesErrors[keyof ListLegalResearchConversationMessagesErrors];
+
+export type ListLegalResearchConversationMessagesResponses = {
+    /**
+     * OK
+     */
+    200: Array<LegalResearchMessage>;
+};
+
+export type ListLegalResearchConversationMessagesResponse = ListLegalResearchConversationMessagesResponses[keyof ListLegalResearchConversationMessagesResponses];
+
+export type GetLegalResearchDocumentData = {
+    body?: never;
+    path: {
+        document_id: number;
+    };
+    query?: never;
+    url: '/api/legal-research/documents/{document_id}';
+};
+
+export type GetLegalResearchDocumentErrors = {
+    /**
+     * Missing or invalid bearer token
+     */
+    401: string;
+    /**
+     * Resource not found
+     */
+    404: string;
+    /**
+     * Internal server error
+     */
+    500: string;
+    /**
+     * Upstream service (wokil-rag) returned a bad response
+     */
+    502: string;
+    /**
+     * Upstream service (wokil-rag) unavailable
+     */
+    503: string;
+};
+
+export type GetLegalResearchDocumentError = GetLegalResearchDocumentErrors[keyof GetLegalResearchDocumentErrors];
+
+export type GetLegalResearchDocumentResponses = {
+    /**
+     * OK
+     */
+    200: LegalResearchDocument;
+};
+
+export type GetLegalResearchDocumentResponse = GetLegalResearchDocumentResponses[keyof GetLegalResearchDocumentResponses];

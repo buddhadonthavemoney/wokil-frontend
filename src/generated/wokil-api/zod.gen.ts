@@ -341,6 +341,44 @@ export const zLegalResearchConversation = z.object({
     last_question: z.string().nullish()
 });
 
+/**
+ * One persisted exchange of a conversation (wokil-go's table).
+ */
+export const zLegalResearchMessage = z.object({
+    id: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }),
+    turn_index: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+    question: z.string(),
+    answer: z.string(),
+    sources: z.array(zLegalResearchFile),
+    from_general_knowledge: z.boolean(),
+    created_at: z.iso.datetime()
+});
+
+export const zLegalResearchDocumentChunk = z.object({
+    chunk_index: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+    section_path: z.string().nullish(),
+    main_clause_number: z.string().nullish(),
+    page_start: z.int().nullish(),
+    text: z.string()
+});
+
+/**
+ * Metadata plus full text of one corpus document, proxied from wokil-rag (RAG's /documents/{id} + /documents/{id}/chunks). Enables opening a cited source from the chat transcript.
+ */
+export const zLegalResearchDocument = z.object({
+    document_id: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }),
+    title: z.string(),
+    filename: z.string().optional(),
+    collection: z.string().nullish(),
+    category: z.string().nullish(),
+    doc_type: z.string().nullish(),
+    jurisdiction: z.string().nullish(),
+    summary: z.string().nullish(),
+    doc_year: z.int().nullish(),
+    source_url: z.string().nullish(),
+    chunks: z.array(zLegalResearchDocumentChunk)
+});
+
 export const zProfessionalProfileWritable = z.object({
     bio: z.string().optional(),
     officeHours: z.string().optional(),
@@ -605,3 +643,21 @@ export const zChatLegalResearchResponse = zLegalResearchChatResponse;
  * OK
  */
 export const zListLegalResearchConversationsResponse = z.array(zLegalResearchConversation);
+
+export const zListLegalResearchConversationMessagesPath = z.object({
+    conversation_id: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' })
+});
+
+/**
+ * OK
+ */
+export const zListLegalResearchConversationMessagesResponse = z.array(zLegalResearchMessage);
+
+export const zGetLegalResearchDocumentPath = z.object({
+    document_id: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' })
+});
+
+/**
+ * OK
+ */
+export const zGetLegalResearchDocumentResponse = zLegalResearchDocument;

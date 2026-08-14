@@ -1,67 +1,128 @@
 'use client';
 
-import { useState } from 'react';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import ReactMarkdown from 'react-markdown';
 import {
-  Search,
   Gavel,
-  BookOpen,
-  Scale,
   History,
-  ArrowRight,
+  Send,
+  SquarePen,
   AlertTriangle,
   Loader2,
-  X,
+  Scale,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import {
   chatLegalResearch,
   listLegalResearchConversations,
+  listLegalResearchConversationMessages,
   type LegalResearchChatResponse,
   type LegalResearchConversation,
+  type LegalResearchFile,
+  type LegalResearchMessage,
 } from '@/generated/wokil-api';
 import { PageHeader } from '@/components/layout/PageHeader';
 
-const databases = [
-  {
-    icon: BookOpen,
-    title: 'Constitution of Nepal',
-    description:
-      'Explore the constitution, fundamental rights, and state structure with historical context.',
-  },
-  {
-    icon: Gavel,
-    title: 'Civil Law (Muluki)',
-    description:
-      'Access the Muluki Civil Code 2074, property laws, family law, and contract regulations.',
-  },
-  {
-    icon: Scale,
-    title: 'Criminal Law',
-    description:
-      'Muluki Criminal Code, penal procedures, evidence act, and major Supreme Court precedents.',
-  },
-];
-
 const suggestedChips = ['Fundamental Rights (Part 3)', 'Muluki Civil Code 2074', 'Cyber Crime Precedents'];
+
+type Turn = {
+  question: string;
+  answer: string;
+  sources: LegalResearchFile[];
+  fromGeneralKnowledge: boolean;
+  createdAt?: string;
+};
 
 function timeAgo(iso: string): string {
   const seconds = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
   if (seconds < 60) return 'just now';
   const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes} minute${minutes === 1 ? '' : 's'} ago`;
+  if (minutes < 60) return `${minutes}m ago`;
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours} hour${hours === 1 ? '' : 's'} ago`;
+  if (hours < 24) return `${hours}h ago`;
   const days = Math.floor(hours / 24);
-  if (days < 30) return `${days} day${days === 1 ? '' : 's'} ago`;
+  if (days < 30) return `${days}d ago`;
   return new Date(iso).toLocaleDateString();
+}
+
+function SourceCard({ file }: { file: LegalResearchFile }) {
+  return (
+    <div className="p-4 rounded-lg border border-border bg-background">
+      <div className="flex items-start justify-between gap-3">
+        <h4 className="text-sm font-medium text-foreground">{file.document_title}</h4>
+        <span className="shrink-0 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-secondary border border-accent text-foreground">
+          {Math.round(file.score * 100)}%
+        </span>
+      </div>
+      {(file.collection || file.category) && (
+        <p className="mt-1.5 text-xs text-muted-foreground">
+          {[file.collection, file.category].filter(Boolean).join(' · ')}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function AssistantMessage({ turn }: { turn: Turn }) {
+  return (
+    <div className="flex items-start gap-3">
+      <div className="w-8 h-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center shrink-0">
+        <Gavel className="w-4 h-4" />
+      </div>
+      <div className="flex-1 min-w-0 space-y-3">
+        {turn.fromGeneralKnowledge && (
+          <div className="flex items-start gap-3 p-4 rounded-lg border border-amber-600/40 bg-amber-600/10">
+            <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-semibold text-amber-700">
+                Answered from general knowledge — not the corpus
+              </p>
+              <p className="text-xs text-amber-700/80 mt-1">
+                Nothing in the Najir decisions or Nepal Law Commission acts
+                matched this query. Verify this answer before relying on it.
+              </p>
+            </div>
+          </div>
+        )}
+        <div className="prose prose-sm max-w-none prose-p:my-2 prose-pre:bg-secondary prose-pre:text-foreground prose-headings:font-heading prose-a:text-accent">
+          <ReactMarkdown>{turn.answer}</ReactMarkdown>
+        </div>
+        {turn.sources.length > 0 && (
+          <div>
+            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">
+              Sources ({turn.sources.length})
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {turn.sources.map((file) => (
+                <SourceCard key={file.document_id} file={file} />
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function UserMessage({ question }: { question: string }) {
+  return (
+    <div className="flex justify-end">
+      <div className="max-w-[85%] md:max-w-[70%] px-4 py-2.5 rounded-2xl rounded-br-sm bg-primary text-primary-foreground text-sm leading-relaxed whitespace-pre-wrap">
+        {question}
+      </div>
+    </div>
+  );
 }
 
 export default function LegalResearchPage() {
   const [query, setQuery] = useState('');
-  const [result, setResult] = useState<LegalResearchChatResponse | null>(null);
   const [activeConversationId, setActiveConversationId] = useState<number | null>(null);
+  const [pendingQuestion, setPendingQuestion] = useState<string | null>(null);
+  const threadRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const queryClient = useQueryClient();
 
   const conversationsQuery = useQuery({
     queryKey: ['legal-research', 'conversations'],
@@ -75,6 +136,52 @@ export default function LegalResearchPage() {
       return (data ?? []) as LegalResearchConversation[];
     },
   });
+
+  const messagesQuery = useQuery({
+    queryKey: ['legal-research', 'messages', activeConversationId],
+    queryFn: async (): Promise<LegalResearchMessage[]> => {
+      if (activeConversationId == null) return [];
+      const { data, error } = await listLegalResearchConversationMessages({
+        path: { conversation_id: activeConversationId },
+      });
+      if (error !== undefined) {
+        throw new Error(
+          typeof error === 'string' ? error : 'Failed to load the conversation.',
+        );
+      }
+      return (data ?? []) as LegalResearchMessage[];
+    },
+    enabled: activeConversationId != null,
+  });
+
+  const transcript: Turn[] = useMemo(
+    () =>
+      (messagesQuery.data ?? []).map((m) => ({
+        question: m.question,
+        answer: m.answer,
+        sources: m.sources ?? [],
+        fromGeneralKnowledge: m.from_general_knowledge,
+        createdAt: m.created_at,
+      })),
+    [messagesQuery.data],
+  );
+
+  const allTurns: Turn[] = useMemo(
+    () => [
+      ...transcript,
+      ...(pendingQuestion != null
+        ? [
+            {
+              question: pendingQuestion,
+              answer: '',
+              sources: [] as LegalResearchFile[],
+              fromGeneralKnowledge: false,
+            },
+          ]
+        : []),
+    ],
+    [transcript, pendingQuestion],
+  );
 
   const researchMutation = useMutation({
     mutationFn: async (question: string): Promise<LegalResearchChatResponse> => {
@@ -95,25 +202,40 @@ export default function LegalResearchPage() {
         timedOut,
       ]);
       if (error !== undefined) {
-        // The spec's error bodies are text/plain, so every status maps to a
-        // plain string (e.g. the backend's 503 "legal research service
-        // unavailable").
         throw new Error(
           typeof error === 'string' ? error : 'Failed to run the research query.',
         );
       }
       return data as LegalResearchChatResponse;
     },
+    onMutate: (question) => {
+      setPendingQuestion(question);
+    },
     onSuccess: (data) => {
-      setResult(data);
-      // Follow-ups continue the same conversation; a fresh one (no
-      // conversation_id) is started by the backend and adopted here.
-      if (data.conversation_id != null) {
-        setActiveConversationId(data.conversation_id);
+      const confirmed: LegalResearchMessage = {
+        id: 0,
+        turn_index: 0,
+        question: researchMutation.variables as string,
+        answer: data.answer,
+        sources: (data.files ?? []) as LegalResearchFile[],
+        from_general_knowledge: data.from_general_knowledge,
+        created_at: new Date().toISOString(),
+      };
+      const conversationId = data.conversation_id ?? activeConversationId;
+      if (conversationId != null) {
+        queryClient.setQueryData<LegalResearchMessage[]>(
+          ['legal-research', 'messages', conversationId],
+          (old) => [...(old ?? []), confirmed],
+        );
+        if (activeConversationId !== conversationId) {
+          setActiveConversationId(conversationId);
+        }
       }
+      setPendingQuestion(null);
       void conversationsQuery.refetch();
     },
     onError: (error: Error) => {
+      setPendingQuestion(null);
       toast.error(
         error?.message === 'timed-out'
           ? 'Request timed out. Try a shorter or more specific question.'
@@ -122,256 +244,213 @@ export default function LegalResearchPage() {
     },
   });
 
+  useEffect(() => {
+    threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight, behavior: 'smooth' });
+  }, [allTurns, researchMutation.isPending]);
+
   const submit = (question: string) => {
     const trimmed = question.trim();
     if (!trimmed || researchMutation.isPending) return;
+    setQuery('');
+    if (textareaRef.current) textareaRef.current.style.height = 'auto';
     researchMutation.mutate(trimmed);
   };
 
   const startNewConversation = () => {
     setActiveConversationId(null);
-    setResult(null);
+    setPendingQuestion(null);
     setQuery('');
   };
 
-  const resumeConversation = (conversation: LegalResearchConversation) => {
+  const openConversation = (conversation: LegalResearchConversation) => {
+    if (activeConversationId === conversation.id) return;
     setActiveConversationId(conversation.id);
-    setResult(null);
-    setQuery(conversation.last_question ?? '');
-    toast.info(`Resuming "${conversation.title}" — follow-up questions continue on it.`);
+    setPendingQuestion(null);
+    setQuery('');
   };
 
-  return (
-    <div className="min-h-screen bg-background pb-20">
-      <main className="container mx-auto px-6 py-8 max-w-7xl">
-        <div className="flex flex-col gap-12">
-          <PageHeader
-            icon={<Gavel />}
-            title="Legal Research"
-            description="Access comprehensive Nepali constitutional law, civil codes, and criminal precedents through our AI-powered research system."
-          />
+  const activeTitle =
+    conversationsQuery.data?.find((c) => c.id === activeConversationId)?.title ?? null;
 
-          <section className="bg-card border border-border rounded-xl p-8 shadow-sm">
-            <h2 className="font-heading text-lg font-bold text-foreground mb-6">
-              Law &amp; Constitution Search
-            </h2>
-            <form
-              className="relative"
-              onSubmit={(e) => {
-                e.preventDefault();
-                submit(query);
-              }}
-            >
-              <Search className="w-5 h-5 text-muted-foreground absolute left-4 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                disabled={researchMutation.isPending}
-                placeholder="Query the Constitution, Civil Code, or specific precedents..."
-                className="w-full pl-12 pr-28 py-4 rounded-xl border border-border bg-background text-foreground placeholder:text-muted-foreground outline-none"
-              />
+  return (
+    <div className="h-screen bg-background flex flex-col overflow-hidden">
+      <main className="container mx-auto px-6 py-6 max-w-7xl w-full flex-1 min-h-0 flex flex-col">
+        <PageHeader
+          icon={<Gavel />}
+          title="Legal Research"
+          description="Access comprehensive Nepali constitutional law, civil codes, and criminal precedents through our AI-powered research system."
+        />
+
+        <section className="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-[280px_1fr] gap-6 items-stretch">
+          {/* Sidebar: conversations */}
+          <aside className="hidden md:flex flex-col rounded-xl border border-border bg-card overflow-hidden min-h-0">
+            <div className="p-3 border-b border-border">
               <button
-                type="submit"
-                disabled={researchMutation.isPending || !query.trim()}
-                className="absolute right-3 top-1/2 -translate-y-1/2 bg-primary text-primary-foreground px-6 py-2 rounded-lg text-xs font-bold uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed"
+                type="button"
+                onClick={startNewConversation}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-bold hover:opacity-90 transition-opacity"
               >
-                {researchMutation.isPending ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  'Search'
-                )}
+                <SquarePen className="w-4 h-4" /> New chat
               </button>
-            </form>
-            <div className="mt-6 flex flex-wrap items-center gap-3">
-              {activeConversationId != null && (
-                <button
-                  type="button"
-                  onClick={startNewConversation}
-                  className="px-4 py-2 rounded-full border border-accent bg-secondary/50 text-sm text-foreground hover:border-accent"
-                  title="Stop continuing the current conversation"
-                >
-                  Continuing conversation #<span className="font-bold">{activeConversationId}</span>{' '}
-                  <X className="w-3.5 h-3.5 inline -mt-0.5" />
-                </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-2 space-y-1">
+              <p className="px-3 pt-2 pb-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                Recent research
+              </p>
+              {conversationsQuery.isPending && (
+                <p className="px-3 py-2 text-xs text-muted-foreground flex items-center gap-2">
+                  <Loader2 className="w-3 h-3 animate-spin" /> Loading…
+                </p>
               )}
-              <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground mr-2">
-                Suggested:
-              </span>
-              {suggestedChips.map((chip) => (
+              {conversationsQuery.isError && (
+                <p className="px-3 py-2 text-xs text-muted-foreground">
+                  Couldn&apos;t load conversations.
+                </p>
+              )}
+              {(conversationsQuery.data ?? []).map((conversation) => (
                 <button
-                  key={chip}
+                  key={conversation.id}
                   type="button"
-                  disabled={researchMutation.isPending}
-                  onClick={() => submit(chip)}
-                  className="px-4 py-2 rounded-full border border-border bg-background text-sm text-foreground hover:border-accent disabled:opacity-50"
+                  onClick={() => openConversation(conversation)}
+                  className={`w-full p-3 rounded-lg text-left hover:bg-secondary/50 transition-colors ${
+                    activeConversationId === conversation.id ? 'bg-secondary/70' : ''
+                  }`}
                 >
-                  {chip}
+                  <p className="text-sm font-medium text-foreground truncate">
+                    {conversation.last_question || conversation.title}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                    {timeAgo(conversation.updated_at)} · {conversation.message_count} turn
+                    {conversation.message_count === 1 ? '' : 's'}
+                  </p>
                 </button>
               ))}
+              {(conversationsQuery.data ?? []).length === 0 && !conversationsQuery.isPending && (
+                <p className="px-3 py-2 text-xs text-muted-foreground">
+                  No research yet — start a new chat.
+                </p>
+              )}
             </div>
-          </section>
+          </aside>
 
-          {researchMutation.isPending && (
-            <section className="bg-card border border-border rounded-xl p-8 shadow-sm">
-              <div className="flex items-center gap-3 text-muted-foreground">
-                <Loader2 className="w-5 h-5 animate-spin" />
-                <p className="text-sm">
-                  Searching the corpus and synthesizing an answer… this usually
-                  takes 5–10 seconds.
+          {/* Chat window */}
+          <div className="flex flex-col rounded-xl border border-border bg-card overflow-hidden min-h-0">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-border">
+              <div className="flex items-center gap-2 min-w-0">
+                <History className="w-4 h-4 text-muted-foreground shrink-0" />
+                <p className="text-sm font-semibold text-foreground truncate">
+                  {activeTitle ?? (allTurns.length > 0 ? 'Conversation' : 'New research')}
                 </p>
               </div>
-            </section>
-          )}
+              <button
+                type="button"
+                onClick={startNewConversation}
+                className="md:hidden flex items-center gap-1.5 text-xs font-bold text-accent uppercase tracking-widest"
+              >
+                <SquarePen className="w-3.5 h-3.5" /> New
+              </button>
+            </div>
 
-          {result && !researchMutation.isPending && (
-            <section className="bg-card border border-border rounded-xl p-8 shadow-sm space-y-6">
-              {result.from_general_knowledge && (
-                <div className="flex items-start gap-3 p-4 rounded-lg border border-amber-600/40 bg-amber-600/10">
-                  <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+            {/* Thread */}
+            <div ref={threadRef} className="flex-1 overflow-y-auto px-5 py-6 space-y-6">
+              {allTurns.length === 0 && (
+                <div className="h-full flex flex-col items-center justify-center text-center gap-6 py-16">
+                  <div className="w-14 h-14 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center">
+                    <Scale className="w-7 h-7" />
+                  </div>
                   <div>
-                    <p className="text-sm font-semibold text-amber-700">
-                      Answered from general knowledge — not the corpus
-                    </p>
-                    <p className="text-xs text-amber-700/80 mt-1">
-                      Nothing in the Najir decisions or Nepal Law Commission
-                      acts matched this query. Verify this answer before relying
-                      on it.
+                    <h3 className="font-heading text-lg font-bold text-foreground">
+                      Ask the legal corpus anything
+                    </h3>
+                    <p className="text-sm text-muted-foreground mt-1 max-w-sm">
+                      Query the Constitution, the Muluki Civil Code 2074, criminal
+                      precedents, and Najir decisions.
                     </p>
                   </div>
-                </div>
-              )}
-
-              <div className="prose prose-sm max-w-none">
-                <p className="text-sm leading-relaxed text-foreground whitespace-pre-wrap">
-                  {result.answer}
-                </p>
-              </div>
-
-              {result.files.length > 0 && (
-                <div>
-                  <h3 className="font-heading text-sm font-bold text-foreground mb-3">
-                    Sources ({result.files.length})
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {result.files.map((file) => (
-                      <div
-                        key={file.document_id}
-                        className="p-4 rounded-lg border border-border bg-background"
+                  <div className="flex flex-wrap items-center justify-center gap-3">
+                    {suggestedChips.map((chip) => (
+                      <button
+                        key={chip}
+                        type="button"
+                        disabled={researchMutation.isPending}
+                        onClick={() => submit(chip)}
+                        className="px-4 py-2 rounded-full border border-border bg-background text-sm text-foreground hover:border-accent disabled:opacity-50"
                       >
-                        <div className="flex items-start justify-between gap-3">
-                          <h4 className="text-sm font-medium text-foreground">
-                            {file.document_title}
-                          </h4>
-                          <span className="shrink-0 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-secondary border border-accent text-foreground">
-                            {Math.round(file.score * 100)}%
-                          </span>
-                        </div>
-                        {(file.collection || file.category) && (
-                          <p className="mt-1.5 text-xs text-muted-foreground">
-                            {[file.collection, file.category].filter(Boolean).join(' · ')}
-                          </p>
-                        )}
-                      </div>
+                        {chip}
+                      </button>
                     ))}
                   </div>
                 </div>
               )}
-            </section>
-          )}
 
-          <section>
-            <h2 className="font-heading text-lg font-bold text-foreground mb-6">
-              Core Legal Databases
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {databases.map(({ icon: Icon, title, description }) => (
-                <div key={title} className="p-6 rounded-xl border border-border bg-card">
-                  <div className="w-12 h-12 rounded-lg bg-primary text-primary-foreground flex items-center justify-center mb-4">
-                    <Icon className="w-5 h-5" />
-                  </div>
-                  <h3 className="font-heading text-base font-semibold text-foreground mb-2">
-                    {title}
-                  </h3>
-                  <p className="text-sm text-muted-foreground">{description}</p>
-                  <div className="mt-4 flex items-center gap-1 text-accent text-xs font-bold uppercase tracking-widest">
-                    Browse <ArrowRight className="w-3.5 h-3.5" />
-                  </div>
+              {allTurns.map((turn, i) => (
+                <div key={`${turn.createdAt ?? ''}-${i}`} className="space-y-4">
+                  <UserMessage question={turn.question} />
+                  {researchMutation.isPending && turn.answer === '' ? (
+                    <div className="flex items-start gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center shrink-0">
+                        <Gavel className="w-4 h-4" />
+                      </div>
+                      <div className="flex items-center gap-2 text-muted-foreground text-sm pt-2">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>Searching the corpus and synthesizing…</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <AssistantMessage turn={turn} />
+                  )}
                 </div>
               ))}
             </div>
-          </section>
 
-          <section>
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="font-heading text-lg font-bold text-foreground">
-                Recent Research
-              </h2>
-              <span className="text-xs font-bold uppercase tracking-widest text-accent">
-                {conversationsQuery.data?.length ?? 0} conversation
-                {(conversationsQuery.data?.length ?? 0) === 1 ? '' : 's'}
-              </span>
+            {/* Composer */}
+            <div className="px-5 py-4 border-t border-border">
+              <form
+                className="flex items-end gap-3"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  submit(query);
+                }}
+              >
+                <textarea
+                  ref={textareaRef}
+                  value={query}
+                  onChange={(e) => {
+                    setQuery(e.target.value);
+                    e.target.style.height = 'auto';
+                    e.target.style.height = `${Math.min(e.target.scrollHeight, 160)}px`;
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      submit(query);
+                    }
+                  }}
+                  disabled={researchMutation.isPending}
+                  rows={1}
+                  placeholder="Ask a question about the corpus…"
+                  className="flex-1 resize-none px-4 py-3 rounded-xl border border-border bg-background text-foreground placeholder:text-muted-foreground outline-none text-sm max-h-40"
+                />
+                <button
+                  type="submit"
+                  disabled={researchMutation.isPending || !query.trim()}
+                  className="shrink-0 w-11 h-11 rounded-xl bg-primary text-primary-foreground flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
+                  title="Send"
+                >
+                  {researchMutation.isPending ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Send className="w-4 h-4" />
+                  )}
+                </button>
+              </form>
+              <p className="mt-2 text-[11px] text-muted-foreground">
+                Answers cite their sources from the corpus. Always verify legal
+                answers before relying on them.
+              </p>
             </div>
-            {conversationsQuery.isPending ? (
-              <div className="bg-card border border-border rounded-xl p-8 flex items-center gap-3 text-muted-foreground">
-                <Loader2 className="w-4 h-4 animate-spin" />
-                <p className="text-sm">Loading your recent research…</p>
-              </div>
-            ) : conversationsQuery.isError ? (
-              <div className="bg-card border border-border rounded-xl p-8 text-sm text-muted-foreground">
-                Couldn&apos;t load recent research. {conversationsQuery.error?.message}
-              </div>
-            ) : (conversationsQuery.data?.length ?? 0) === 0 ? (
-              <div className="bg-card border border-border rounded-xl p-8 text-sm text-muted-foreground">
-                No research yet — ask your first question above and it will
-                appear here.
-              </div>
-            ) : (
-              <div className="bg-card border border-border rounded-xl overflow-hidden divide-y divide-border">
-                {(conversationsQuery.data ?? []).map((conversation) => (
-                  <button
-                    key={conversation.id}
-                    type="button"
-                    onClick={() => resumeConversation(conversation)}
-                    disabled={researchMutation.isPending}
-                    className={`w-full p-4 flex items-start gap-4 text-left hover:bg-secondary/40 transition-colors disabled:opacity-50 ${
-                      activeConversationId === conversation.id
-                        ? 'bg-secondary/60'
-                        : ''
-                    }`}
-                  >
-                    <History className="w-5 h-5 text-muted-foreground mt-1 shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-sm font-medium text-foreground truncate">
-                        {conversation.last_question || conversation.title}
-                      </h3>
-                      {conversation.last_question &&
-                        conversation.last_question !== conversation.title && (
-                          <p className="mt-0.5 text-xs text-muted-foreground truncate">
-                            {conversation.title}
-                          </p>
-                        )}
-                      <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                        <span>{timeAgo(conversation.updated_at)}</span>
-                        <span className="w-1 h-1 rounded-full bg-border" />
-                        <span className="bg-secondary border border-accent text-foreground px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider">
-                          {conversation.message_count} question
-                          {conversation.message_count === 1 ? '' : 's'}
-                        </span>
-                        {activeConversationId === conversation.id && (
-                          <span className="bg-primary text-primary-foreground px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider">
-                            Active
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <ArrowRight className="w-4 h-4 text-muted-foreground shrink-0 opacity-60" />
-                  </button>
-                ))}
-              </div>
-            )}
-          </section>
-        </div>
+          </div>
+        </section>
       </main>
     </div>
   );

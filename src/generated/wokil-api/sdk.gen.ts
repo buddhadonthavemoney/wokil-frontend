@@ -2,7 +2,7 @@
 
 import { type Client, type ClientMeta, formDataBodySerializer, type Options as Options2, type RequestResult, type ServerSentEventsResult, type TDataShape } from './client';
 import { client } from './client.gen';
-import type { ChatLegalResearchData, ChatLegalResearchErrors, ChatLegalResearchResponses, CheckDomainAvailabilityData, CheckDomainAvailabilityErrors, CheckDomainAvailabilityResponses, CreateFirmData, CreateFirmErrors, CreateFirmResponses, CreateFormData, CreateFormErrors, CreateFormResponses, CreateGaPropertyData, CreateGaPropertyErrors, CreateGaPropertyResponses, CreateSiteData, CreateSiteErrors, CreateSiteResponses, DeleteSiteData, DeleteSiteErrors, DeleteSiteResponses, DeploySiteData, DeploySiteErrors, DeploySiteResponses, GetAccountTypeData, GetAccountTypeErrors, GetAccountTypeResponses, GetMyFirmData, GetMyFirmErrors, GetMyFirmResponses, GetProfileData, GetProfileErrors, GetProfileResponses, GetPublicDirectoryData, GetPublicDirectoryErrors, GetPublicDirectoryResponses, GetSiteAnalyticsData, GetSiteAnalyticsErrors, GetSiteAnalyticsResponses, GetVerificationRecordsData, GetVerificationRecordsErrors, GetVerificationRecordsResponses, GoogleCallbackData, GoogleCallbackErrors, GoogleCallbackResponses, GoogleLoginData, GoogleLoginResponses, ListFormsData, ListFormsErrors, ListFormsResponses, ListLegalResearchConversationsData, ListLegalResearchConversationsErrors, ListLegalResearchConversationsResponses, ListSitesData, ListSitesErrors, ListSitesResponses, ListSubmissionsData, ListSubmissionsErrors, ListSubmissionsResponses, ListThemesData, ListThemesErrors, ListThemesResponses, ListUsersData, ListUsersErrors, ListUsersResponses, SaveProfileData, SaveProfileErrors, SaveProfileResponses, SearchFirmsData, SearchFirmsErrors, SearchFirmsResponses, SetAccountTypeData, SetAccountTypeErrors, SetAccountTypeResponses, StreamDeployStatusData, StreamDeployStatusErrors, StreamDeployStatusResponse, StreamDeployStatusResponses, SubmitFormData, SubmitFormErrors, SubmitFormResponses, UpdateFirmData, UpdateFirmErrors, UpdateFirmResponses, UpdateProfileVisibilityData, UpdateProfileVisibilityErrors, UpdateProfileVisibilityResponses, UploadFileData, UploadFileErrors, UploadFileResponses, VerifyDnsData, VerifyDnsErrors, VerifyDnsResponses } from './types.gen';
+import type { ChatLegalResearchData, ChatLegalResearchErrors, ChatLegalResearchResponses, CheckDomainAvailabilityData, CheckDomainAvailabilityErrors, CheckDomainAvailabilityResponses, CreateFirmData, CreateFirmErrors, CreateFirmResponses, CreateFormData, CreateFormErrors, CreateFormResponses, CreateGaPropertyData, CreateGaPropertyErrors, CreateGaPropertyResponses, CreateSiteData, CreateSiteErrors, CreateSiteResponses, DeleteSiteData, DeleteSiteErrors, DeleteSiteResponses, DeploySiteData, DeploySiteErrors, DeploySiteResponses, GetAccountTypeData, GetAccountTypeErrors, GetAccountTypeResponses, GetLegalResearchDocumentData, GetLegalResearchDocumentErrors, GetLegalResearchDocumentResponses, GetMyFirmData, GetMyFirmErrors, GetMyFirmResponses, GetProfileData, GetProfileErrors, GetProfileResponses, GetPublicDirectoryData, GetPublicDirectoryErrors, GetPublicDirectoryResponses, GetSiteAnalyticsData, GetSiteAnalyticsErrors, GetSiteAnalyticsResponses, GetVerificationRecordsData, GetVerificationRecordsErrors, GetVerificationRecordsResponses, GoogleCallbackData, GoogleCallbackErrors, GoogleCallbackResponses, GoogleLoginData, GoogleLoginResponses, ListFormsData, ListFormsErrors, ListFormsResponses, ListLegalResearchConversationMessagesData, ListLegalResearchConversationMessagesErrors, ListLegalResearchConversationMessagesResponses, ListLegalResearchConversationsData, ListLegalResearchConversationsErrors, ListLegalResearchConversationsResponses, ListSitesData, ListSitesErrors, ListSitesResponses, ListSubmissionsData, ListSubmissionsErrors, ListSubmissionsResponses, ListThemesData, ListThemesErrors, ListThemesResponses, ListUsersData, ListUsersErrors, ListUsersResponses, SaveProfileData, SaveProfileErrors, SaveProfileResponses, SearchFirmsData, SearchFirmsErrors, SearchFirmsResponses, SetAccountTypeData, SetAccountTypeErrors, SetAccountTypeResponses, StreamDeployStatusData, StreamDeployStatusErrors, StreamDeployStatusResponse, StreamDeployStatusResponses, SubmitFormData, SubmitFormErrors, SubmitFormResponses, UpdateFirmData, UpdateFirmErrors, UpdateFirmResponses, UpdateProfileVisibilityData, UpdateProfileVisibilityErrors, UpdateProfileVisibilityResponses, UploadFileData, UploadFileErrors, UploadFileResponses, VerifyDnsData, VerifyDnsErrors, VerifyDnsResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -338,5 +338,27 @@ export const chatLegalResearch = <ThrowOnError extends boolean = false>(options:
 export const listLegalResearchConversations = <ThrowOnError extends boolean = false>(options?: Options<ListLegalResearchConversationsData, ThrowOnError>): RequestResult<ListLegalResearchConversationsResponses, ListLegalResearchConversationsErrors, ThrowOnError> => (options?.client ?? client).get<ListLegalResearchConversationsResponses, ListLegalResearchConversationsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/legal-research/conversations',
+    ...options
+});
+
+/**
+ * List a conversation's messages
+ *
+ * The full transcript of one of the caller's conversations, oldest first. Ownership-scoped like the chat endpoint: an unknown or foreign conversation_id is a 404. Sources is each turn's point-in-time citation snapshot (the LegalResearchFile shape).
+ */
+export const listLegalResearchConversationMessages = <ThrowOnError extends boolean = false>(options: Options<ListLegalResearchConversationMessagesData, ThrowOnError>): RequestResult<ListLegalResearchConversationMessagesResponses, ListLegalResearchConversationMessagesErrors, ThrowOnError> => (options.client ?? client).get<ListLegalResearchConversationMessagesResponses, ListLegalResearchConversationMessagesErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/legal-research/conversations/{conversation_id}/messages',
+    ...options
+});
+
+/**
+ * Get one corpus document (metadata + full text)
+ *
+ * Proxied from wokil-rag's /documents/{id} and /documents/{id}/chunks. Any authenticated user may open a corpus document; the id is RAG's opaque document id as returned in chat files/sources. 404 when the corpus has no such document or RAG is unreachable.
+ */
+export const getLegalResearchDocument = <ThrowOnError extends boolean = false>(options: Options<GetLegalResearchDocumentData, ThrowOnError>): RequestResult<GetLegalResearchDocumentResponses, GetLegalResearchDocumentErrors, ThrowOnError> => (options.client ?? client).get<GetLegalResearchDocumentResponses, GetLegalResearchDocumentErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/legal-research/documents/{document_id}',
     ...options
 });
