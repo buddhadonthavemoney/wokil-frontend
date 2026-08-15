@@ -70,7 +70,7 @@ function ListEditor<T extends Record<string, string>>({
         {items.map((item, index) => (
           <div key={index} className="rounded-xl border border-border bg-muted/30 p-4 space-y-3">
             <div className="flex items-center justify-between gap-3">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+              <span className="text-[10px] label-caps text-muted-foreground">
                 {headingLabel} {index + 1}
               </span>
               <Button

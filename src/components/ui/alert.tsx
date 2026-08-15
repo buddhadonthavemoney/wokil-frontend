@@ -4,12 +4,15 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const alertVariants = cva(
-  "relative w-full rounded-lg border p-4 [&>svg~*]:pl-7 [&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&>svg]:text-foreground",
+  "relative w-full rounded-xl border border-border p-4 [&>svg~*]:pl-7 [&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&>svg]:text-foreground",
   {
     variants: {
       variant: {
-        default: "bg-background text-foreground",
-        destructive: "border-destructive/50 text-destructive dark:border-destructive [&>svg]:text-destructive",
+        default: "bg-card text-foreground",
+        // Advisory, not an error — DNS instructions, "profile incomplete".
+        accent: "border-accent/40 bg-accent/10 text-foreground [&>svg]:text-accent",
+        success: "border-success/30 bg-success/10 text-foreground [&>svg]:text-success",
+        destructive: "border-destructive/40 bg-destructive/8 text-destructive [&>svg]:text-destructive",
       },
     },
     defaultVariants: {

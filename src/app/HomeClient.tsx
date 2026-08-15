@@ -169,9 +169,6 @@ export function HomeClient({ professionals }: HomeClientProps) {
                     <div className="absolute top-40 -right-20 w-80 h-80 bg-primary/5 rounded-full blur-3xl" />
 
                     <div className="relative max-w-3xl mx-auto">
-                        <span className="inline-block px-4 py-1.5 mb-8 rounded-full border border-accent/30 bg-card/60 backdrop-blur-sm text-primary text-xs font-semibold uppercase tracking-widest shadow-sm">
-                            The Modern Standard for Nepal&apos;s Legal Professionals
-                        </span>
                         <h1 className="text-4xl md:text-6xl font-bold text-primary leading-tight mb-8">
                             Establish Your Authority.<br />Elevate Your Practice.
                         </h1>

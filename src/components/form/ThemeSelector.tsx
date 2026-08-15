@@ -30,7 +30,7 @@ export function ThemeSelector({ themes, currentTheme, onThemeSelect, isLoading }
           className="h-9 rounded-full px-4 border-border/50 bg-card hover:bg-card/80 shadow-sm gap-2 transition-all hover:scale-105 pr-3"
         >
           <Palette className="w-3.5 h-3.5 text-muted-foreground" />
-          <span className="text-[10px] font-bold uppercase tracking-wider text-foreground">
+          <span className="text-[10px] label-caps text-foreground">
             {currentThemeName ?? "Select Theme"}
           </span>
           <ChevronDown className="w-3 h-3 text-muted-foreground/50 ml-0.5" />
@@ -53,7 +53,7 @@ export function ThemeSelector({ themes, currentTheme, onThemeSelect, isLoading }
               )}
               disabled={isLoading}
             >
-              <span className="text-xs font-bold uppercase tracking-wide">
+              <span className="label-caps text-xs">
                 {theme.name}
               </span>
               {currentTheme === theme.id && (

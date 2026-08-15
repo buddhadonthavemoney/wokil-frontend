@@ -129,9 +129,9 @@ export function AccountTypeSetting() {
             deciding whether to click needs to know what it costs before they
             reach for it.
           */}
-          <div className="flex gap-3 rounded-xl border border-amber-200 bg-amber-50/60 p-4">
-            <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-            <div className="text-xs text-amber-900 leading-relaxed space-y-1">
+          <div className="flex gap-3 rounded-xl border border-accent/40 bg-accent/10 p-4">
+            <AlertTriangle className="w-4 h-4 text-accent shrink-0 mt-0.5" />
+            <div className="text-xs text-foreground leading-relaxed space-y-1">
               <p className="font-bold">Switching changes what you edit and what you publish.</p>
               <p>
                 Nothing is deleted — your personal profile and your firm both stay exactly as they

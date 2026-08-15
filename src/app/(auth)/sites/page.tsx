@@ -271,9 +271,11 @@ export default function Sites() {
   };
 
   const statusConfig: Record<string, { label: string; dot: string; className: string }> = {
-    deployed: { label: 'Live', dot: 'bg-emerald-500', className: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-    requested: { label: 'Requested', dot: 'bg-blue-500', className: 'bg-blue-50 text-blue-700 border-blue-200' },
-    link_pending: { label: 'Link Pending', dot: 'bg-amber-500', className: 'bg-amber-50 text-amber-700 border-amber-200' },
+    // Live is the only genuinely "good" state, so it gets --success; the two
+    // in-flight states are informational and ride the neutral/gold chips.
+    deployed: { label: 'Live', dot: 'bg-success', className: 'bg-success/10 text-success border-success/30' },
+    requested: { label: 'Requested', dot: 'bg-muted-foreground', className: 'bg-surface text-muted-foreground border-border' },
+    link_pending: { label: 'Link Pending', dot: 'bg-accent', className: 'bg-accent/10 text-accent-foreground border-accent/30' },
   };
 
   const getStatusBadge = (status: string) => {
@@ -283,7 +285,7 @@ export default function Sites() {
       <Badge
         variant="outline"
         className={cn(
-          'gap-1.5 py-1 px-2.5 font-bold uppercase tracking-wider text-[10px] rounded-full',
+          'gap-1.5 py-1 px-2.5 label-caps text-[10px] rounded-full',
           config.className,
         )}
       >
@@ -376,7 +378,7 @@ export default function Sites() {
                               <Button 
                                   variant="ghost" 
                                   size="icon" 
-                                  className="h-8 w-8 hover:bg-red-50 text-muted-foreground hover:text-destructive shadow-sm"
+                                  className="h-8 w-8 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                                   onClick={() => {
                                     setSiteToDelete(site.domain);
                                     setSiteTypeToDelete(site.type);
@@ -513,10 +515,10 @@ export default function Sites() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           {siteTypeToDelete === 'subdomain' && (
-            <Alert className="bg-amber-50 border-amber-200">
-              <AlertCircle className="h-4 w-4 text-amber-600" />
-              <AlertTitle className="text-sm font-bold text-amber-900">Important Note</AlertTitle>
-              <AlertDescription className="text-xs text-amber-800">
+            <Alert variant="accent">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle className="text-sm font-semibold">Important Note</AlertTitle>
+              <AlertDescription className="text-xs text-muted-foreground">
                 After deleting this subdomain, you'll need to go to the Profile Builder and refill the subdomain field to create a new one.
               </AlertDescription>
             </Alert>

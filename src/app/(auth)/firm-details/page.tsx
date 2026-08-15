@@ -65,7 +65,7 @@ export default function FirmDetails() {
         ) : (
           <div className="space-y-6">
             {FIRM_STEPS.map(({ key, Component }) => (
-              <section key={key} className="bg-white border-none rounded-3xl p-6 md:p-8 shadow-premium">
+              <section key={key} className="bg-card border border-border rounded-xl p-6 md:p-8 shadow-sm">
                 <Component profile={firm} onUpdate={(fields: object) => updateNestedFirm(key, fields)} />
               </section>
             ))}

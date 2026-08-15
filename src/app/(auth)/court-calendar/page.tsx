@@ -91,7 +91,7 @@ export default function CourtCalendarPage() {
                 <button
                   type="button"
                   disabled
-                  className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest"
+                  className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg text-xs label-caps"
                 >
                   <Plus className="w-4 h-4" />
                   New Event
@@ -119,7 +119,7 @@ export default function CourtCalendarPage() {
                 <h2 className="font-heading text-lg font-bold text-foreground">
                   Upcoming Hearings
                 </h2>
-                <span className="text-xs font-bold uppercase tracking-widest text-accent">
+                <span className="text-xs label-caps text-accent">
                   View All
                 </span>
               </div>
@@ -130,7 +130,7 @@ export default function CourtCalendarPage() {
                   return (
                     <div key={hearing.caseNumber} className="p-4 flex items-start gap-4">
                       <div className="flex flex-col items-center justify-center bg-secondary rounded-lg border border-border px-3 py-2 min-w-[56px] shrink-0">
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                        <span className="text-[10px] label-caps text-muted-foreground">
                           {month}
                         </span>
                         <span className="font-heading text-lg font-bold text-primary leading-none">

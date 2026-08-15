@@ -69,7 +69,7 @@ export function ProgressIndicator({
                 )}
               </div>
               <span className={cn(
-                "mt-4 text-[10px] font-bold uppercase tracking-widest text-center transition-colors duration-300",
+                "mt-4 text-[10px] label-caps text-center transition-colors duration-300",
                 isCurrent ? "text-primary px-2 py-0.5 rounded bg-primary/5" : "text-muted-foreground/50 group-hover:text-primary/70",
                 isLocked && "text-muted-foreground/40 group-hover:text-muted-foreground/40",
                 "hidden sm:block"

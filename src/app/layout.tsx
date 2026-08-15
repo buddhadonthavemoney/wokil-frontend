@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import QueryProvider from "@/components/providers/QueryProvider";
-import ThemeProvider from "@/components/providers/ThemeProvider";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -75,14 +74,12 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className="antialiased" suppressHydrationWarning>
         <QueryProvider>
-          <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
-            <TooltipProvider>
-              {children}
-              <Toaster />
-              <Sonner />
-              <Analytics />
-            </TooltipProvider>
-          </ThemeProvider>
+          <TooltipProvider>
+            {children}
+            <Toaster />
+            <Sonner />
+            <Analytics />
+          </TooltipProvider>
         </QueryProvider>
       </body>
     </html>

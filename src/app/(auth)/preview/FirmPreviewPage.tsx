@@ -67,7 +67,7 @@ export function FirmPreviewPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen gap-4">
         <Building2 className="w-12 h-12 text-primary animate-pulse" />
-        <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground animate-pulse">
+        <p className="text-xs label-caps text-muted-foreground animate-pulse">
           Loading Firm...
         </p>
       </div>

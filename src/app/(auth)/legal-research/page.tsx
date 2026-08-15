@@ -49,10 +49,10 @@ function timeAgo(iso: string): string {
 
 function SourceCard({ file }: { file: LegalResearchFile }) {
   return (
-    <div className="p-4 rounded-lg border border-border bg-background">
+    <div className="p-4 rounded-xl border border-border bg-card shadow-sm transition-shadow hover:shadow-md">
       <div className="flex items-start justify-between gap-3">
         <h4 className="text-sm font-medium text-foreground">{file.document_title}</h4>
-        <span className="shrink-0 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-secondary border border-accent text-foreground">
+        <span className="shrink-0 label-caps text-[10px] px-2 py-0.5 rounded-md bg-accent/10 border border-accent/30 text-accent-foreground">
           {Math.round(file.score * 100)}%
         </span>
       </div>
@@ -68,18 +68,20 @@ function SourceCard({ file }: { file: LegalResearchFile }) {
 function AssistantMessage({ turn }: { turn: Turn }) {
   return (
     <div className="flex items-start gap-3">
-      <div className="w-8 h-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center shrink-0">
+      {/* Gold marks the assistant, navy the user — same pairing as the
+          sidebar's active marker, so the two speakers read apart at a glance. */}
+      <div className="w-8 h-8 rounded-lg bg-accent text-accent-foreground flex items-center justify-center shrink-0">
         <Gavel className="w-4 h-4" />
       </div>
       <div className="flex-1 min-w-0 space-y-3">
         {turn.fromGeneralKnowledge && (
-          <div className="flex items-start gap-3 p-4 rounded-lg border border-amber-600/40 bg-amber-600/10">
-            <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+          <div className="flex items-start gap-3 p-4 rounded-xl border border-accent/40 bg-accent/10">
+            <AlertTriangle className="w-5 h-5 text-accent shrink-0 mt-0.5" />
             <div>
-              <p className="text-sm font-semibold text-amber-700">
+              <p className="text-sm font-semibold text-foreground">
                 Answered from general knowledge — not the corpus
               </p>
-              <p className="text-xs text-amber-700/80 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 Nothing in the Najir decisions or Nepal Law Commission acts
                 matched this query. Verify this answer before relying on it.
               </p>
@@ -91,7 +93,7 @@ function AssistantMessage({ turn }: { turn: Turn }) {
         </div>
         {turn.sources.length > 0 && (
           <div>
-            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">
+            <p className="text-xs label-caps text-muted-foreground mb-2">
               Sources ({turn.sources.length})
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -288,13 +290,13 @@ export default function LegalResearchPage() {
               <button
                 type="button"
                 onClick={startNewConversation}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-bold hover:opacity-90 transition-opacity"
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium shadow-navy hover:bg-primary/90 transition-colors"
               >
                 <SquarePen className="w-4 h-4" /> New chat
               </button>
             </div>
             <div className="flex-1 overflow-y-auto p-2 space-y-1">
-              <p className="px-3 pt-2 pb-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+              <p className="px-3 pt-2 pb-1 label-caps text-[10px] text-muted-foreground">
                 Recent research
               </p>
               {conversationsQuery.isPending && (
@@ -312,8 +314,10 @@ export default function LegalResearchPage() {
                   key={conversation.id}
                   type="button"
                   onClick={() => openConversation(conversation)}
-                  className={`w-full p-3 rounded-lg text-left hover:bg-secondary/50 transition-colors ${
-                    activeConversationId === conversation.id ? 'bg-secondary/70' : ''
+                  className={`w-full p-3 rounded-lg text-left border-r-4 transition-colors ${
+                    activeConversationId === conversation.id
+                      ? 'bg-surface-low border-accent'
+                      : 'border-transparent hover:bg-surface-low'
                   }`}
                 >
                   <p className="text-sm font-medium text-foreground truncate">
@@ -345,7 +349,7 @@ export default function LegalResearchPage() {
               <button
                 type="button"
                 onClick={startNewConversation}
-                className="md:hidden flex items-center gap-1.5 text-xs font-bold text-accent uppercase tracking-widest"
+                className="md:hidden flex items-center gap-1.5 label-caps text-accent-foreground"
               >
                 <SquarePen className="w-3.5 h-3.5" /> New
               </button>
@@ -355,11 +359,11 @@ export default function LegalResearchPage() {
             <div ref={threadRef} className="flex-1 overflow-y-auto px-5 py-6 space-y-6">
               {allTurns.length === 0 && (
                 <div className="h-full flex flex-col items-center justify-center text-center gap-6 py-16">
-                  <div className="w-14 h-14 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center">
+                  <div className="w-14 h-14 rounded-xl bg-accent/12 border border-accent/30 text-accent flex items-center justify-center">
                     <Scale className="w-7 h-7" />
                   </div>
                   <div>
-                    <h3 className="font-heading text-lg font-bold text-foreground">
+                    <h3 className="font-heading text-lg font-semibold text-primary">
                       Ask the legal corpus anything
                     </h3>
                     <p className="text-sm text-muted-foreground mt-1 max-w-sm">
@@ -374,7 +378,7 @@ export default function LegalResearchPage() {
                         type="button"
                         disabled={researchMutation.isPending}
                         onClick={() => submit(chip)}
-                        className="px-4 py-2 rounded-full border border-border bg-background text-sm text-foreground hover:border-accent disabled:opacity-50"
+                        className="px-4 py-2 rounded-full border border-border bg-card text-sm text-foreground shadow-sm transition-colors hover:border-accent hover:bg-surface-low disabled:opacity-50"
                       >
                         {chip}
                       </button>
@@ -429,12 +433,12 @@ export default function LegalResearchPage() {
                   disabled={researchMutation.isPending}
                   rows={1}
                   placeholder="Ask a question about the corpus…"
-                  className="flex-1 resize-none px-4 py-3 rounded-xl border border-border bg-background text-foreground placeholder:text-muted-foreground outline-none text-sm max-h-40"
+                  className="flex-1 resize-none px-4 py-3 rounded-xl border border-border bg-card shadow-sm text-foreground placeholder:text-muted-foreground/70 outline-none transition-shadow focus:border-accent focus:ring-1 focus:ring-accent text-sm max-h-40"
                 />
                 <button
                   type="submit"
                   disabled={researchMutation.isPending || !query.trim()}
-                  className="shrink-0 w-11 h-11 rounded-xl bg-primary text-primary-foreground flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
+                  className="shrink-0 w-11 h-11 rounded-xl bg-primary text-primary-foreground shadow-navy flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none hover:bg-primary/90 transition-colors"
                   title="Send"
                 >
                   {researchMutation.isPending ? (

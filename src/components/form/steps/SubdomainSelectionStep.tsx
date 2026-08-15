@@ -84,13 +84,13 @@ export function SubdomainSelectionStep({ profile, onUpdate }: SubdomainSelection
                     <div className="flex items-center justify-between">
                         <Label htmlFor="subdomain">Subdomain Name *</Label>
                         {isDeployed && (
-                            <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100 uppercase tracking-tighter">
+                            <span className="label-caps text-[10px] text-accent-foreground bg-accent/10 px-2 py-0.5 rounded-full border border-accent/30">
                                 Locked after deployment
                             </span>
                         )}
                     </div>
                     <div className="relative group">
-                        <div className={`absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none transition-colors ${isAvailable === true ? 'text-green-500' : 'group-focus-within:text-primary'}`}>
+                        <div className={`absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none transition-colors ${isAvailable === true ? 'text-success' : 'group-focus-within:text-accent'}`}>
                             <Globe className="w-4 h-4" />
                         </div>
                         <Input
@@ -99,18 +99,18 @@ export function SubdomainSelectionStep({ profile, onUpdate }: SubdomainSelection
                             value={subdomain}
                             onChange={handleChange}
                             disabled={isDeployed}
-                            className={`h-12 pl-11 pr-12 font-medium transition-all ${isAvailable === true ? 'border-green-500 bg-green-50/30' : ''} ${isDeployed ? 'bg-muted/50 border-dashed cursor-not-allowed opacity-80' : ''}`}
+                            className={`h-12 pl-11 pr-12 font-medium transition-all ${isAvailable === true ? 'border-success bg-success/5' : ''} ${isDeployed ? 'bg-muted/50 border-dashed cursor-not-allowed opacity-80' : ''}`}
                         />
                         <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
                             {isValidating ? (
                                 <Loader2 className="w-5 h-5 animate-spin text-primary" />
                             ) : isAvailable === true ? (
-                                <div className="flex items-center justify-center w-7 h-7 rounded-full bg-green-500 shadow-md shadow-green-200 animate-in zoom-in duration-500">
-                                    <Check className="w-4 h-4 text-white stroke-[3px]" />
+                                <div className="flex items-center justify-center w-7 h-7 rounded-full bg-success shadow-sm animate-in zoom-in duration-500">
+                                    <Check className="w-4 h-4 text-success-foreground stroke-[3px]" />
                                 </div>
                             ) : isAvailable === false ? (
-                                <div className="flex items-center justify-center w-7 h-7 rounded-full bg-destructive shadow-md shadow-red-200 animate-in zoom-in duration-500">
-                                    <X className="w-4 h-4 text-white stroke-[3px]" />
+                                <div className="flex items-center justify-center w-7 h-7 rounded-full bg-destructive shadow-sm animate-in zoom-in duration-500">
+                                    <X className="w-4 h-4 text-destructive-foreground stroke-[3px]" />
                                 </div>
                             ) : isDeployed ? (
                                 <div className="flex items-center justify-center w-7 h-7 rounded-full bg-primary/10">
@@ -121,12 +121,12 @@ export function SubdomainSelectionStep({ profile, onUpdate }: SubdomainSelection
                     </div>
 
                     <div className="flex flex-col gap-2 pt-1">
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                        <p className="text-[10px] label-caps text-muted-foreground flex items-center gap-2">
                             <span>Your site is:</span>
-                            <span className={`lowercase transition-all px-2 py-0.5 rounded-md ${isDeployed || isAvailable === true ? 'bg-green-100 text-green-700 font-bold' : 'text-primary bg-primary/5'}`}>
+                            <span className={`lowercase transition-all px-2 py-0.5 rounded-md ${isDeployed || isAvailable === true ? 'bg-success/12 text-success font-bold' : 'text-primary bg-primary/5'}`}>
                                 {subdomain || 'your-name'}.{process.env.NEXT_PUBLIC_PUBLISH_LIVE_DOMAIN || 'wokil.com'}
                             </span>
-                            {(isDeployed || isAvailable === true) && <Check className="w-3.5 h-3.5 text-green-600 animate-in fade-in slide-in-from-left-2" />}
+                            {(isDeployed || isAvailable === true) && <Check className="w-3.5 h-3.5 text-success animate-in fade-in slide-in-from-left-2" />}
                         </p>
 
                         {!isDeployed && isAvailable === false && (
@@ -136,7 +136,7 @@ export function SubdomainSelectionStep({ profile, onUpdate }: SubdomainSelection
                             </p>
                         )}
                         {!isDeployed && isAvailable === true && (
-                            <p className="text-xs font-semibold text-green-600 flex items-center gap-1.5 animate-in slide-in-from-top-1">
+                            <p className="text-xs font-semibold text-success flex items-center gap-1.5 animate-in slide-in-from-top-1">
                                 <CheckCircle2 className="w-3.5 h-3.5" />
                                 Great choice! This subdomain is available.
                             </p>
@@ -153,7 +153,7 @@ export function SubdomainSelectionStep({ profile, onUpdate }: SubdomainSelection
                             </p>
                         )}
                         {!isDeployed && subdomain && subdomain.length < 3 && (
-                            <p className="text-xs font-medium text-amber-600">
+                            <p className="text-xs font-medium text-accent-foreground">
                                 Subdomain must be at least 3 characters long.
                             </p>
                         )}
@@ -161,7 +161,7 @@ export function SubdomainSelectionStep({ profile, onUpdate }: SubdomainSelection
                 </div>
 
                 <div className="p-6 rounded-2xl bg-primary/5 border border-primary/10 space-y-3">
-                    <h4 className="text-xs font-bold uppercase tracking-widest text-primary">Tips for your subdomain:</h4>
+                    <h4 className="text-xs label-caps text-primary">Tips for your subdomain:</h4>
                     <ul className="space-y-2">
                         {[
                             "Use your full name or law firm name",

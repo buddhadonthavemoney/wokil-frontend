@@ -181,7 +181,7 @@ export default function ProfileBuilder() {
             <Button
               variant="ghost"
               size="sm"
-              className="gap-2 rounded-full text-[10px] font-bold uppercase tracking-wider text-muted-foreground hover:text-primary hover:bg-primary/5 transition-all"
+              className="gap-2 rounded-full text-[10px] label-caps text-muted-foreground hover:text-primary hover:bg-primary/5 transition-all"
               onClick={() => router.push('/preview')}
             >
               <Monitor className="w-3.5 h-3.5" />

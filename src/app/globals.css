@@ -1,5 +1,6 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap");
 @import "tailwindcss";
+@plugin "tailwindcss-animate";
 
 @theme {
   --font-heading: "Outfit", sans-serif;
@@ -31,6 +32,17 @@
 
   --color-card: hsl(var(--card));
   --color-card-foreground: hsl(var(--card-foreground));
+
+  --color-success: hsl(var(--success));
+  --color-success-foreground: hsl(var(--success-foreground));
+
+  /* Surface ladder from the Stitch design system (#f4f3f2 / #eeeeed / #e9e8e7).
+     Three depths of "slightly recessed" that --muted alone can't express:
+     `surface-low` is the hover state on any row or nav item, `surface` is a
+     nested panel inside a card, `surface-high` is the deepest well. */
+  --color-surface-low: hsl(var(--surface-low));
+  --color-surface: hsl(var(--surface));
+  --color-surface-high: hsl(var(--surface-high));
 
   /* Radius scale from the Wokil design system (Stitch): 0.25rem on controls,
      0.5rem on cards, 0.75rem on large containers, full only on pills. The
@@ -86,10 +98,15 @@
   :root {
     --background: 30 17% 98%;
     --foreground: 180 4% 11%;
-    --card: 0 0% 100%;
+    /* Warm cream (Stitch `surface-cream` #FDFCFB), deliberately not white —
+       cards separate from the warm-grey page in a warm direction. */
+    --card: 30 33% 99%;
     --card-foreground: 180 4% 11%;
-    --popover: 0 0% 100%;
+    --popover: 30 33% 99%;
     --popover-foreground: 180 4% 11%;
+    --surface-low: 30 5% 95%;
+    --surface: 40 3% 93%;
+    --surface-high: 30 3% 91%;
     --primary: 217 43% 19%;
     --primary-foreground: 0 0% 100%;
     --secondary: 30 25% 95%;
@@ -100,38 +117,22 @@
     --accent-foreground: 217 43% 19%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
+    /* Semantic, not decorative — subdomain availability and deploy success are
+       real states, so they get their own token rather than collapsing into
+       --accent (which is the brand gold, and means "active", not "good"). */
+    --success: 142 55% 34%;
+    --success-foreground: 0 0% 100%;
     --border: 220 13% 91%;
     --input: 220 13% 91%;
     --ring: 39 48% 56%;
     --radius: 0.5rem;
   }
 
-  .dark {
-    --background: 222 47% 11%;
-    --foreground: 210 40% 98%;
-    --card: 222 47% 11%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222 47% 11%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 210 40% 98%;
-    --primary-foreground: 222 47% 11%;
-    --secondary: 217 33% 17%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 39 48% 56%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217 33% 17%;
-    --input: 217 33% 17%;
-    --ring: 39 48% 56%;
-  }
 }
 
 @layer base {
   * {
-    @apply border-border/10;
+    @apply border-border;
   }
   body {
     @apply bg-background text-foreground antialiased;
@@ -153,6 +154,20 @@
   }
   .shadow-card {
     box-shadow: 0 2px 12px -2px hsl(215 50% 23% / 0.08);
+  }
+  /* Navy-tinted rather than neutral black — the shadow under a primary button
+     reads as an extension of the button, not a generic drop shadow. */
+  .shadow-navy {
+    box-shadow: 0 4px 14px 0 hsl(var(--primary) / 0.2);
+  }
+  /* Stitch `label-caps`: the uppercase microtype on chips, table headers and
+     section eyebrows. Inter 600 with open tracking. Deliberately sets no
+     font-size — call sites keep their own `text-xs`/`text-[10px]`, which would
+     otherwise race this rule for precedence (both are plain utilities, so the
+     winner would come down to CSS source order, not class order). */
+  .label-caps {
+    font-family: var(--font-body);
+    @apply font-semibold uppercase tracking-[0.05em];
   }
   .hover-pop {
     @apply transition-transform duration-300 ease-out hover:z-10;
