@@ -14,6 +14,7 @@ import {
   deleteSiteEmailRoute,
   getSiteEmailCatchAll,
   setSiteEmailCatchAll,
+  getSiteZone,
 } from '@/generated/wokil-api';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
@@ -40,10 +41,23 @@ export default function SiteEmailPage() {
   const [destinationInput, setDestinationInput] = useState('');
   const [localPart, setLocalPart] = useState('');
 
-  const { data: email, isLoading, error: emailError } = useQuery({
+  // Email Routing is a property of the site's Cloudflare zone, so nothing on
+  // this page can work — or is even safe to ask Cloudflare about — until the
+  // delegation is live. This is the gate; the hidden button on the sites grid
+  // is only a convenience.
+  const { data: zone, isLoading: zoneLoading, error: zoneError } = useQuery({
+    queryKey: ['site-zone', domain],
+    queryFn: async () => (await getSiteZone({ path: { domain }, throwOnError: true })).data,
+    enabled: !!domain,
+    retry: false,
+  });
+
+  const zoneActive = zone?.status === 'active';
+
+  const { data: email, isLoading: emailLoading, error: emailError } = useQuery({
     queryKey: ['site-email', domain],
     queryFn: async () => (await getSiteEmail({ path: { domain }, throwOnError: true })).data,
-    enabled: !!domain,
+    enabled: zoneActive,
     retry: false,
     // Cloudflare only marks the destination verified once the owner clicks the
     // link it emailed them, which happens outside this tab.
@@ -140,7 +154,7 @@ export default function SiteEmailPage() {
     </div>
   );
 
-  if (isLoading) {
+  if (zoneLoading || (zoneActive && emailLoading)) {
     return shell(
       <div className="flex items-center justify-center py-20">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -148,22 +162,41 @@ export default function SiteEmailPage() {
     );
   }
 
-  // The backend 404s with "site has no Cloudflare zone" for a CNAME-mode site.
-  // The sites list has no dns_mode to gate the entry point on, so explain the
-  // requirement here rather than showing a raw error.
-  if (emailError) {
-    const message = apiErrorMessage(emailError, '');
+  // A CNAME-mode site has no zone at all and 404s here; a nameserver-mode one
+  // has a zone that is still `pending` until the registrar is repointed.
+  // Neither can route mail, and both are reachable by typing the URL.
+  if (zoneError || !zoneActive) {
+    const message = apiErrorMessage(zoneError, '');
     const noZone = message.includes('no Cloudflare zone');
+    const notDelegated = !zoneError && !zoneActive;
     return shell(
-      <Alert variant={noZone ? 'accent' : 'destructive'}>
+      <Alert variant={noZone || notDelegated ? 'accent' : 'destructive'}>
         <Mail className="h-4 w-4" />
         <AlertTitle className="text-sm font-semibold">
-          {noZone ? 'Email forwarding needs nameserver delegation' : 'Could not load email settings'}
+          {noZone
+            ? 'Email forwarding needs nameserver delegation'
+            : notDelegated
+              ? 'Verify this domain first'
+              : 'Could not load email settings'}
         </AlertTitle>
         <AlertDescription className="text-xs text-muted-foreground">
           {noZone
             ? `${domain} is linked with the CNAME flow, so we don't hold its DNS and can't route its mail. Re-onboard the domain with "Point your nameservers" to enable forwarding.`
-            : message || 'Please try again.'}
+            : notDelegated
+              ? `We don't hold ${domain}'s DNS yet, so there is nothing to forward. Point your registrar at the nameservers shown under "Verify Domain", and email settings unlock once the delegation goes live.`
+              : message || 'Please try again.'}
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
+  if (emailError) {
+    return shell(
+      <Alert variant="destructive">
+        <Mail className="h-4 w-4" />
+        <AlertTitle className="text-sm font-semibold">Could not load email settings</AlertTitle>
+        <AlertDescription className="text-xs text-muted-foreground">
+          {apiErrorMessage(emailError, 'Please try again.')}
         </AlertDescription>
       </Alert>
     );

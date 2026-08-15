@@ -4,7 +4,7 @@ import { Globe, ExternalLink, Edit, IdCard, Loader2, ShieldCheck, Plus, Trash2, 
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getProfile, listSites, createSite, deleteSite, verifyDns, getVerificationRecords, createSiteZone, getSiteZone } from '@/generated/wokil-api';
+import { getProfile, listSites, createSite, deleteSite, verifyDns, getVerificationRecords, createSiteZone } from '@/generated/wokil-api';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -84,7 +84,7 @@ export default function Sites() {
   const [deleteConfirmMessage, setDeleteConfirmMessage] = useState<string | null>(null);
   const [siteToVerify, setSiteToVerify] = useState<string | null>(null);
   // Non-null only while the open verification dialog is for a nameserver-mode
-  // site — drives the zone poll and gates the Verify button.
+  // site — switches the dialog copy from DNS records to NS delegation.
   const [nameserverDomain, setNameserverDomain] = useState<string | null>(null);
   const [verificationRecords, setVerificationRecords] = useState<VerificationRecord[]>([]);
   const [isLoadingRecords, setIsLoadingRecords] = useState(false);
@@ -129,21 +129,6 @@ export default function Sites() {
   const { data: sites, isLoading: sitesLoading } = useQuery({
     queryKey: ['sites'],
     queryFn: async () => (await listSites({ throwOnError: true })).data,
-  });
-
-  const { data: zone } = useQuery({
-    queryKey: ['site-zone', nameserverDomain],
-    queryFn: async () => (await getSiteZone({ path: { domain: nameserverDomain! }, throwOnError: true })).data,
-    enabled: nameserverDomain !== null && siteToVerify === nameserverDomain,
-    // The endpoint is throttled server-side to one read per 10s, so polling
-    // any faster just buys 429s. Cloudflare takes minutes to see a delegation
-    // anyway, so a retry on failure would only stack up more of them.
-    refetchInterval: 15000,
-    // The whole point of this dialog is to be left open while the user is off
-    // in another tab changing nameservers at their registrar, and React Query
-    // suspends the interval on an unfocused window unless told otherwise.
-    refetchIntervalInBackground: true,
-    retry: false,
   });
 
   const createSiteMutation = useMutation({
@@ -325,13 +310,6 @@ export default function Sites() {
   };
 
   const isNameserverMode = nameserverDomain !== null && nameserverDomain === siteToVerify;
-  const zoneStatusLabel = {
-    active: 'Delegation confirmed',
-    pending: 'Waiting for your registrar…',
-    // Cloudflare reports `moved` once a zone it used to serve is delegated
-    // elsewhere — for us that means the nameservers were changed back.
-    moved: 'This domain is no longer pointed at us',
-  }[zone?.status ?? 'pending'];
 
   const isLoading = profileLoading || sitesLoading;
 
@@ -402,6 +380,10 @@ export default function Sites() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
               {sites.map((site) => {
                 const isDeletingThisSite = deleteSiteMutation.isPending && deleteSiteMutation.variables?.domain === site.domain;
+                // Nothing on an unlinked domain works yet: it resolves nowhere
+                // and owns no Cloudflare zone, so every action but verifying
+                // and deleting is a dead end until the deploy completes.
+                const isLive = site.status === 'deployed';
                 return (
                 <Card key={site.reference} className="border-none shadow-premium bg-card overflow-hidden group rounded-xl relative">
                   {isDeletingThisSite && (
@@ -449,6 +431,8 @@ export default function Sites() {
                                   variant="ghost" 
                                   size="icon" 
                                   className="h-8 w-8 hover:bg-card shadow-sm"
+                                  disabled={!isLive}
+                                  title={isLive ? 'Open site' : 'Available once the domain is verified'}
                                   onClick={() => window.open(getPublicUrl(site.domain), '_blank')}
                               >
                                   <ExternalLink className="w-3.5 h-3.5" />
@@ -502,7 +486,7 @@ export default function Sites() {
                               <IdCard className="w-3.5 h-3.5" />
                               Business Card
                           </Button>
-                          {site.type === 'external' && (
+                          {site.type === 'external' && isLive && (
                             <Button
                                 variant="outline"
                                 size="sm"
@@ -683,11 +667,11 @@ export default function Sites() {
           <Alert className="bg-primary/5 border-primary/20">
             <AlertCircle className="h-4 w-4 text-primary" />
             <AlertTitle className="text-sm font-bold">
-              {isNameserverMode ? zoneStatusLabel : 'Important'}
+              Important
             </AlertTitle>
             <AlertDescription className="text-xs">
               {isNameserverMode
-                ? 'Nameserver changes usually take a few minutes but can take up to 24 hours. This page checks every 15 seconds — leave it open.'
+                ? 'Nameserver changes usually take a few minutes but can take up to 24 hours. Click Verify & Link Site once you have updated them at your registrar.'
                 : 'DNS changes can take up to 24 hours to propagate, but usually happen within minutes.'}
             </AlertDescription>
           </Alert>
@@ -734,10 +718,10 @@ export default function Sites() {
             </Button>
             <Button
                 onClick={() => siteToVerify && verifyMutation.mutate(siteToVerify)}
-                // In nameserver mode verification can only succeed once
-                // Cloudflare reports the zone active, so don't let the user
-                // burn their one-per-minute attempt before then.
-                disabled={verifyMutation.isPending || cooldownSeconds > 0 || (isNameserverMode && zone?.status !== 'active')}
+                // The backend's 429 + Retry-After is the throttle, and the
+                // cooldown above mirrors it — so let the user click and get a
+                // real answer instead of pre-gating on a zone read.
+                disabled={verifyMutation.isPending || cooldownSeconds > 0}
             >
               {verifyMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {cooldownSeconds > 0 ? `Try again in ${cooldownSeconds}s` : 'Verify & Link Site'}
