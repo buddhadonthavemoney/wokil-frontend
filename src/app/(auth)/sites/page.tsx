@@ -1,10 +1,10 @@
 'use client';
 
-import { Globe, ExternalLink, Edit, IdCard, Loader2, ShieldCheck, Plus, Trash2, Copy, AlertCircle } from 'lucide-react';
+import { Globe, ExternalLink, Edit, IdCard, Loader2, ShieldCheck, Plus, Trash2, Copy, AlertCircle, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getProfile, listSites, createSite, deleteSite, verifyDns, getVerificationRecords } from '@/generated/wokil-api';
+import { getProfile, listSites, createSite, deleteSite, verifyDns, getVerificationRecords, createSiteZone, getSiteZone } from '@/generated/wokil-api';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -58,17 +58,34 @@ class VerifyRateLimitError extends Error {
   }
 }
 
+// The API's error bodies are text/plain (http.Error), so `throwOnError`
+// rejects with the message string itself — not an axios-shaped
+// `{ response: { data: { message } } }`. Reading the axios shape always came
+// back undefined, which is why every failure showed the same generic text.
+const apiErrorMessage = (error: unknown, fallback: string) => {
+  if (typeof error === 'string' && error.trim()) return error.trim();
+  if (error instanceof Error && error.message) return error.message;
+  return fallback;
+};
+
 export default function Sites() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [newSite, setNewSite] = useState<{ domain: string, status: 'requested' | 'link_pending' }>({
+  const [newSite, setNewSite] = useState<{ domain: string, status: 'requested' | 'link_pending', dns_mode: 'cname' | 'nameserver' }>({
     domain: '',
-    status: 'requested'
+    status: 'requested',
+    dns_mode: 'cname'
   });
   const [siteToDelete, setSiteToDelete] = useState<string | null>(null);
   const [siteTypeToDelete, setSiteTypeToDelete] = useState<'subdomain' | 'external' | null>(null);
+  // Set only after a delete has been refused because the domain is still
+  // delegated to us; holds the backend's explanation of what breaks.
+  const [deleteConfirmMessage, setDeleteConfirmMessage] = useState<string | null>(null);
   const [siteToVerify, setSiteToVerify] = useState<string | null>(null);
+  // Non-null only while the open verification dialog is for a nameserver-mode
+  // site — drives the zone poll and gates the Verify button.
+  const [nameserverDomain, setNameserverDomain] = useState<string | null>(null);
   const [verificationRecords, setVerificationRecords] = useState<VerificationRecord[]>([]);
   const [isLoadingRecords, setIsLoadingRecords] = useState(false);
   const [verifyCooldown, setVerifyCooldown] = useState<{ domain: string; until: number } | null>(null);
@@ -114,13 +131,28 @@ export default function Sites() {
     queryFn: async () => (await listSites({ throwOnError: true })).data,
   });
 
+  const { data: zone } = useQuery({
+    queryKey: ['site-zone', nameserverDomain],
+    queryFn: async () => (await getSiteZone({ path: { domain: nameserverDomain! }, throwOnError: true })).data,
+    enabled: nameserverDomain !== null && siteToVerify === nameserverDomain,
+    // The endpoint is throttled server-side to one read per 10s, so polling
+    // any faster just buys 429s. Cloudflare takes minutes to see a delegation
+    // anyway, so a retry on failure would only stack up more of them.
+    refetchInterval: 15000,
+    // The whole point of this dialog is to be left open while the user is off
+    // in another tab changing nameservers at their registrar, and React Query
+    // suspends the interval on an unfocused window unless told otherwise.
+    refetchIntervalInBackground: true,
+    retry: false,
+  });
+
   const createSiteMutation = useMutation({
-    mutationFn: (body: { domain: string; status: 'requested' | 'link_pending' }) =>
+    mutationFn: (body: { domain: string; status: 'requested' | 'link_pending'; dns_mode: 'cname' | 'nameserver' }) =>
       createSite({ body, throwOnError: true }),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['sites'] });
       setIsCreateDialogOpen(false);
-      setNewSite({ domain: '', status: 'requested' });
+      setNewSite({ domain: '', status: 'requested', dns_mode: 'cname' });
       toast.success("Site created successfully!");
       // An onboarded domain is unusable until its DNS records are added, so go
       // straight to them rather than making the user find the new card and
@@ -129,13 +161,19 @@ export default function Sites() {
         handleFetchRecords(variables.domain);
       }
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Failed to create site");
+    onError: (error: unknown) => {
+      // Carries the "nameserver mode is not enabled on this deployment" 400,
+      // which is the only signal the user gets that the mode is unavailable.
+      toast.error(apiErrorMessage(error, "Failed to create site"));
     }
   });
 
   const deleteSiteMutation = useMutation({
-    mutationFn: (domain: string) => deleteSite({ path: { domain }, throwOnError: true }),
+    // `confirm` is sent only on a retry. Sending it unconditionally would
+    // silently defeat the backend's guard against black-holing a domain whose
+    // delegation is still live.
+    mutationFn: ({ domain, confirm }: { domain: string; confirm?: boolean }) =>
+      deleteSite({ path: { domain }, query: confirm ? { confirm: true } : undefined, throwOnError: true }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sites'] });
       // siteUrl/deploymentURL/isPublished are derived from the sites table, so
@@ -143,10 +181,18 @@ export default function Sites() {
       // dashboard keeps showing the deleted site's URL from cache.
       queryClient.invalidateQueries({ queryKey: ['profile'] });
       setSiteToDelete(null);
+      setDeleteConfirmMessage(null);
       toast.success("Site deleted successfully");
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Failed to delete site");
+    onError: (error: unknown) => {
+      const message = apiErrorMessage(error, "Failed to delete site");
+      // ErrZoneDeleteNeedsConfirm — keep the dialog open and show what the
+      // backend says breaks, rather than a toast the user dismisses blind.
+      if (message.includes('confirm=true')) {
+        setDeleteConfirmMessage(message);
+        return;
+      }
+      toast.error(message);
     }
   });
 
@@ -218,24 +264,47 @@ export default function Sites() {
   const handleFetchRecords = async (domain: string) => {
     setIsLoadingRecords(true);
     try {
-      const { data } = await getVerificationRecords({ path: { domain }, throwOnError: true });
-      // Map API response to UI record structure
-      const records: VerificationRecord[] = [
-        {
-          type: 'TXT',
-          name: '@ / ' + domain,
-          value: data.txt_record
-        },
-        {
-          type: 'CNAME',
-          name: data.cname_host,
-          value: data.cname_value
-        }
-      ];
-      setVerificationRecords(records);
+      const { data, error, response } = await getVerificationRecords({ path: { domain } });
+      if (!response) {
+        throw new Error('Could not reach the server. Check your connection and try again.');
+      }
+      // A nameserver-mode site has no zone until it is asked for, and the read
+      // path deliberately refuses to provision one — it 404s with this
+      // sentinel instead, which is the cue to create the zone.
+      const needsZone =
+        response.status === 404 && typeof error === 'string' && error.includes('no Cloudflare zone');
+      if (needsZone || data?.mode === 'nameserver') {
+        const nameservers = data?.nameservers?.length
+          ? data.nameservers
+          : (await createSiteZone({ path: { domain }, throwOnError: true })).data.nameservers;
+        setVerificationRecords(nameservers.map((ns, i) => ({
+          type: 'NS',
+          name: `Nameserver ${i + 1}`,
+          value: ns,
+        })));
+        setNameserverDomain(domain);
+      } else if (!response.ok || !data) {
+        throw new Error(apiErrorMessage(error, 'Failed to fetch verification records'));
+      } else {
+        // Map API response to UI record structure
+        const records: VerificationRecord[] = [
+          {
+            type: 'TXT',
+            name: '@ / ' + domain,
+            value: data.txt_record
+          },
+          {
+            type: 'CNAME',
+            name: data.cname_host,
+            value: data.cname_value
+          }
+        ];
+        setVerificationRecords(records);
+        setNameserverDomain(null);
+      }
       setSiteToVerify(domain);
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || "Failed to fetch verification records");
+    } catch (error: unknown) {
+      toast.error(apiErrorMessage(error, "Failed to fetch verification records"));
     } finally {
       setIsLoadingRecords(false);
     }
@@ -254,6 +323,15 @@ export default function Sites() {
     }
     createSiteMutation.mutate(newSite);
   };
+
+  const isNameserverMode = nameserverDomain !== null && nameserverDomain === siteToVerify;
+  const zoneStatusLabel = {
+    active: 'Delegation confirmed',
+    pending: 'Waiting for your registrar…',
+    // Cloudflare reports `moved` once a zone it used to serve is delegated
+    // elsewhere — for us that means the nameservers were changed back.
+    moved: 'This domain is no longer pointed at us',
+  }[zone?.status ?? 'pending'];
 
   const isLoading = profileLoading || sitesLoading;
 
@@ -323,7 +401,7 @@ export default function Sites() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
               {sites.map((site) => {
-                const isDeletingThisSite = deleteSiteMutation.isPending && deleteSiteMutation.variables === site.domain;
+                const isDeletingThisSite = deleteSiteMutation.isPending && deleteSiteMutation.variables?.domain === site.domain;
                 return (
                 <Card key={site.reference} className="border-none shadow-premium bg-card overflow-hidden group rounded-xl relative">
                   {isDeletingThisSite && (
@@ -424,6 +502,17 @@ export default function Sites() {
                               <IdCard className="w-3.5 h-3.5" />
                               Business Card
                           </Button>
+                          {site.type === 'external' && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="gap-2 rounded-lg text-xs"
+                                onClick={() => router.push(`/sites/${encodeURIComponent(site.domain)}/email`)}
+                            >
+                                <Mail className="w-3.5 h-3.5" />
+                                Email
+                            </Button>
+                          )}
                       </div>
                     </div>
                   </CardContent>
@@ -490,6 +579,31 @@ export default function Sites() {
                   </div>
                 </RadioGroup>
               </div>
+              {newSite.status === 'link_pending' && (
+                <div className="grid gap-2">
+                  <Label className="text-xs uppercase text-muted-foreground font-bold">How will you point it at us?</Label>
+                  <RadioGroup
+                    value={newSite.dns_mode}
+                    onValueChange={(val: 'cname' | 'nameserver') => setNewSite({ ...newSite, dns_mode: val })}
+                    className="grid grid-cols-1 gap-4"
+                  >
+                    <div className="flex items-start space-x-3 space-y-0">
+                      <RadioGroupItem value="nameserver" id="dns_nameserver" className="mt-0.5 border-primary text-primary" />
+                      <Label htmlFor="dns_nameserver" className="font-medium cursor-pointer leading-snug">
+                        Point your nameservers
+                        <span className="block text-xs font-normal text-muted-foreground">Recommended — also unlocks email forwarding on your domain.</span>
+                      </Label>
+                    </div>
+                    <div className="flex items-start space-x-3 space-y-0">
+                      <RadioGroupItem value="cname" id="dns_cname" className="mt-0.5 border-primary text-primary" />
+                      <Label htmlFor="dns_cname" className="font-medium cursor-pointer leading-snug">
+                        Add a CNAME record
+                        <span className="block text-xs font-normal text-muted-foreground">Keep your current DNS provider.</span>
+                      </Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+              )}
             </div>
             <DialogFooter>
               <Button type="submit" disabled={createSiteMutation.isPending}>
@@ -505,6 +619,7 @@ export default function Sites() {
         if (!open) {
           setSiteToDelete(null);
           setSiteTypeToDelete(null);
+          setDeleteConfirmMessage(null);
         }
       }}>
         <AlertDialogContent>
@@ -523,34 +638,57 @@ export default function Sites() {
               </AlertDescription>
             </Alert>
           )}
+          {deleteConfirmMessage && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle className="text-sm font-semibold">This domain is still delegated to us</AlertTitle>
+              <AlertDescription className="text-xs">{deleteConfirmMessage}</AlertDescription>
+            </Alert>
+          )}
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={() => siteToDelete && deleteSiteMutation.mutate(siteToDelete)}
+            <AlertDialogAction
+              // Radix closes the dialog on action click; the first attempt may
+              // need to come back and ask for confirmation, so keep it open.
+              onClick={(e) => {
+                e.preventDefault();
+                if (siteToDelete) deleteSiteMutation.mutate({ domain: siteToDelete, confirm: deleteConfirmMessage !== null });
+              }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               disabled={deleteSiteMutation.isPending}
             >
               {deleteSiteMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Delete
+              {deleteConfirmMessage ? 'Delete anyway' : 'Delete'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      <Dialog open={siteToVerify !== null} onOpenChange={(open) => !open && setSiteToVerify(null)}>
+      <Dialog open={siteToVerify !== null} onOpenChange={(open) => {
+        if (!open) {
+          setSiteToVerify(null);
+          setNameserverDomain(null);
+        }
+      }}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
             <DialogTitle>Verify Domain: {siteToVerify}</DialogTitle>
             <DialogDescription>
-              Add the following DNS records to your domain provider (Cloudflare, Namecheap, etc.) to verify and link your site.
+              {isNameserverMode
+                ? 'Replace the nameservers at your registrar (GoDaddy, Namecheap, etc.) with the two below. The delegation itself proves you own the domain — there is nothing else to add.'
+                : 'Add the following DNS records to your domain provider (Cloudflare, Namecheap, etc.) to verify and link your site.'}
             </DialogDescription>
           </DialogHeader>
 
           <Alert className="bg-primary/5 border-primary/20">
             <AlertCircle className="h-4 w-4 text-primary" />
-            <AlertTitle className="text-sm font-bold">Important</AlertTitle>
+            <AlertTitle className="text-sm font-bold">
+              {isNameserverMode ? zoneStatusLabel : 'Important'}
+            </AlertTitle>
             <AlertDescription className="text-xs">
-              DNS changes can take up to 24 hours to propagate, but usually happen within minutes.
+              {isNameserverMode
+                ? 'Nameserver changes usually take a few minutes but can take up to 24 hours. This page checks every 15 seconds — leave it open.'
+                : 'DNS changes can take up to 24 hours to propagate, but usually happen within minutes.'}
             </AlertDescription>
           </Alert>
 
@@ -594,9 +732,12 @@ export default function Sites() {
             <Button variant="outline" onClick={() => setSiteToVerify(null)}>
               Configure Later
             </Button>
-            <Button 
+            <Button
                 onClick={() => siteToVerify && verifyMutation.mutate(siteToVerify)}
-                disabled={verifyMutation.isPending || cooldownSeconds > 0}
+                // In nameserver mode verification can only succeed once
+                // Cloudflare reports the zone active, so don't let the user
+                // burn their one-per-minute attempt before then.
+                disabled={verifyMutation.isPending || cooldownSeconds > 0 || (isNameserverMode && zone?.status !== 'active')}
             >
               {verifyMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {cooldownSeconds > 0 ? `Try again in ${cooldownSeconds}s` : 'Verify & Link Site'}

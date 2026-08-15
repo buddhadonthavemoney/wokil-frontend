@@ -2,7 +2,7 @@
 
 import { type Client, type ClientMeta, formDataBodySerializer, type Options as Options2, type RequestResult, type ServerSentEventsResult, type TDataShape } from './client';
 import { client } from './client.gen';
-import type { ChatLegalResearchData, ChatLegalResearchErrors, ChatLegalResearchResponses, CheckDomainAvailabilityData, CheckDomainAvailabilityErrors, CheckDomainAvailabilityResponses, CreateFirmData, CreateFirmErrors, CreateFirmResponses, CreateFormData, CreateFormErrors, CreateFormResponses, CreateGaPropertyData, CreateGaPropertyErrors, CreateGaPropertyResponses, CreateSiteData, CreateSiteErrors, CreateSiteResponses, DeleteSiteData, DeleteSiteErrors, DeleteSiteResponses, DeploySiteData, DeploySiteErrors, DeploySiteResponses, GetAccountTypeData, GetAccountTypeErrors, GetAccountTypeResponses, GetLegalResearchDocumentData, GetLegalResearchDocumentErrors, GetLegalResearchDocumentResponses, GetMyFirmData, GetMyFirmErrors, GetMyFirmResponses, GetProfileData, GetProfileErrors, GetProfileResponses, GetPublicDirectoryData, GetPublicDirectoryErrors, GetPublicDirectoryResponses, GetSiteAnalyticsData, GetSiteAnalyticsErrors, GetSiteAnalyticsResponses, GetVerificationRecordsData, GetVerificationRecordsErrors, GetVerificationRecordsResponses, GoogleCallbackData, GoogleCallbackErrors, GoogleCallbackResponses, GoogleLoginData, GoogleLoginResponses, ListFormsData, ListFormsErrors, ListFormsResponses, ListLegalResearchConversationMessagesData, ListLegalResearchConversationMessagesErrors, ListLegalResearchConversationMessagesResponses, ListLegalResearchConversationsData, ListLegalResearchConversationsErrors, ListLegalResearchConversationsResponses, ListSitesData, ListSitesErrors, ListSitesResponses, ListSubmissionsData, ListSubmissionsErrors, ListSubmissionsResponses, ListThemesData, ListThemesErrors, ListThemesResponses, ListUsersData, ListUsersErrors, ListUsersResponses, SaveProfileData, SaveProfileErrors, SaveProfileResponses, SearchFirmsData, SearchFirmsErrors, SearchFirmsResponses, SetAccountTypeData, SetAccountTypeErrors, SetAccountTypeResponses, StreamDeployStatusData, StreamDeployStatusErrors, StreamDeployStatusResponse, StreamDeployStatusResponses, SubmitFormData, SubmitFormErrors, SubmitFormResponses, UpdateFirmData, UpdateFirmErrors, UpdateFirmResponses, UpdateProfileVisibilityData, UpdateProfileVisibilityErrors, UpdateProfileVisibilityResponses, UploadFileData, UploadFileErrors, UploadFileResponses, VerifyDnsData, VerifyDnsErrors, VerifyDnsResponses } from './types.gen';
+import type { ChatLegalResearchData, ChatLegalResearchErrors, ChatLegalResearchResponses, CheckDomainAvailabilityData, CheckDomainAvailabilityErrors, CheckDomainAvailabilityResponses, CreateFirmData, CreateFirmErrors, CreateFirmResponses, CreateFormData, CreateFormErrors, CreateFormResponses, CreateGaPropertyData, CreateGaPropertyErrors, CreateGaPropertyResponses, CreateSiteData, CreateSiteEmailRouteData, CreateSiteEmailRouteErrors, CreateSiteEmailRouteResponses, CreateSiteErrors, CreateSiteResponses, CreateSiteZoneData, CreateSiteZoneErrors, CreateSiteZoneResponses, DeleteSiteData, DeleteSiteEmailRouteData, DeleteSiteEmailRouteErrors, DeleteSiteEmailRouteResponses, DeleteSiteErrors, DeleteSiteResponses, DeploySiteData, DeploySiteErrors, DeploySiteResponses, EnableSiteEmailData, EnableSiteEmailErrors, EnableSiteEmailResponses, GetAccountTypeData, GetAccountTypeErrors, GetAccountTypeResponses, GetLegalResearchDocumentData, GetLegalResearchDocumentErrors, GetLegalResearchDocumentResponses, GetMyFirmData, GetMyFirmErrors, GetMyFirmResponses, GetProfileData, GetProfileErrors, GetProfileResponses, GetPublicDirectoryData, GetPublicDirectoryErrors, GetPublicDirectoryResponses, GetSiteAnalyticsData, GetSiteAnalyticsErrors, GetSiteAnalyticsResponses, GetSiteEmailCatchAllData, GetSiteEmailCatchAllErrors, GetSiteEmailCatchAllResponses, GetSiteEmailData, GetSiteEmailErrors, GetSiteEmailResponses, GetSiteZoneData, GetSiteZoneErrors, GetSiteZoneResponses, GetVerificationRecordsData, GetVerificationRecordsErrors, GetVerificationRecordsResponses, GoogleCallbackData, GoogleCallbackErrors, GoogleCallbackResponses, GoogleLoginData, GoogleLoginResponses, ListFormsData, ListFormsErrors, ListFormsResponses, ListLegalResearchConversationMessagesData, ListLegalResearchConversationMessagesErrors, ListLegalResearchConversationMessagesResponses, ListLegalResearchConversationsData, ListLegalResearchConversationsErrors, ListLegalResearchConversationsResponses, ListSiteEmailRoutesData, ListSiteEmailRoutesErrors, ListSiteEmailRoutesResponses, ListSitesData, ListSitesErrors, ListSitesResponses, ListSubmissionsData, ListSubmissionsErrors, ListSubmissionsResponses, ListThemesData, ListThemesErrors, ListThemesResponses, ListUsersData, ListUsersErrors, ListUsersResponses, SaveProfileData, SaveProfileErrors, SaveProfileResponses, SearchFirmsData, SearchFirmsErrors, SearchFirmsResponses, SetAccountTypeData, SetAccountTypeErrors, SetAccountTypeResponses, SetSiteEmailCatchAllData, SetSiteEmailCatchAllErrors, SetSiteEmailCatchAllResponses, StreamDeployStatusData, StreamDeployStatusErrors, StreamDeployStatusResponse, StreamDeployStatusResponses, SubmitFormData, SubmitFormErrors, SubmitFormResponses, UpdateFirmData, UpdateFirmErrors, UpdateFirmResponses, UpdateProfileVisibilityData, UpdateProfileVisibilityErrors, UpdateProfileVisibilityResponses, UploadFileData, UploadFileErrors, UploadFileResponses, VerifyDnsData, VerifyDnsErrors, VerifyDnsResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -174,6 +174,117 @@ export const verifyDns = <ThrowOnError extends boolean = false>(options: Options
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/sites/{domain}/verify',
     ...options
+});
+
+/**
+ * Get the delegation status of the site's Cloudflare zone
+ */
+export const getSiteZone = <ThrowOnError extends boolean = false>(options: Options<GetSiteZoneData, ThrowOnError>): RequestResult<GetSiteZoneResponses, GetSiteZoneErrors, ThrowOnError> => (options.client ?? client).get<GetSiteZoneResponses, GetSiteZoneErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/sites/{domain}/zone',
+    ...options
+});
+
+/**
+ * Create the site's own Cloudflare zone (nameserver mode)
+ *
+ * Moves the site off the shared zone: creates a Cloudflare zone for its domain and returns the nameservers the customer must delegate to. Idempotent — an existing zone for the domain is adopted rather than re-created, so a retry is safe.
+ *
+ */
+export const createSiteZone = <ThrowOnError extends boolean = false>(options: Options<CreateSiteZoneData, ThrowOnError>): RequestResult<CreateSiteZoneResponses, CreateSiteZoneErrors, ThrowOnError> => (options.client ?? client).post<CreateSiteZoneResponses, CreateSiteZoneErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/sites/{domain}/zone',
+    ...options
+});
+
+/**
+ * Enable Email Routing on the site's zone (nameserver mode)
+ *
+ * Switches on Cloudflare Email Routing for the site's own zone — which adds and locks the MX and SPF records itself, so the customer has nothing to do — and registers `destination` as the inbox to forward to. Cloudflare emails that address a verification link; poll the status endpoint until `verified` is true. Requires an `active` zone. Idempotent: an already-registered destination is adopted.
+ *
+ */
+export const enableSiteEmail = <ThrowOnError extends boolean = false>(options: Options<EnableSiteEmailData, ThrowOnError>): RequestResult<EnableSiteEmailResponses, EnableSiteEmailErrors, ThrowOnError> => (options.client ?? client).post<EnableSiteEmailResponses, EnableSiteEmailErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/sites/{domain}/email/enable',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Get Email Routing status for the site's zone
+ *
+ * Read live from Cloudflare, which is the source of truth for both the routing switch and the destination's verification state. Pass `destination` to learn whether that address has been verified; without it only the routing switch is reported.
+ *
+ */
+export const getSiteEmail = <ThrowOnError extends boolean = false>(options: Options<GetSiteEmailData, ThrowOnError>): RequestResult<GetSiteEmailResponses, GetSiteEmailErrors, ThrowOnError> => (options.client ?? client).get<GetSiteEmailResponses, GetSiteEmailErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/sites/{domain}/email/status',
+    ...options
+});
+
+/**
+ * List the site's forwarding addresses
+ *
+ * Read live from Cloudflare — the rules are not mirrored locally. Each route carries the `tag` needed to delete it.
+ *
+ */
+export const listSiteEmailRoutes = <ThrowOnError extends boolean = false>(options: Options<ListSiteEmailRoutesData, ThrowOnError>): RequestResult<ListSiteEmailRoutesResponses, ListSiteEmailRoutesErrors, ThrowOnError> => (options.client ?? client).get<ListSiteEmailRoutesResponses, ListSiteEmailRoutesErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/sites/{domain}/email/routes',
+    ...options
+});
+
+/**
+ * Forward an address on the site's domain to a verified inbox
+ *
+ * Creates a Cloudflare routing rule sending `localPart`@domain to `destination`. Rejected unless the destination has been verified, since Cloudflare will not deliver to an unverified address.
+ *
+ */
+export const createSiteEmailRoute = <ThrowOnError extends boolean = false>(options: Options<CreateSiteEmailRouteData, ThrowOnError>): RequestResult<CreateSiteEmailRouteResponses, CreateSiteEmailRouteErrors, ThrowOnError> => (options.client ?? client).post<CreateSiteEmailRouteResponses, CreateSiteEmailRouteErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/sites/{domain}/email/routes',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Delete a forwarding address
+ */
+export const deleteSiteEmailRoute = <ThrowOnError extends boolean = false>(options: Options<DeleteSiteEmailRouteData, ThrowOnError>): RequestResult<DeleteSiteEmailRouteResponses, DeleteSiteEmailRouteErrors, ThrowOnError> => (options.client ?? client).delete<DeleteSiteEmailRouteResponses, DeleteSiteEmailRouteErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/sites/{domain}/email/routes/{tag}',
+    ...options
+});
+
+/**
+ * Get the catch-all rule for the site's domain
+ */
+export const getSiteEmailCatchAll = <ThrowOnError extends boolean = false>(options: Options<GetSiteEmailCatchAllData, ThrowOnError>): RequestResult<GetSiteEmailCatchAllResponses, GetSiteEmailCatchAllErrors, ThrowOnError> => (options.client ?? client).get<GetSiteEmailCatchAllResponses, GetSiteEmailCatchAllErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/sites/{domain}/email/catch-all',
+    ...options
+});
+
+/**
+ * Turn the catch-all on or off
+ *
+ * With it on, mail to any address on the domain that no rule matches is forwarded to `destination`. With it off, unmatched mail is rejected.
+ *
+ */
+export const setSiteEmailCatchAll = <ThrowOnError extends boolean = false>(options: Options<SetSiteEmailCatchAllData, ThrowOnError>): RequestResult<SetSiteEmailCatchAllResponses, SetSiteEmailCatchAllErrors, ThrowOnError> => (options.client ?? client).put<SetSiteEmailCatchAllResponses, SetSiteEmailCatchAllErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/sites/{domain}/email/catch-all',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
 });
 
 /**

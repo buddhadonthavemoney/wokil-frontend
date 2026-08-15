@@ -17,7 +17,9 @@ export interface CreateSiteRequest {
 }
 
 export interface VerificationRecord {
-    type: 'TXT' | 'CNAME';
+    // NS rows are the nameserver-mode instructions: same copy-a-value UI, but
+    // set at the registrar rather than added as a record in an existing zone.
+    type: 'TXT' | 'CNAME' | 'NS';
     name: string;
     value: string;
 }
