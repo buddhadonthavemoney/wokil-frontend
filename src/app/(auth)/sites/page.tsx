@@ -8,7 +8,7 @@ import { getProfile, listSites, createSite, deleteSite, verifyDns, getVerificati
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { cn, siteHref } from '@/lib/utils';
+import { cn, siteHref, normalizeDomain, isValidDomain } from '@/lib/utils';
 import { apiErrorMessage, copyToClipboard } from '@/lib/client-ui';
 import { useState, useEffect, useRef } from 'react';
 import {
@@ -59,14 +59,22 @@ class VerifyRateLimitError extends Error {
   }
 }
 
+// The whole card is the hit target, but it stays a real radio underneath —
+// arrow-key navigation and screen readers keep working, which a div+onClick
+// would throw away. Radix puts data-state on the item; `has-*` reads it.
+const dnsModeCardClass =
+  'flex flex-col gap-2 items-start cursor-pointer rounded-xl border border-border/60 bg-card p-4 ' +
+  'transition-colors hover:border-accent/50 ' +
+  'has-[[data-state=checked]]:border-accent has-[[data-state=checked]]:bg-accent/5 ' +
+  'has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring has-[:focus-visible]:ring-offset-2';
+
 export default function Sites() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [newSite, setNewSite] = useState<{ domain: string, status: 'requested' | 'link_pending', dns_mode: 'cname' | 'nameserver' }>({
+  const [newSite, setNewSite] = useState<{ domain: string, dns_mode: 'cname' | 'nameserver' }>({
     domain: '',
-    status: 'requested',
-    dns_mode: 'cname'
+    dns_mode: 'nameserver'
   });
   const [siteToDelete, setSiteToDelete] = useState<string | null>(null);
   const [siteTypeToDelete, setSiteTypeToDelete] = useState<'subdomain' | 'external' | null>(null);
@@ -74,9 +82,9 @@ export default function Sites() {
   // delegated to us; holds the backend's explanation of what breaks.
   const [deleteConfirmMessage, setDeleteConfirmMessage] = useState<string | null>(null);
   const [siteToVerify, setSiteToVerify] = useState<string | null>(null);
-  // Non-null only while the open verification dialog is for a nameserver-mode
-  // site — switches the dialog copy from DNS records to NS delegation.
-  const [nameserverDomain, setNameserverDomain] = useState<string | null>(null);
+  // Non-empty only while the open verification dialog is for a nameserver-mode
+  // site — switches the dialog from DNS records to registrar delegation.
+  const [nameservers, setNameservers] = useState<string[]>([]);
   const [verificationRecords, setVerificationRecords] = useState<VerificationRecord[]>([]);
   const [isLoadingRecords, setIsLoadingRecords] = useState(false);
   const [verifyCooldown, setVerifyCooldown] = useState<{ domain: string; until: number } | null>(null);
@@ -123,19 +131,17 @@ export default function Sites() {
   });
 
   const createSiteMutation = useMutation({
-    mutationFn: (body: { domain: string; status: 'requested' | 'link_pending'; dns_mode: 'cname' | 'nameserver' }) =>
+    mutationFn: (body: { domain: string; status: 'link_pending'; dns_mode: 'cname' | 'nameserver' }) =>
       createSite({ body, throwOnError: true }),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['sites'] });
       setIsCreateDialogOpen(false);
-      setNewSite({ domain: '', status: 'requested', dns_mode: 'cname' });
+      setNewSite({ domain: '', dns_mode: 'nameserver' });
       toast.success("Site created successfully!");
       // An onboarded domain is unusable until its DNS records are added, so go
       // straight to them rather than making the user find the new card and
       // click "Verify Domain" as a separate step.
-      if (variables.status === 'link_pending') {
-        handleFetchRecords(variables.domain);
-      }
+      handleFetchRecords(variables.domain);
     },
     onError: (error: unknown) => {
       // Carries the "nameserver mode is not enabled on this deployment" 400,
@@ -247,15 +253,10 @@ export default function Sites() {
       const needsZone =
         response?.status === 404 && typeof error === 'string' && error.includes('no Cloudflare zone');
       if (needsZone || data?.mode === 'nameserver') {
-        const nameservers = data?.nameservers?.length
+        setNameservers(data?.nameservers?.length
           ? data.nameservers
-          : (await createSiteZone({ path: { domain }, throwOnError: true })).data.nameservers;
-        setVerificationRecords(nameservers.map((ns, i) => ({
-          type: 'NS',
-          name: `Nameserver ${i + 1}`,
-          value: ns,
-        })));
-        setNameserverDomain(domain);
+          : (await createSiteZone({ path: { domain }, throwOnError: true })).data.nameservers);
+        setVerificationRecords([]);
       } else if (!response?.ok || !data) {
         throw new Error(apiErrorMessage(error, 'Failed to fetch verification records'));
       } else {
@@ -273,7 +274,7 @@ export default function Sites() {
           }
         ];
         setVerificationRecords(records);
-        setNameserverDomain(null);
+        setNameservers([]);
       }
       setSiteToVerify(domain);
     } catch (error: unknown) {
@@ -285,14 +286,17 @@ export default function Sites() {
 
   const handleCreateSite = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newSite.domain) {
-        toast.error("Please enter a domain");
-        return;
+    // Normalize on submit rather than on change — rewriting the value mid-typing
+    // fights the caret.
+    const domain = normalizeDomain(newSite.domain);
+    if (!isValidDomain(domain)) {
+      toast.error("Enter a domain like example.com");
+      return;
     }
-    createSiteMutation.mutate(newSite);
+    createSiteMutation.mutate({ ...newSite, domain, status: 'link_pending' });
   };
 
-  const isNameserverMode = nameserverDomain !== null && nameserverDomain === siteToVerify;
+  const isNameserverMode = nameservers.length > 0;
 
   const isLoading = profileLoading || sitesLoading;
 
@@ -500,7 +504,7 @@ export default function Sites() {
 
                 <div className="text-center space-y-2">
                     <p className="text-xs text-muted-foreground max-w-[200px] mx-auto leading-relaxed group-hover:text-foreground transition-colors">
-                        Request a new domain or connect your own personal domain to your professional site.
+                        Connect a domain you own to your professional site.
                     </p>
                 </div>
               </Card>
@@ -512,70 +516,70 @@ export default function Sites() {
       </main>
 
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[560px]">
           <DialogHeader>
-            <DialogTitle>Add New Site</DialogTitle>
+            <DialogTitle>Add a domain</DialogTitle>
             <DialogDescription>
-              Enter the domain details for your new site.
+              Connect a domain you own to your professional site.
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleCreateSite}>
-            <div className="grid gap-4 py-4">
+            <div className="grid gap-6 py-4">
               <div className="grid gap-2">
-                <Label htmlFor="domain">Domain Name</Label>
+                <Label htmlFor="domain">Domain name</Label>
                 <Input
                   id="domain"
-                  placeholder="e.g. portfolio.yourname.com"
+                  placeholder="example.com"
+                  autoComplete="off"
+                  autoCapitalize="none"
+                  spellCheck={false}
                   value={newSite.domain}
                   onChange={(e) => setNewSite({ ...newSite, domain: e.target.value })}
                 />
+                <p className="text-xs text-muted-foreground">
+                  Just the domain — no <code className="font-mono">https://</code> or trailing path.
+                </p>
               </div>
-              <div className="grid gap-4 py-2">
-                <RadioGroup 
-                    value={newSite.status} 
-                    onValueChange={(val: 'requested' | 'link_pending') => setNewSite({ ...newSite, status: val })}
-                    className="grid grid-cols-1 gap-4"
+
+              <div className="grid gap-3">
+                <Label>How should your domain point at us?</Label>
+                <RadioGroup
+                  value={newSite.dns_mode}
+                  onValueChange={(val: 'cname' | 'nameserver') => setNewSite({ ...newSite, dns_mode: val })}
+                  className="grid grid-cols-1 sm:grid-cols-2 gap-3"
                 >
-                  <div className="flex items-center space-x-3 space-y-0">
-                    <RadioGroupItem value="requested" id="requested" className="border-primary text-primary" />
-                    <Label htmlFor="requested" className="font-medium cursor-pointer">Request a new domain</Label>
-                  </div>
-                  <div className="flex items-center space-x-3 space-y-0">
-                    <RadioGroupItem value="link_pending" id="link_pending" className="border-primary text-primary" />
-                    <Label htmlFor="link_pending" className="font-medium cursor-pointer">Onboard your own domain</Label>
-                  </div>
+                  <Label htmlFor="dns_nameserver" className={dnsModeCardClass}>
+                    <span className="flex items-center gap-2">
+                      <RadioGroupItem value="nameserver" id="dns_nameserver" />
+                      <span className="font-semibold text-sm">Let us manage your DNS</span>
+                    </span>
+                    <Badge variant="outline" className="w-fit text-[10px] bg-accent/10 text-accent-foreground border-accent/30">
+                      Recommended
+                    </Badge>
+                    <span className="text-xs font-normal text-muted-foreground leading-snug">
+                      You&apos;ll paste two nameservers at your registrar. Also unlocks email forwarding
+                      on your domain.
+                    </span>
+                  </Label>
+                  <Label htmlFor="dns_cname" className={dnsModeCardClass}>
+                    <span className="flex items-center gap-2">
+                      <RadioGroupItem value="cname" id="dns_cname" />
+                      <span className="font-semibold text-sm">Keep your current DNS provider</span>
+                    </span>
+                    <span className="text-xs font-normal text-muted-foreground leading-snug">
+                      You&apos;ll add one CNAME record. Website only — no email forwarding.
+                    </span>
+                  </Label>
                 </RadioGroup>
               </div>
-              {newSite.status === 'link_pending' && (
-                <div className="grid gap-2">
-                  <Label className="text-xs uppercase text-muted-foreground font-bold">How will you point it at us?</Label>
-                  <RadioGroup
-                    value={newSite.dns_mode}
-                    onValueChange={(val: 'cname' | 'nameserver') => setNewSite({ ...newSite, dns_mode: val })}
-                    className="grid grid-cols-1 gap-4"
-                  >
-                    <div className="flex items-start space-x-3 space-y-0">
-                      <RadioGroupItem value="nameserver" id="dns_nameserver" className="mt-0.5 border-primary text-primary" />
-                      <Label htmlFor="dns_nameserver" className="font-medium cursor-pointer leading-snug">
-                        Point your nameservers
-                        <span className="block text-xs font-normal text-muted-foreground">Recommended — also unlocks email forwarding on your domain.</span>
-                      </Label>
-                    </div>
-                    <div className="flex items-start space-x-3 space-y-0">
-                      <RadioGroupItem value="cname" id="dns_cname" className="mt-0.5 border-primary text-primary" />
-                      <Label htmlFor="dns_cname" className="font-medium cursor-pointer leading-snug">
-                        Add a CNAME record
-                        <span className="block text-xs font-normal text-muted-foreground">Keep your current DNS provider.</span>
-                      </Label>
-                    </div>
-                  </RadioGroup>
-                </div>
-              )}
             </div>
             <DialogFooter>
-              <Button type="submit" disabled={createSiteMutation.isPending}>
+              <Button type="button" variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={createSiteMutation.isPending || !isValidDomain(normalizeDomain(newSite.domain))}>
                 {createSiteMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Create Site
+                Add domain
               </Button>
             </DialogFooter>
           </form>
@@ -634,30 +638,59 @@ export default function Sites() {
       <Dialog open={siteToVerify !== null} onOpenChange={(open) => {
         if (!open) {
           setSiteToVerify(null);
-          setNameserverDomain(null);
+          setNameservers([]);
         }
       }}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
-            <DialogTitle>Verify Domain: {siteToVerify}</DialogTitle>
+            <DialogTitle>
+              {isNameserverMode ? `Point ${siteToVerify} at us` : `Verify ${siteToVerify}`}
+            </DialogTitle>
             <DialogDescription>
               {isNameserverMode
-                ? 'Replace the nameservers at your registrar (GoDaddy, Namecheap, etc.) with the two below. The delegation itself proves you own the domain — there is nothing else to add.'
-                : 'Add the following DNS records to your domain provider (Cloudflare, Namecheap, etc.) to verify and link your site.'}
+                ? 'The delegation itself proves you own the domain — there is nothing else to add.'
+                : 'Add these two records at your DNS provider to verify and link your site.'}
             </DialogDescription>
           </DialogHeader>
 
+          <ol className="flex flex-col gap-2 text-xs text-muted-foreground list-decimal pl-4 marker:text-muted-foreground">
+            {isNameserverMode ? (
+              <>
+                <li>Sign in to your <strong className="font-semibold text-foreground">registrar</strong> — where you bought the domain (GoDaddy, Namecheap, …).</li>
+                <li>Open its Nameservers or Custom DNS settings for {siteToVerify}.</li>
+                <li><strong className="font-semibold text-foreground">Replace all</strong> the existing nameservers with the two below.</li>
+                <li>Save, then click Verify &amp; Link Site.</li>
+              </>
+            ) : (
+              <>
+                <li>Open the record editor at your <strong className="font-semibold text-foreground">DNS provider</strong> (Cloudflare, Namecheap, …).</li>
+                <li>Add both records below exactly as shown.</li>
+                <li>Save, then click Verify &amp; Link Site.</li>
+              </>
+            )}
+          </ol>
+
           <Alert className="bg-primary/5 border-primary/20">
             <AlertCircle className="h-4 w-4 text-primary" />
-            <AlertTitle className="text-sm font-bold">Important</AlertTitle>
+            <AlertTitle className="text-sm font-bold">This takes a moment to take effect</AlertTitle>
             <AlertDescription className="text-xs">
               {isNameserverMode
-                ? 'Nameserver changes usually take a few minutes but can take up to 24 hours. Click Verify & Link Site once you have updated them at your registrar.'
-                : 'DNS changes can take up to 24 hours to propagate, but usually happen within minutes.'}
+                ? 'Nameserver changes usually go live in a few minutes, but can take up to 24 hours.'
+                : 'DNS changes usually propagate within minutes, but can take up to 24 hours.'}
             </AlertDescription>
           </Alert>
 
           <div className="space-y-4 py-4">
+            {nameservers.map((ns) => (
+              <div key={ns} className="flex items-center gap-2">
+                <code className="flex-1 p-2.5 bg-muted/30 rounded-lg border border-border/50 text-xs font-mono break-all">
+                  {ns}
+                </code>
+                <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" aria-label={`Copy ${ns}`} onClick={() => copyToClipboard(ns)}>
+                  <Copy className="h-3 w-3" />
+                </Button>
+              </div>
+            ))}
             {verificationRecords?.map((record, index) => (
               <div key={index} className="p-4 bg-muted/30 rounded-xl border border-border/50 space-y-3">
                 <div className="flex items-center justify-between">
