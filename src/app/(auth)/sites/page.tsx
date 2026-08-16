@@ -9,6 +9,7 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { cn, siteHref } from '@/lib/utils';
+import { apiErrorMessage, copyToClipboard } from '@/lib/client-ui';
 import { useState, useEffect, useRef } from 'react';
 import {
   Dialog,
@@ -57,16 +58,6 @@ class VerifyRateLimitError extends Error {
     this.retryAfterSeconds = retryAfterSeconds;
   }
 }
-
-// The API's error bodies are text/plain (http.Error), so `throwOnError`
-// rejects with the message string itself — not an axios-shaped
-// `{ response: { data: { message } } }`. Reading the axios shape always came
-// back undefined, which is why every failure showed the same generic text.
-const apiErrorMessage = (error: unknown, fallback: string) => {
-  if (typeof error === 'string' && error.trim()) return error.trim();
-  if (error instanceof Error && error.message) return error.message;
-  return fallback;
-};
 
 export default function Sites() {
   const router = useRouter();
@@ -250,14 +241,11 @@ export default function Sites() {
     setIsLoadingRecords(true);
     try {
       const { data, error, response } = await getVerificationRecords({ path: { domain } });
-      if (!response) {
-        throw new Error('Could not reach the server. Check your connection and try again.');
-      }
       // A nameserver-mode site has no zone until it is asked for, and the read
       // path deliberately refuses to provision one — it 404s with this
       // sentinel instead, which is the cue to create the zone.
       const needsZone =
-        response.status === 404 && typeof error === 'string' && error.includes('no Cloudflare zone');
+        response?.status === 404 && typeof error === 'string' && error.includes('no Cloudflare zone');
       if (needsZone || data?.mode === 'nameserver') {
         const nameservers = data?.nameservers?.length
           ? data.nameservers
@@ -268,7 +256,7 @@ export default function Sites() {
           value: ns,
         })));
         setNameserverDomain(domain);
-      } else if (!response.ok || !data) {
+      } else if (!response?.ok || !data) {
         throw new Error(apiErrorMessage(error, 'Failed to fetch verification records'));
       } else {
         // Map API response to UI record structure
@@ -293,11 +281,6 @@ export default function Sites() {
     } finally {
       setIsLoadingRecords(false);
     }
-  };
-
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-    toast.success("Copied to clipboard");
   };
 
   const handleCreateSite = (e: React.FormEvent) => {
@@ -666,9 +649,7 @@ export default function Sites() {
 
           <Alert className="bg-primary/5 border-primary/20">
             <AlertCircle className="h-4 w-4 text-primary" />
-            <AlertTitle className="text-sm font-bold">
-              Important
-            </AlertTitle>
+            <AlertTitle className="text-sm font-bold">Important</AlertTitle>
             <AlertDescription className="text-xs">
               {isNameserverMode
                 ? 'Nameserver changes usually take a few minutes but can take up to 24 hours. Click Verify & Link Site once you have updated them at your registrar.'

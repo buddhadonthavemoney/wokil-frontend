@@ -292,7 +292,7 @@ export default function Sidebar() {
             </div>
             <div onClick={handleNavClick}>
               {/* /email resolves the domain, then hands off to /sites/[domain]/email. */}
-              <NavLink icon={<Mail className="w-5 h-5" />} label="Email" path="/email" isActive={pathname === '/email' || Boolean(pathname?.endsWith('/email'))} />
+              <NavLink icon={<Mail className="w-5 h-5" />} label="Email" path="/email" isActive={Boolean(pathname?.endsWith('/email'))} />
             </div>
             <div onClick={handleNavClick}>
               <NavLink icon={<IdCard className="w-5 h-5" />} label="Business Cards" path="/business-cards" isActive={pathname === '/business-cards'} />

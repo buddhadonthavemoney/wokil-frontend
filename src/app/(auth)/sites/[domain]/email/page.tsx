@@ -25,19 +25,9 @@ import { Switch } from '@/components/ui/switch';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { apiErrorMessage, copyToClipboard } from '@/lib/client-ui';
 
-// Same fetch-client caveat as the sites page: error bodies are text/plain
-// (http.Error), so a rejected request carries the message as a bare string.
-const apiErrorMessage = (error: unknown, fallback: string) => {
-  if (typeof error === 'string' && error.trim()) return error.trim();
-  if (error instanceof Error && error.message) return error.message;
-  return fallback;
-};
-
-const copyToClipboard = (text: string) => {
-  navigator.clipboard.writeText(text);
-  toast.success('Copied to clipboard');
-};
+const guideLinkClass = 'inline-flex items-center gap-1 text-accent underline underline-offset-2';
 
 /** Monospace value with a copy button — the fields users retype wrongly. */
 function CopyValue({ value }: { value: string }) {
@@ -59,20 +49,6 @@ function CopyValue({ value }: { value: string }) {
   );
 }
 
-function GuideLink({ href, children }: { href: string; children: React.ReactNode }) {
-  return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="inline-flex items-center gap-1 text-accent underline underline-offset-2"
-    >
-      {children}
-      <ExternalLink className="h-3 w-3" />
-    </a>
-  );
-}
-
 /**
  * Forwarding only gets mail in. Gmail can send *as* one of these addresses over
  * SMTP, but it confirms ownership by mailing a code to the address itself —
@@ -88,14 +64,29 @@ function SendAsGuide({ addresses }: { addresses: string[] }) {
           <ol className="flex flex-col gap-3 text-xs text-muted-foreground list-decimal pl-4 marker:text-muted-foreground">
             <li>
               Turn on{' '}
-              <GuideLink href="https://myaccount.google.com/signinoptions/two-step-verification">
+              <a
+                href="https://myaccount.google.com/signinoptions/two-step-verification"
+                target="_blank"
+                rel="noopener noreferrer"
+                className={guideLinkClass}
+              >
                 2-Step Verification
-              </GuideLink>{' '}
+                <ExternalLink className="h-3 w-3" />
+              </a>{' '}
               on your Google account. Google hides App Passwords until it is on.
             </li>
             <li>
               Create an{' '}
-              <GuideLink href="https://myaccount.google.com/apppasswords">App Password</GuideLink> — Google
+              <a
+                href="https://myaccount.google.com/apppasswords"
+                target="_blank"
+                rel="noopener noreferrer"
+                className={guideLinkClass}
+              >
+                App Password
+                <ExternalLink className="h-3 w-3" />
+              </a>{' '}
+              — Google
               shows a 16-character password once. Copy it now; it is not shown again.
             </li>
             <li>

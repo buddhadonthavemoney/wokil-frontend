@@ -28,12 +28,4 @@ jobs:
           BEFORE_SHA: ${{ github.event.before }}
           AFTER_SHA: ${{ github.event.after }}
         run: |
-          ZERO_SHA="0000000000000000000000000000000000000000"
-          if [ -z "$BEFORE_SHA" ] || [ "$BEFORE_SHA" = "$ZERO_SHA" ]; then
-            # First push of a new branch (or a force-push edge case): fall
-            # back to just the tip commit rather than a diffable range.
-            RANGE="-1 $AFTER_SHA"
-          else
-            RANGE="$BEFORE_SHA..$AFTER_SHA"
-          fi
-          git log $RANGE --format=%B | python .github/scripts/jira.py transition "Deployed"
+          git log "$BEFORE_SHA..$AFTER_SHA" --format=%B | python .github/scripts/jira.py "Deployed"

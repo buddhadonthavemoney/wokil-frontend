@@ -2,17 +2,14 @@
 """Shared helper for the Jira PR/deploy sync GitHub Actions workflows.
 
 Reads free text (a PR title, or a block of commit messages) from stdin,
-extracts SCRUM-### ticket keys, and transitions each one to a given status.
+extracts SCRUM-### ticket keys, and transitions each one to the status given
+as the sole argument. Reads JIRA_BASE_URL, JIRA_USER_EMAIL, and JIRA_API_TOKEN
+from the environment.
 
 Usage:
-    echo "$PR_TITLE" | python jira.py transition "In Review"
-    git log <range> --format=%B | python jira.py transition "Deployed"
-    echo "$PR_TITLE" | python jira.py extract-keys
-
-`transition` reads JIRA_BASE_URL, JIRA_USER_EMAIL, and JIRA_API_TOKEN from
-the environment.
+    echo "$PR_TITLE" | python jira.py "In Review"
+    git log <range> --format=%B | python jira.py "Deployed"
 """
-import argparse
 import base64
 import json
 import os
@@ -33,11 +30,6 @@ def extract_ticket_keys(text: str) -> list[str]:
         if key not in seen:
             seen.append(key)
     return seen
-
-
-def basic_auth_header(email: str, api_token: str) -> str:
-    token = base64.b64encode(f"{email}:{api_token}".encode()).decode()
-    return f"Basic {token}"
 
 
 def _request(url: str, auth_header: str, method: str = "GET", body=None):
@@ -93,14 +85,13 @@ def transition_issue_by_name(base_url: str, auth_header: str, issue_key: str, ta
     print(f"[jira] {issue_key} -> {target_status_name}")
 
 
-def cmd_extract_keys(_args: argparse.Namespace) -> None:
-    for key in extract_ticket_keys(sys.stdin.read()):
-        print(key)
-
-
-def cmd_transition(args: argparse.Namespace) -> None:
+def main() -> None:
+    status_name = sys.argv[1]
     base_url = os.environ["JIRA_BASE_URL"]
-    auth_header = basic_auth_header(os.environ["JIRA_USER_EMAIL"], os.environ["JIRA_API_TOKEN"])
+    token = base64.b64encode(
+        f'{os.environ["JIRA_USER_EMAIL"]}:{os.environ["JIRA_API_TOKEN"]}'.encode()
+    ).decode()
+    auth_header = f"Basic {token}"
 
     keys = extract_ticket_keys(sys.stdin.read())
     if not keys:
@@ -110,28 +101,13 @@ def cmd_transition(args: argparse.Namespace) -> None:
     failed = False
     for key in keys:
         try:
-            transition_issue_by_name(base_url, auth_header, key, args.status)
+            transition_issue_by_name(base_url, auth_header, key, status_name)
         except Exception as e:  # noqa: BLE001 - report and continue with the rest
-            print(f'::warning::Failed to transition {key} to "{args.status}": {e}')
+            print(f'::warning::Failed to transition {key} to "{status_name}": {e}')
             failed = True
 
     if failed:
         sys.exit(1)
-
-
-def main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    sub = parser.add_subparsers(dest="command", required=True)
-
-    p_extract = sub.add_parser("extract-keys", help="Print SCRUM-### keys found in stdin, one per line")
-    p_extract.set_defaults(func=cmd_extract_keys)
-
-    p_transition = sub.add_parser("transition", help="Transition every SCRUM-### key found in stdin to the given status")
-    p_transition.add_argument("status", help='Target Jira status name, e.g. "In Review"')
-    p_transition.set_defaults(func=cmd_transition)
-
-    args = parser.parse_args()
-    args.func(args)
 
 
 if __name__ == "__main__":

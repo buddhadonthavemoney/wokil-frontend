@@ -39,4 +39,4 @@ jobs:
           PR_TITLE: ${{ github.event.pull_request.title }}
           TARGET_STATUS: ${{ steps.status.outputs.value }}
         run: |
-          printf '%s' "$PR_TITLE" | python .github/scripts/jira.py transition "$TARGET_STATUS"
+          printf '%s' "$PR_TITLE" | python .github/scripts/jira.py "$TARGET_STATUS"
