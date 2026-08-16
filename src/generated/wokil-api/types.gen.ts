@@ -229,17 +229,119 @@ export type Site = {
 export type CreateSiteRequest = {
     domain: string;
     status: 'requested' | 'link_pending';
+    /**
+     * How the customer will point the domain at us. `cname` (the default) is the TXT + CNAME flow. `nameserver` delegates the whole domain to a Cloudflare zone of its own, and is rejected unless the deployment runs with nameserver mode enabled.
+     *
+     */
+    dns_mode?: 'cname' | 'nameserver';
 };
 
 export type VerificationRecords = {
     domain: string;
+    /**
+     * Which set of instructions applies. In `cname` mode the customer adds the TXT and CNAME records below. In `nameserver` mode they point their registrar at `nameservers` instead — the delegation itself is the proof of ownership, so no verification token is issued and the record fields are empty.
+     *
+     */
+    mode: 'cname' | 'nameserver';
     txt_record: string;
     cname_host: string;
     cname_value: string;
+    /**
+     * Set at the registrar in `nameserver` mode; absent otherwise.
+     */
+    nameservers?: Array<string>;
 };
 
 export type MessageResponse = {
     message: string;
+};
+
+export type SiteZone = {
+    /**
+     * Delegation state of the site's own Cloudflare zone. `pending` until the customer points their registrar at the nameservers below, `active` once Cloudflare sees the delegation, `moved` once it is pointed away again. Cloudflare's remaining zone states are reported as `pending`.
+     *
+     */
+    status: 'pending' | 'active' | 'moved';
+    /**
+     * The nameservers the customer must set at their registrar.
+     */
+    nameservers: Array<string>;
+};
+
+export type SiteEmailRequest = {
+    /**
+     * The existing inbox mail for this domain should be forwarded to.
+     */
+    destination: string;
+};
+
+export type SiteEmail = {
+    /**
+     * Whether Email Routing is switched on for the site's zone. Enabling also adds and locks the MX and SPF records, so nothing is asked of the customer — we hold the zone.
+     *
+     */
+    enabled: boolean;
+    /**
+     * The inbox mail is forwarded to. Empty until a destination is registered.
+     *
+     */
+    destination: string;
+    /**
+     * Whether the destination has followed the verification link Cloudflare emailed it. No forwarding rule can be created until this is true.
+     *
+     */
+    verified: boolean;
+};
+
+export type SiteEmailRoute = {
+    /**
+     * Cloudflare's rule id. Nothing is stored locally, so this is what the caller passes back to delete the rule.
+     *
+     */
+    tag: string;
+    /**
+     * The full address mail arrives at, e.g. `contact@theirfirm.com`.
+     */
+    address: string;
+    /**
+     * The verified inbox this address forwards to.
+     */
+    destination: string;
+    enabled: boolean;
+};
+
+export type SiteEmailRouteRequest = {
+    /**
+     * The part before the `@`, e.g. `contact`. The domain is the site's own.
+     *
+     */
+    localPart: string;
+    /**
+     * The inbox to forward to. Must already be registered and verified — see the email/enable endpoint.
+     *
+     */
+    destination: string;
+};
+
+export type SiteEmailCatchAll = {
+    /**
+     * Whether mail to any address on the domain that no rule matches is forwarded. Off means such mail is rejected.
+     *
+     */
+    enabled: boolean;
+    /**
+     * The inbox unmatched mail forwards to. Empty when disabled.
+     */
+    destination: string;
+};
+
+export type SiteEmailCatchAllRequest = {
+    enabled: boolean;
+    /**
+     * Where unmatched mail goes. Required when `enabled` is true, and must be verified. Ignored when disabling.
+     *
+     */
+    destination?: string;
 };
 
 export type DomainAvailabilityRequest = {
@@ -950,7 +1052,12 @@ export type DeleteSiteData = {
     path: {
         domain: string;
     };
-    query?: never;
+    query?: {
+        /**
+         * Required for a nameserver-mode site whose delegation is still live: deleting the site deletes the Cloudflare zone with it, and the domain stops resolving anywhere until the registrar is repointed.
+         */
+        confirm?: boolean;
+    };
     url: '/api/sites/{domain}';
 };
 
@@ -1007,6 +1114,10 @@ export type GetVerificationRecordsErrors = {
      */
     401: string;
     /**
+     * Resource not found
+     */
+    404: string;
+    /**
      * Internal server error
      */
     500: string;
@@ -1061,6 +1172,367 @@ export type VerifyDnsResponses = {
 };
 
 export type VerifyDnsResponse = VerifyDnsResponses[keyof VerifyDnsResponses];
+
+export type GetSiteZoneData = {
+    body?: never;
+    path: {
+        domain: string;
+    };
+    query?: never;
+    url: '/api/sites/{domain}/zone';
+};
+
+export type GetSiteZoneErrors = {
+    /**
+     * Invalid request
+     */
+    400: string;
+    /**
+     * Missing or invalid bearer token
+     */
+    401: string;
+    /**
+     * Resource not found
+     */
+    404: string;
+    /**
+     * Rate limited; retry after the interval in the Retry-After header
+     */
+    429: string;
+    /**
+     * Internal server error
+     */
+    500: string;
+};
+
+export type GetSiteZoneError = GetSiteZoneErrors[keyof GetSiteZoneErrors];
+
+export type GetSiteZoneResponses = {
+    /**
+     * OK
+     */
+    200: SiteZone;
+};
+
+export type GetSiteZoneResponse = GetSiteZoneResponses[keyof GetSiteZoneResponses];
+
+export type CreateSiteZoneData = {
+    body?: never;
+    path: {
+        domain: string;
+    };
+    query?: never;
+    url: '/api/sites/{domain}/zone';
+};
+
+export type CreateSiteZoneErrors = {
+    /**
+     * Invalid request
+     */
+    400: string;
+    /**
+     * Missing or invalid bearer token
+     */
+    401: string;
+    /**
+     * Resource not found
+     */
+    404: string;
+    /**
+     * Internal server error
+     */
+    500: string;
+};
+
+export type CreateSiteZoneError = CreateSiteZoneErrors[keyof CreateSiteZoneErrors];
+
+export type CreateSiteZoneResponses = {
+    /**
+     * Zone created or adopted
+     */
+    200: SiteZone;
+};
+
+export type CreateSiteZoneResponse = CreateSiteZoneResponses[keyof CreateSiteZoneResponses];
+
+export type EnableSiteEmailData = {
+    body: SiteEmailRequest;
+    path: {
+        domain: string;
+    };
+    query?: never;
+    url: '/api/sites/{domain}/email/enable';
+};
+
+export type EnableSiteEmailErrors = {
+    /**
+     * Invalid request
+     */
+    400: string;
+    /**
+     * Missing or invalid bearer token
+     */
+    401: string;
+    /**
+     * Resource not found
+     */
+    404: string;
+    /**
+     * Internal server error
+     */
+    500: string;
+};
+
+export type EnableSiteEmailError = EnableSiteEmailErrors[keyof EnableSiteEmailErrors];
+
+export type EnableSiteEmailResponses = {
+    /**
+     * Email Routing enabled, destination pending verification
+     */
+    200: SiteEmail;
+};
+
+export type EnableSiteEmailResponse = EnableSiteEmailResponses[keyof EnableSiteEmailResponses];
+
+export type GetSiteEmailData = {
+    body?: never;
+    path: {
+        domain: string;
+    };
+    query?: {
+        destination?: string;
+    };
+    url: '/api/sites/{domain}/email/status';
+};
+
+export type GetSiteEmailErrors = {
+    /**
+     * Invalid request
+     */
+    400: string;
+    /**
+     * Missing or invalid bearer token
+     */
+    401: string;
+    /**
+     * Resource not found
+     */
+    404: string;
+    /**
+     * Internal server error
+     */
+    500: string;
+};
+
+export type GetSiteEmailError = GetSiteEmailErrors[keyof GetSiteEmailErrors];
+
+export type GetSiteEmailResponses = {
+    /**
+     * OK
+     */
+    200: SiteEmail;
+};
+
+export type GetSiteEmailResponse = GetSiteEmailResponses[keyof GetSiteEmailResponses];
+
+export type ListSiteEmailRoutesData = {
+    body?: never;
+    path: {
+        domain: string;
+    };
+    query?: never;
+    url: '/api/sites/{domain}/email/routes';
+};
+
+export type ListSiteEmailRoutesErrors = {
+    /**
+     * Invalid request
+     */
+    400: string;
+    /**
+     * Missing or invalid bearer token
+     */
+    401: string;
+    /**
+     * Resource not found
+     */
+    404: string;
+    /**
+     * Internal server error
+     */
+    500: string;
+};
+
+export type ListSiteEmailRoutesError = ListSiteEmailRoutesErrors[keyof ListSiteEmailRoutesErrors];
+
+export type ListSiteEmailRoutesResponses = {
+    /**
+     * OK
+     */
+    200: Array<SiteEmailRoute>;
+};
+
+export type ListSiteEmailRoutesResponse = ListSiteEmailRoutesResponses[keyof ListSiteEmailRoutesResponses];
+
+export type CreateSiteEmailRouteData = {
+    body: SiteEmailRouteRequest;
+    path: {
+        domain: string;
+    };
+    query?: never;
+    url: '/api/sites/{domain}/email/routes';
+};
+
+export type CreateSiteEmailRouteErrors = {
+    /**
+     * Invalid request
+     */
+    400: string;
+    /**
+     * Missing or invalid bearer token
+     */
+    401: string;
+    /**
+     * Resource not found
+     */
+    404: string;
+    /**
+     * Internal server error
+     */
+    500: string;
+};
+
+export type CreateSiteEmailRouteError = CreateSiteEmailRouteErrors[keyof CreateSiteEmailRouteErrors];
+
+export type CreateSiteEmailRouteResponses = {
+    /**
+     * Route created
+     */
+    200: SiteEmailRoute;
+};
+
+export type CreateSiteEmailRouteResponse = CreateSiteEmailRouteResponses[keyof CreateSiteEmailRouteResponses];
+
+export type DeleteSiteEmailRouteData = {
+    body?: never;
+    path: {
+        domain: string;
+        /**
+         * The rule id from the list endpoint.
+         */
+        tag: string;
+    };
+    query?: never;
+    url: '/api/sites/{domain}/email/routes/{tag}';
+};
+
+export type DeleteSiteEmailRouteErrors = {
+    /**
+     * Invalid request
+     */
+    400: string;
+    /**
+     * Missing or invalid bearer token
+     */
+    401: string;
+    /**
+     * Resource not found
+     */
+    404: string;
+    /**
+     * Internal server error
+     */
+    500: string;
+};
+
+export type DeleteSiteEmailRouteError = DeleteSiteEmailRouteErrors[keyof DeleteSiteEmailRouteErrors];
+
+export type DeleteSiteEmailRouteResponses = {
+    /**
+     * Route deleted
+     */
+    200: MessageResponse;
+};
+
+export type DeleteSiteEmailRouteResponse = DeleteSiteEmailRouteResponses[keyof DeleteSiteEmailRouteResponses];
+
+export type GetSiteEmailCatchAllData = {
+    body?: never;
+    path: {
+        domain: string;
+    };
+    query?: never;
+    url: '/api/sites/{domain}/email/catch-all';
+};
+
+export type GetSiteEmailCatchAllErrors = {
+    /**
+     * Invalid request
+     */
+    400: string;
+    /**
+     * Missing or invalid bearer token
+     */
+    401: string;
+    /**
+     * Resource not found
+     */
+    404: string;
+    /**
+     * Internal server error
+     */
+    500: string;
+};
+
+export type GetSiteEmailCatchAllError = GetSiteEmailCatchAllErrors[keyof GetSiteEmailCatchAllErrors];
+
+export type GetSiteEmailCatchAllResponses = {
+    /**
+     * OK
+     */
+    200: SiteEmailCatchAll;
+};
+
+export type GetSiteEmailCatchAllResponse = GetSiteEmailCatchAllResponses[keyof GetSiteEmailCatchAllResponses];
+
+export type SetSiteEmailCatchAllData = {
+    body: SiteEmailCatchAllRequest;
+    path: {
+        domain: string;
+    };
+    query?: never;
+    url: '/api/sites/{domain}/email/catch-all';
+};
+
+export type SetSiteEmailCatchAllErrors = {
+    /**
+     * Invalid request
+     */
+    400: string;
+    /**
+     * Missing or invalid bearer token
+     */
+    401: string;
+    /**
+     * Resource not found
+     */
+    404: string;
+    /**
+     * Internal server error
+     */
+    500: string;
+};
+
+export type SetSiteEmailCatchAllError = SetSiteEmailCatchAllErrors[keyof SetSiteEmailCatchAllErrors];
+
+export type SetSiteEmailCatchAllResponses = {
+    /**
+     * Catch-all updated
+     */
+    200: SiteEmailCatchAll;
+};
+
+export type SetSiteEmailCatchAllResponse = SetSiteEmailCatchAllResponses[keyof SetSiteEmailCatchAllResponses];
 
 export type CheckDomainAvailabilityData = {
     body: DomainAvailabilityRequest;

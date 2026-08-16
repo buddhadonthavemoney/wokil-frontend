@@ -3,8 +3,8 @@
 import { type DefaultError, queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { chatLegalResearch, checkDomainAvailability, createFirm, createForm, createGaProperty, createSite, deleteSite, deploySite, getAccountType, getLegalResearchDocument, getMyFirm, getProfile, getPublicDirectory, getSiteAnalytics, getVerificationRecords, googleCallback, googleLogin, listForms, listLegalResearchConversationMessages, listLegalResearchConversations, listSites, listSubmissions, listThemes, listUsers, type Options, saveProfile, searchFirms, setAccountType, submitForm, updateFirm, updateProfileVisibility, uploadFile, verifyDns } from '../sdk.gen';
-import type { ChatLegalResearchData, ChatLegalResearchError, ChatLegalResearchResponse, CheckDomainAvailabilityData, CheckDomainAvailabilityError, CheckDomainAvailabilityResponse, CreateFirmData, CreateFirmError, CreateFirmResponse, CreateFormData, CreateFormError, CreateFormResponse, CreateGaPropertyData, CreateGaPropertyError, CreateGaPropertyResponse, CreateSiteData, CreateSiteError, CreateSiteResponse, DeleteSiteData, DeleteSiteError, DeleteSiteResponse, DeploySiteData, DeploySiteError, DeploySiteResponse, GetAccountTypeData, GetAccountTypeError, GetAccountTypeResponse, GetLegalResearchDocumentData, GetLegalResearchDocumentError, GetLegalResearchDocumentResponse, GetMyFirmData, GetMyFirmError, GetMyFirmResponse, GetProfileData, GetProfileError, GetProfileResponse, GetPublicDirectoryData, GetPublicDirectoryError, GetPublicDirectoryResponse, GetSiteAnalyticsData, GetSiteAnalyticsError, GetSiteAnalyticsResponse, GetVerificationRecordsData, GetVerificationRecordsError, GetVerificationRecordsResponse, GoogleCallbackData, GoogleCallbackError, GoogleCallbackResponse, GoogleLoginData, GoogleLoginResponse, ListFormsData, ListFormsError, ListFormsResponse, ListLegalResearchConversationMessagesData, ListLegalResearchConversationMessagesError, ListLegalResearchConversationMessagesResponse, ListLegalResearchConversationsData, ListLegalResearchConversationsError, ListLegalResearchConversationsResponse, ListSitesData, ListSitesError, ListSitesResponse, ListSubmissionsData, ListSubmissionsError, ListSubmissionsResponse, ListThemesData, ListThemesError, ListThemesResponse, ListUsersData, ListUsersError, ListUsersResponse, SaveProfileData, SaveProfileError, SaveProfileResponse, SearchFirmsData, SearchFirmsError, SearchFirmsResponse, SetAccountTypeData, SetAccountTypeError, SetAccountTypeResponse, SubmitFormData, SubmitFormError, SubmitFormResponse, UpdateFirmData, UpdateFirmError, UpdateFirmResponse, UpdateProfileVisibilityData, UpdateProfileVisibilityError, UpdateProfileVisibilityResponse, UploadFileData, UploadFileError, UploadFileResponse, VerifyDnsData, VerifyDnsError, VerifyDnsResponse } from '../types.gen';
+import { chatLegalResearch, checkDomainAvailability, createFirm, createForm, createGaProperty, createSite, createSiteEmailRoute, createSiteZone, deleteSite, deleteSiteEmailRoute, deploySite, enableSiteEmail, getAccountType, getLegalResearchDocument, getMyFirm, getProfile, getPublicDirectory, getSiteAnalytics, getSiteEmail, getSiteEmailCatchAll, getSiteZone, getVerificationRecords, googleCallback, googleLogin, listForms, listLegalResearchConversationMessages, listLegalResearchConversations, listSiteEmailRoutes, listSites, listSubmissions, listThemes, listUsers, type Options, saveProfile, searchFirms, setAccountType, setSiteEmailCatchAll, submitForm, updateFirm, updateProfileVisibility, uploadFile, verifyDns } from '../sdk.gen';
+import type { ChatLegalResearchData, ChatLegalResearchError, ChatLegalResearchResponse, CheckDomainAvailabilityData, CheckDomainAvailabilityError, CheckDomainAvailabilityResponse, CreateFirmData, CreateFirmError, CreateFirmResponse, CreateFormData, CreateFormError, CreateFormResponse, CreateGaPropertyData, CreateGaPropertyError, CreateGaPropertyResponse, CreateSiteData, CreateSiteEmailRouteData, CreateSiteEmailRouteError, CreateSiteEmailRouteResponse, CreateSiteError, CreateSiteResponse, CreateSiteZoneData, CreateSiteZoneError, CreateSiteZoneResponse, DeleteSiteData, DeleteSiteEmailRouteData, DeleteSiteEmailRouteError, DeleteSiteEmailRouteResponse, DeleteSiteError, DeleteSiteResponse, DeploySiteData, DeploySiteError, DeploySiteResponse, EnableSiteEmailData, EnableSiteEmailError, EnableSiteEmailResponse, GetAccountTypeData, GetAccountTypeError, GetAccountTypeResponse, GetLegalResearchDocumentData, GetLegalResearchDocumentError, GetLegalResearchDocumentResponse, GetMyFirmData, GetMyFirmError, GetMyFirmResponse, GetProfileData, GetProfileError, GetProfileResponse, GetPublicDirectoryData, GetPublicDirectoryError, GetPublicDirectoryResponse, GetSiteAnalyticsData, GetSiteAnalyticsError, GetSiteAnalyticsResponse, GetSiteEmailCatchAllData, GetSiteEmailCatchAllError, GetSiteEmailCatchAllResponse, GetSiteEmailData, GetSiteEmailError, GetSiteEmailResponse, GetSiteZoneData, GetSiteZoneError, GetSiteZoneResponse, GetVerificationRecordsData, GetVerificationRecordsError, GetVerificationRecordsResponse, GoogleCallbackData, GoogleCallbackError, GoogleCallbackResponse, GoogleLoginData, GoogleLoginResponse, ListFormsData, ListFormsError, ListFormsResponse, ListLegalResearchConversationMessagesData, ListLegalResearchConversationMessagesError, ListLegalResearchConversationMessagesResponse, ListLegalResearchConversationsData, ListLegalResearchConversationsError, ListLegalResearchConversationsResponse, ListSiteEmailRoutesData, ListSiteEmailRoutesError, ListSiteEmailRoutesResponse, ListSitesData, ListSitesError, ListSitesResponse, ListSubmissionsData, ListSubmissionsError, ListSubmissionsResponse, ListThemesData, ListThemesError, ListThemesResponse, ListUsersData, ListUsersError, ListUsersResponse, SaveProfileData, SaveProfileError, SaveProfileResponse, SearchFirmsData, SearchFirmsError, SearchFirmsResponse, SetAccountTypeData, SetAccountTypeError, SetAccountTypeResponse, SetSiteEmailCatchAllData, SetSiteEmailCatchAllError, SetSiteEmailCatchAllResponse, SubmitFormData, SubmitFormError, SubmitFormResponse, UpdateFirmData, UpdateFirmError, UpdateFirmResponse, UpdateProfileVisibilityData, UpdateProfileVisibilityError, UpdateProfileVisibilityResponse, UploadFileData, UploadFileError, UploadFileResponse, VerifyDnsData, VerifyDnsError, VerifyDnsResponse } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -334,6 +334,181 @@ export const verifyDnsMutation = (options?: Partial<Options<VerifyDnsData>>): Us
     const mutationOptions: UseMutationOptions<VerifyDnsResponse, VerifyDnsError, Options<VerifyDnsData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await verifyDns({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const getSiteZoneQueryKey = (options: Options<GetSiteZoneData>) => createQueryKey('getSiteZone', options);
+
+/**
+ * Get the delegation status of the site's Cloudflare zone
+ */
+export const getSiteZoneOptions = (options: Options<GetSiteZoneData>) => queryOptions<GetSiteZoneResponse, GetSiteZoneError, GetSiteZoneResponse, ReturnType<typeof getSiteZoneQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getSiteZone({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getSiteZoneQueryKey(options)
+});
+
+/**
+ * Create the site's own Cloudflare zone (nameserver mode)
+ *
+ * Moves the site off the shared zone: creates a Cloudflare zone for its domain and returns the nameservers the customer must delegate to. Idempotent — an existing zone for the domain is adopted rather than re-created, so a retry is safe.
+ *
+ */
+export const createSiteZoneMutation = (options?: Partial<Options<CreateSiteZoneData>>): UseMutationOptions<CreateSiteZoneResponse, CreateSiteZoneError, Options<CreateSiteZoneData>> => {
+    const mutationOptions: UseMutationOptions<CreateSiteZoneResponse, CreateSiteZoneError, Options<CreateSiteZoneData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await createSiteZone({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Enable Email Routing on the site's zone (nameserver mode)
+ *
+ * Switches on Cloudflare Email Routing for the site's own zone — which adds and locks the MX and SPF records itself, so the customer has nothing to do — and registers `destination` as the inbox to forward to. Cloudflare emails that address a verification link; poll the status endpoint until `verified` is true. Requires an `active` zone. Idempotent: an already-registered destination is adopted.
+ *
+ */
+export const enableSiteEmailMutation = (options?: Partial<Options<EnableSiteEmailData>>): UseMutationOptions<EnableSiteEmailResponse, EnableSiteEmailError, Options<EnableSiteEmailData>> => {
+    const mutationOptions: UseMutationOptions<EnableSiteEmailResponse, EnableSiteEmailError, Options<EnableSiteEmailData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await enableSiteEmail({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const getSiteEmailQueryKey = (options: Options<GetSiteEmailData>) => createQueryKey('getSiteEmail', options);
+
+/**
+ * Get Email Routing status for the site's zone
+ *
+ * Read live from Cloudflare, which is the source of truth for both the routing switch and the destination's verification state. Pass `destination` to learn whether that address has been verified; without it only the routing switch is reported.
+ *
+ */
+export const getSiteEmailOptions = (options: Options<GetSiteEmailData>) => queryOptions<GetSiteEmailResponse, GetSiteEmailError, GetSiteEmailResponse, ReturnType<typeof getSiteEmailQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getSiteEmail({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getSiteEmailQueryKey(options)
+});
+
+export const listSiteEmailRoutesQueryKey = (options: Options<ListSiteEmailRoutesData>) => createQueryKey('listSiteEmailRoutes', options);
+
+/**
+ * List the site's forwarding addresses
+ *
+ * Read live from Cloudflare — the rules are not mirrored locally. Each route carries the `tag` needed to delete it.
+ *
+ */
+export const listSiteEmailRoutesOptions = (options: Options<ListSiteEmailRoutesData>) => queryOptions<ListSiteEmailRoutesResponse, ListSiteEmailRoutesError, ListSiteEmailRoutesResponse, ReturnType<typeof listSiteEmailRoutesQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await listSiteEmailRoutes({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: listSiteEmailRoutesQueryKey(options)
+});
+
+/**
+ * Forward an address on the site's domain to a verified inbox
+ *
+ * Creates a Cloudflare routing rule sending `localPart`@domain to `destination`. Rejected unless the destination has been verified, since Cloudflare will not deliver to an unverified address.
+ *
+ */
+export const createSiteEmailRouteMutation = (options?: Partial<Options<CreateSiteEmailRouteData>>): UseMutationOptions<CreateSiteEmailRouteResponse, CreateSiteEmailRouteError, Options<CreateSiteEmailRouteData>> => {
+    const mutationOptions: UseMutationOptions<CreateSiteEmailRouteResponse, CreateSiteEmailRouteError, Options<CreateSiteEmailRouteData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await createSiteEmailRoute({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Delete a forwarding address
+ */
+export const deleteSiteEmailRouteMutation = (options?: Partial<Options<DeleteSiteEmailRouteData>>): UseMutationOptions<DeleteSiteEmailRouteResponse, DeleteSiteEmailRouteError, Options<DeleteSiteEmailRouteData>> => {
+    const mutationOptions: UseMutationOptions<DeleteSiteEmailRouteResponse, DeleteSiteEmailRouteError, Options<DeleteSiteEmailRouteData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await deleteSiteEmailRoute({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const getSiteEmailCatchAllQueryKey = (options: Options<GetSiteEmailCatchAllData>) => createQueryKey('getSiteEmailCatchAll', options);
+
+/**
+ * Get the catch-all rule for the site's domain
+ */
+export const getSiteEmailCatchAllOptions = (options: Options<GetSiteEmailCatchAllData>) => queryOptions<GetSiteEmailCatchAllResponse, GetSiteEmailCatchAllError, GetSiteEmailCatchAllResponse, ReturnType<typeof getSiteEmailCatchAllQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getSiteEmailCatchAll({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getSiteEmailCatchAllQueryKey(options)
+});
+
+/**
+ * Turn the catch-all on or off
+ *
+ * With it on, mail to any address on the domain that no rule matches is forwarded to `destination`. With it off, unmatched mail is rejected.
+ *
+ */
+export const setSiteEmailCatchAllMutation = (options?: Partial<Options<SetSiteEmailCatchAllData>>): UseMutationOptions<SetSiteEmailCatchAllResponse, SetSiteEmailCatchAllError, Options<SetSiteEmailCatchAllData>> => {
+    const mutationOptions: UseMutationOptions<SetSiteEmailCatchAllResponse, SetSiteEmailCatchAllError, Options<SetSiteEmailCatchAllData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await setSiteEmailCatchAll({
                 ...options,
                 ...fnOptions,
                 throwOnError: true

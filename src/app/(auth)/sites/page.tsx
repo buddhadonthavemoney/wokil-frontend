@@ -1,14 +1,15 @@
 'use client';
 
-import { Globe, ExternalLink, Edit, IdCard, Loader2, ShieldCheck, Plus, Trash2, Copy, AlertCircle } from 'lucide-react';
+import { Globe, ExternalLink, Edit, IdCard, Loader2, ShieldCheck, Plus, Trash2, Copy, AlertCircle, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getProfile, listSites, createSite, deleteSite, verifyDns, getVerificationRecords } from '@/generated/wokil-api';
+import { getProfile, listSites, createSite, deleteSite, verifyDns, getVerificationRecords, createSiteZone } from '@/generated/wokil-api';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { cn, siteHref } from '@/lib/utils';
+import { cn, siteHref, normalizeDomain, isValidDomain } from '@/lib/utils';
+import { apiErrorMessage, copyToClipboard } from '@/lib/client-ui';
 import { useState, useEffect, useRef } from 'react';
 import {
   Dialog,
@@ -58,17 +59,32 @@ class VerifyRateLimitError extends Error {
   }
 }
 
+// The whole card is the hit target, but it stays a real radio underneath —
+// arrow-key navigation and screen readers keep working, which a div+onClick
+// would throw away. Radix puts data-state on the item; `has-*` reads it.
+const dnsModeCardClass =
+  'flex flex-col gap-2 items-start cursor-pointer rounded-xl border border-border/60 bg-card p-4 ' +
+  'transition-colors hover:border-accent/50 ' +
+  'has-[[data-state=checked]]:border-accent has-[[data-state=checked]]:bg-accent/5 ' +
+  'has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring has-[:focus-visible]:ring-offset-2';
+
 export default function Sites() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [newSite, setNewSite] = useState<{ domain: string, status: 'requested' | 'link_pending' }>({
+  const [newSite, setNewSite] = useState<{ domain: string, dns_mode: 'cname' | 'nameserver' }>({
     domain: '',
-    status: 'requested'
+    dns_mode: 'nameserver'
   });
   const [siteToDelete, setSiteToDelete] = useState<string | null>(null);
   const [siteTypeToDelete, setSiteTypeToDelete] = useState<'subdomain' | 'external' | null>(null);
+  // Set only after a delete has been refused because the domain is still
+  // delegated to us; holds the backend's explanation of what breaks.
+  const [deleteConfirmMessage, setDeleteConfirmMessage] = useState<string | null>(null);
   const [siteToVerify, setSiteToVerify] = useState<string | null>(null);
+  // Non-empty only while the open verification dialog is for a nameserver-mode
+  // site — switches the dialog from DNS records to registrar delegation.
+  const [nameservers, setNameservers] = useState<string[]>([]);
   const [verificationRecords, setVerificationRecords] = useState<VerificationRecord[]>([]);
   const [isLoadingRecords, setIsLoadingRecords] = useState(false);
   const [verifyCooldown, setVerifyCooldown] = useState<{ domain: string; until: number } | null>(null);
@@ -115,27 +131,31 @@ export default function Sites() {
   });
 
   const createSiteMutation = useMutation({
-    mutationFn: (body: { domain: string; status: 'requested' | 'link_pending' }) =>
+    mutationFn: (body: { domain: string; status: 'link_pending'; dns_mode: 'cname' | 'nameserver' }) =>
       createSite({ body, throwOnError: true }),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['sites'] });
       setIsCreateDialogOpen(false);
-      setNewSite({ domain: '', status: 'requested' });
+      setNewSite({ domain: '', dns_mode: 'nameserver' });
       toast.success("Site created successfully!");
       // An onboarded domain is unusable until its DNS records are added, so go
       // straight to them rather than making the user find the new card and
       // click "Verify Domain" as a separate step.
-      if (variables.status === 'link_pending') {
-        handleFetchRecords(variables.domain);
-      }
+      handleFetchRecords(variables.domain);
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Failed to create site");
+    onError: (error: unknown) => {
+      // Carries the "nameserver mode is not enabled on this deployment" 400,
+      // which is the only signal the user gets that the mode is unavailable.
+      toast.error(apiErrorMessage(error, "Failed to create site"));
     }
   });
 
   const deleteSiteMutation = useMutation({
-    mutationFn: (domain: string) => deleteSite({ path: { domain }, throwOnError: true }),
+    // `confirm` is sent only on a retry. Sending it unconditionally would
+    // silently defeat the backend's guard against black-holing a domain whose
+    // delegation is still live.
+    mutationFn: ({ domain, confirm }: { domain: string; confirm?: boolean }) =>
+      deleteSite({ path: { domain }, query: confirm ? { confirm: true } : undefined, throwOnError: true }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sites'] });
       // siteUrl/deploymentURL/isPublished are derived from the sites table, so
@@ -143,10 +163,18 @@ export default function Sites() {
       // dashboard keeps showing the deleted site's URL from cache.
       queryClient.invalidateQueries({ queryKey: ['profile'] });
       setSiteToDelete(null);
+      setDeleteConfirmMessage(null);
       toast.success("Site deleted successfully");
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Failed to delete site");
+    onError: (error: unknown) => {
+      const message = apiErrorMessage(error, "Failed to delete site");
+      // ErrZoneDeleteNeedsConfirm — keep the dialog open and show what the
+      // backend says breaks, rather than a toast the user dismisses blind.
+      if (message.includes('confirm=true')) {
+        setDeleteConfirmMessage(message);
+        return;
+      }
+      toast.error(message);
     }
   });
 
@@ -218,42 +246,57 @@ export default function Sites() {
   const handleFetchRecords = async (domain: string) => {
     setIsLoadingRecords(true);
     try {
-      const { data } = await getVerificationRecords({ path: { domain }, throwOnError: true });
-      // Map API response to UI record structure
-      const records: VerificationRecord[] = [
-        {
-          type: 'TXT',
-          name: '@ / ' + domain,
-          value: data.txt_record
-        },
-        {
-          type: 'CNAME',
-          name: data.cname_host,
-          value: data.cname_value
-        }
-      ];
-      setVerificationRecords(records);
+      const { data, error, response } = await getVerificationRecords({ path: { domain } });
+      // A nameserver-mode site has no zone until it is asked for, and the read
+      // path deliberately refuses to provision one — it 404s with this
+      // sentinel instead, which is the cue to create the zone.
+      const needsZone =
+        response?.status === 404 && typeof error === 'string' && error.includes('no Cloudflare zone');
+      if (needsZone || data?.mode === 'nameserver') {
+        setNameservers(data?.nameservers?.length
+          ? data.nameservers
+          : (await createSiteZone({ path: { domain }, throwOnError: true })).data.nameservers);
+        setVerificationRecords([]);
+      } else if (!response?.ok || !data) {
+        throw new Error(apiErrorMessage(error, 'Failed to fetch verification records'));
+      } else {
+        // Map API response to UI record structure
+        const records: VerificationRecord[] = [
+          {
+            type: 'TXT',
+            name: '@ / ' + domain,
+            value: data.txt_record
+          },
+          {
+            type: 'CNAME',
+            name: data.cname_host,
+            value: data.cname_value
+          }
+        ];
+        setVerificationRecords(records);
+        setNameservers([]);
+      }
       setSiteToVerify(domain);
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || "Failed to fetch verification records");
+    } catch (error: unknown) {
+      toast.error(apiErrorMessage(error, "Failed to fetch verification records"));
     } finally {
       setIsLoadingRecords(false);
     }
   };
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-    toast.success("Copied to clipboard");
-  };
-
   const handleCreateSite = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newSite.domain) {
-        toast.error("Please enter a domain");
-        return;
+    // Normalize on submit rather than on change — rewriting the value mid-typing
+    // fights the caret.
+    const domain = normalizeDomain(newSite.domain);
+    if (!isValidDomain(domain)) {
+      toast.error("Enter a domain like example.com");
+      return;
     }
-    createSiteMutation.mutate(newSite);
+    createSiteMutation.mutate({ ...newSite, domain, status: 'link_pending' });
   };
+
+  const isNameserverMode = nameservers.length > 0;
 
   const isLoading = profileLoading || sitesLoading;
 
@@ -323,7 +366,11 @@ export default function Sites() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
               {sites.map((site) => {
-                const isDeletingThisSite = deleteSiteMutation.isPending && deleteSiteMutation.variables === site.domain;
+                const isDeletingThisSite = deleteSiteMutation.isPending && deleteSiteMutation.variables?.domain === site.domain;
+                // Nothing on an unlinked domain works yet: it resolves nowhere
+                // and owns no Cloudflare zone, so every action but verifying
+                // and deleting is a dead end until the deploy completes.
+                const isLive = site.status === 'deployed';
                 return (
                 <Card key={site.reference} className="border-none shadow-premium bg-card overflow-hidden group rounded-xl relative">
                   {isDeletingThisSite && (
@@ -371,6 +418,8 @@ export default function Sites() {
                                   variant="ghost" 
                                   size="icon" 
                                   className="h-8 w-8 hover:bg-card shadow-sm"
+                                  disabled={!isLive}
+                                  title={isLive ? 'Open site' : 'Available once the domain is verified'}
                                   onClick={() => window.open(getPublicUrl(site.domain), '_blank')}
                               >
                                   <ExternalLink className="w-3.5 h-3.5" />
@@ -424,6 +473,17 @@ export default function Sites() {
                               <IdCard className="w-3.5 h-3.5" />
                               Business Card
                           </Button>
+                          {site.type === 'external' && isLive && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="gap-2 rounded-lg text-xs"
+                                onClick={() => router.push(`/sites/${encodeURIComponent(site.domain)}/email`)}
+                            >
+                                <Mail className="w-3.5 h-3.5" />
+                                Email
+                            </Button>
+                          )}
                       </div>
                     </div>
                   </CardContent>
@@ -444,7 +504,7 @@ export default function Sites() {
 
                 <div className="text-center space-y-2">
                     <p className="text-xs text-muted-foreground max-w-[200px] mx-auto leading-relaxed group-hover:text-foreground transition-colors">
-                        Request a new domain or connect your own personal domain to your professional site.
+                        Connect a domain you own to your professional site.
                     </p>
                 </div>
               </Card>
@@ -456,45 +516,70 @@ export default function Sites() {
       </main>
 
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[560px]">
           <DialogHeader>
-            <DialogTitle>Add New Site</DialogTitle>
+            <DialogTitle>Add a domain</DialogTitle>
             <DialogDescription>
-              Enter the domain details for your new site.
+              Connect a domain you own to your professional site.
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleCreateSite}>
-            <div className="grid gap-4 py-4">
+            <div className="grid gap-6 py-4">
               <div className="grid gap-2">
-                <Label htmlFor="domain">Domain Name</Label>
+                <Label htmlFor="domain">Domain name</Label>
                 <Input
                   id="domain"
-                  placeholder="e.g. portfolio.yourname.com"
+                  placeholder="example.com"
+                  autoComplete="off"
+                  autoCapitalize="none"
+                  spellCheck={false}
                   value={newSite.domain}
                   onChange={(e) => setNewSite({ ...newSite, domain: e.target.value })}
                 />
+                <p className="text-xs text-muted-foreground">
+                  Just the domain — no <code className="font-mono">https://</code> or trailing path.
+                </p>
               </div>
-              <div className="grid gap-4 py-2">
-                <RadioGroup 
-                    value={newSite.status} 
-                    onValueChange={(val: 'requested' | 'link_pending') => setNewSite({ ...newSite, status: val })}
-                    className="grid grid-cols-1 gap-4"
+
+              <div className="grid gap-3">
+                <Label>How should your domain point at us?</Label>
+                <RadioGroup
+                  value={newSite.dns_mode}
+                  onValueChange={(val: 'cname' | 'nameserver') => setNewSite({ ...newSite, dns_mode: val })}
+                  className="grid grid-cols-1 sm:grid-cols-2 gap-3"
                 >
-                  <div className="flex items-center space-x-3 space-y-0">
-                    <RadioGroupItem value="requested" id="requested" className="border-primary text-primary" />
-                    <Label htmlFor="requested" className="font-medium cursor-pointer">Request a new domain</Label>
-                  </div>
-                  <div className="flex items-center space-x-3 space-y-0">
-                    <RadioGroupItem value="link_pending" id="link_pending" className="border-primary text-primary" />
-                    <Label htmlFor="link_pending" className="font-medium cursor-pointer">Onboard your own domain</Label>
-                  </div>
+                  <Label htmlFor="dns_nameserver" className={dnsModeCardClass}>
+                    <span className="flex items-center gap-2">
+                      <RadioGroupItem value="nameserver" id="dns_nameserver" />
+                      <span className="font-semibold text-sm">Let us manage your DNS</span>
+                    </span>
+                    <Badge variant="outline" className="w-fit text-[10px] bg-accent/10 text-accent-foreground border-accent/30">
+                      Recommended
+                    </Badge>
+                    <span className="text-xs font-normal text-muted-foreground leading-snug">
+                      You&apos;ll paste two nameservers at your registrar. Also unlocks email forwarding
+                      on your domain.
+                    </span>
+                  </Label>
+                  <Label htmlFor="dns_cname" className={dnsModeCardClass}>
+                    <span className="flex items-center gap-2">
+                      <RadioGroupItem value="cname" id="dns_cname" />
+                      <span className="font-semibold text-sm">Keep your current DNS provider</span>
+                    </span>
+                    <span className="text-xs font-normal text-muted-foreground leading-snug">
+                      You&apos;ll add one CNAME record. Website only — no email forwarding.
+                    </span>
+                  </Label>
                 </RadioGroup>
               </div>
             </div>
             <DialogFooter>
-              <Button type="submit" disabled={createSiteMutation.isPending}>
+              <Button type="button" variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={createSiteMutation.isPending || !isValidDomain(normalizeDomain(newSite.domain))}>
                 {createSiteMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Create Site
+                Add domain
               </Button>
             </DialogFooter>
           </form>
@@ -505,6 +590,7 @@ export default function Sites() {
         if (!open) {
           setSiteToDelete(null);
           setSiteTypeToDelete(null);
+          setDeleteConfirmMessage(null);
         }
       }}>
         <AlertDialogContent>
@@ -523,38 +609,88 @@ export default function Sites() {
               </AlertDescription>
             </Alert>
           )}
+          {deleteConfirmMessage && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle className="text-sm font-semibold">This domain is still delegated to us</AlertTitle>
+              <AlertDescription className="text-xs">{deleteConfirmMessage}</AlertDescription>
+            </Alert>
+          )}
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={() => siteToDelete && deleteSiteMutation.mutate(siteToDelete)}
+            <AlertDialogAction
+              // Radix closes the dialog on action click; the first attempt may
+              // need to come back and ask for confirmation, so keep it open.
+              onClick={(e) => {
+                e.preventDefault();
+                if (siteToDelete) deleteSiteMutation.mutate({ domain: siteToDelete, confirm: deleteConfirmMessage !== null });
+              }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               disabled={deleteSiteMutation.isPending}
             >
               {deleteSiteMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Delete
+              {deleteConfirmMessage ? 'Delete anyway' : 'Delete'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      <Dialog open={siteToVerify !== null} onOpenChange={(open) => !open && setSiteToVerify(null)}>
+      <Dialog open={siteToVerify !== null} onOpenChange={(open) => {
+        if (!open) {
+          setSiteToVerify(null);
+          setNameservers([]);
+        }
+      }}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
-            <DialogTitle>Verify Domain: {siteToVerify}</DialogTitle>
+            <DialogTitle>
+              {isNameserverMode ? `Point ${siteToVerify} at us` : `Verify ${siteToVerify}`}
+            </DialogTitle>
             <DialogDescription>
-              Add the following DNS records to your domain provider (Cloudflare, Namecheap, etc.) to verify and link your site.
+              {isNameserverMode
+                ? 'The delegation itself proves you own the domain — there is nothing else to add.'
+                : 'Add these two records at your DNS provider to verify and link your site.'}
             </DialogDescription>
           </DialogHeader>
 
+          <ol className="flex flex-col gap-2 text-xs text-muted-foreground list-decimal pl-4 marker:text-muted-foreground">
+            {isNameserverMode ? (
+              <>
+                <li>Sign in to your <strong className="font-semibold text-foreground">registrar</strong> — where you bought the domain (GoDaddy, Namecheap, …).</li>
+                <li>Open its Nameservers or Custom DNS settings for {siteToVerify}.</li>
+                <li><strong className="font-semibold text-foreground">Replace all</strong> the existing nameservers with the two below.</li>
+                <li>Save, then click Verify &amp; Link Site.</li>
+              </>
+            ) : (
+              <>
+                <li>Open the record editor at your <strong className="font-semibold text-foreground">DNS provider</strong> (Cloudflare, Namecheap, …).</li>
+                <li>Add both records below exactly as shown.</li>
+                <li>Save, then click Verify &amp; Link Site.</li>
+              </>
+            )}
+          </ol>
+
           <Alert className="bg-primary/5 border-primary/20">
             <AlertCircle className="h-4 w-4 text-primary" />
-            <AlertTitle className="text-sm font-bold">Important</AlertTitle>
+            <AlertTitle className="text-sm font-bold">This takes a moment to take effect</AlertTitle>
             <AlertDescription className="text-xs">
-              DNS changes can take up to 24 hours to propagate, but usually happen within minutes.
+              {isNameserverMode
+                ? 'Nameserver changes usually go live in a few minutes, but can take up to 24 hours.'
+                : 'DNS changes usually propagate within minutes, but can take up to 24 hours.'}
             </AlertDescription>
           </Alert>
 
           <div className="space-y-4 py-4">
+            {nameservers.map((ns) => (
+              <div key={ns} className="flex items-center gap-2">
+                <code className="flex-1 p-2.5 bg-muted/30 rounded-lg border border-border/50 text-xs font-mono break-all">
+                  {ns}
+                </code>
+                <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" aria-label={`Copy ${ns}`} onClick={() => copyToClipboard(ns)}>
+                  <Copy className="h-3 w-3" />
+                </Button>
+              </div>
+            ))}
             {verificationRecords?.map((record, index) => (
               <div key={index} className="p-4 bg-muted/30 rounded-xl border border-border/50 space-y-3">
                 <div className="flex items-center justify-between">
@@ -594,8 +730,11 @@ export default function Sites() {
             <Button variant="outline" onClick={() => setSiteToVerify(null)}>
               Configure Later
             </Button>
-            <Button 
+            <Button
                 onClick={() => siteToVerify && verifyMutation.mutate(siteToVerify)}
+                // The backend's 429 + Retry-After is the throttle, and the
+                // cooldown above mirrors it — so let the user click and get a
+                // real answer instead of pre-gating on a zone read.
                 disabled={verifyMutation.isPending || cooldownSeconds > 0}
             >
               {verifyMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

@@ -196,18 +196,62 @@ export const zSite = z.object({
 
 export const zCreateSiteRequest = z.object({
     domain: z.string(),
-    status: z.enum(['requested', 'link_pending'])
+    status: z.enum(['requested', 'link_pending']),
+    dns_mode: z.enum(['cname', 'nameserver']).optional().default('cname')
 });
 
 export const zVerificationRecords = z.object({
     domain: z.string(),
+    mode: z.enum(['cname', 'nameserver']),
     txt_record: z.string(),
     cname_host: z.string(),
-    cname_value: z.string()
+    cname_value: z.string(),
+    nameservers: z.array(z.string()).optional()
 });
 
 export const zMessageResponse = z.object({
     message: z.string()
+});
+
+export const zSiteZone = z.object({
+    status: z.enum([
+        'pending',
+        'active',
+        'moved'
+    ]),
+    nameservers: z.array(z.string())
+});
+
+export const zSiteEmailRequest = z.object({
+    destination: z.email()
+});
+
+export const zSiteEmail = z.object({
+    enabled: z.boolean(),
+    destination: z.string(),
+    verified: z.boolean()
+});
+
+export const zSiteEmailRoute = z.object({
+    tag: z.string(),
+    address: z.string(),
+    destination: z.string(),
+    enabled: z.boolean()
+});
+
+export const zSiteEmailRouteRequest = z.object({
+    localPart: z.string(),
+    destination: z.email()
+});
+
+export const zSiteEmailCatchAll = z.object({
+    enabled: z.boolean(),
+    destination: z.string()
+});
+
+export const zSiteEmailCatchAllRequest = z.object({
+    enabled: z.boolean(),
+    destination: z.email().optional()
 });
 
 export const zDomainAvailabilityRequest = z.object({
@@ -531,6 +575,10 @@ export const zDeleteSitePath = z.object({
     domain: z.string()
 });
 
+export const zDeleteSiteQuery = z.object({
+    confirm: z.boolean().optional()
+});
+
 /**
  * Deleted
  */
@@ -553,6 +601,98 @@ export const zVerifyDnsPath = z.object({
  * Verification successful, deployment triggered
  */
 export const zVerifyDnsResponse = zMessageResponse;
+
+export const zGetSiteZonePath = z.object({
+    domain: z.string()
+});
+
+/**
+ * OK
+ */
+export const zGetSiteZoneResponse = zSiteZone;
+
+export const zCreateSiteZonePath = z.object({
+    domain: z.string()
+});
+
+/**
+ * Zone created or adopted
+ */
+export const zCreateSiteZoneResponse = zSiteZone;
+
+export const zEnableSiteEmailBody = zSiteEmailRequest;
+
+export const zEnableSiteEmailPath = z.object({
+    domain: z.string()
+});
+
+/**
+ * Email Routing enabled, destination pending verification
+ */
+export const zEnableSiteEmailResponse = zSiteEmail;
+
+export const zGetSiteEmailPath = z.object({
+    domain: z.string()
+});
+
+export const zGetSiteEmailQuery = z.object({
+    destination: z.email().optional()
+});
+
+/**
+ * OK
+ */
+export const zGetSiteEmailResponse = zSiteEmail;
+
+export const zListSiteEmailRoutesPath = z.object({
+    domain: z.string()
+});
+
+/**
+ * OK
+ */
+export const zListSiteEmailRoutesResponse = z.array(zSiteEmailRoute);
+
+export const zCreateSiteEmailRouteBody = zSiteEmailRouteRequest;
+
+export const zCreateSiteEmailRoutePath = z.object({
+    domain: z.string()
+});
+
+/**
+ * Route created
+ */
+export const zCreateSiteEmailRouteResponse = zSiteEmailRoute;
+
+export const zDeleteSiteEmailRoutePath = z.object({
+    domain: z.string(),
+    tag: z.string()
+});
+
+/**
+ * Route deleted
+ */
+export const zDeleteSiteEmailRouteResponse = zMessageResponse;
+
+export const zGetSiteEmailCatchAllPath = z.object({
+    domain: z.string()
+});
+
+/**
+ * OK
+ */
+export const zGetSiteEmailCatchAllResponse = zSiteEmailCatchAll;
+
+export const zSetSiteEmailCatchAllBody = zSiteEmailCatchAllRequest;
+
+export const zSetSiteEmailCatchAllPath = z.object({
+    domain: z.string()
+});
+
+/**
+ * Catch-all updated
+ */
+export const zSetSiteEmailCatchAllResponse = zSiteEmailCatchAll;
 
 export const zCheckDomainAvailabilityBody = zDomainAvailabilityRequest;
 
