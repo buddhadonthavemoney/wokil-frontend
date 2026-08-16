@@ -3,8 +3,8 @@
 import { type DefaultError, queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { chatLegalResearch, checkDomainAvailability, createFirm, createForm, createGaProperty, createSite, createSiteEmailRoute, createSiteZone, deleteSite, deleteSiteEmailRoute, deploySite, enableSiteEmail, getAccountType, getLegalResearchDocument, getMyFirm, getProfile, getPublicDirectory, getSiteAnalytics, getSiteEmail, getSiteEmailCatchAll, getSiteZone, getVerificationRecords, googleCallback, googleLogin, listForms, listLegalResearchConversationMessages, listLegalResearchConversations, listSiteEmailRoutes, listSites, listSubmissions, listThemes, listUsers, type Options, saveProfile, searchFirms, setAccountType, setSiteEmailCatchAll, submitForm, updateFirm, updateProfileVisibility, uploadFile, verifyDns } from '../sdk.gen';
-import type { ChatLegalResearchData, ChatLegalResearchError, ChatLegalResearchResponse, CheckDomainAvailabilityData, CheckDomainAvailabilityError, CheckDomainAvailabilityResponse, CreateFirmData, CreateFirmError, CreateFirmResponse, CreateFormData, CreateFormError, CreateFormResponse, CreateGaPropertyData, CreateGaPropertyError, CreateGaPropertyResponse, CreateSiteData, CreateSiteEmailRouteData, CreateSiteEmailRouteError, CreateSiteEmailRouteResponse, CreateSiteError, CreateSiteResponse, CreateSiteZoneData, CreateSiteZoneError, CreateSiteZoneResponse, DeleteSiteData, DeleteSiteEmailRouteData, DeleteSiteEmailRouteError, DeleteSiteEmailRouteResponse, DeleteSiteError, DeleteSiteResponse, DeploySiteData, DeploySiteError, DeploySiteResponse, EnableSiteEmailData, EnableSiteEmailError, EnableSiteEmailResponse, GetAccountTypeData, GetAccountTypeError, GetAccountTypeResponse, GetLegalResearchDocumentData, GetLegalResearchDocumentError, GetLegalResearchDocumentResponse, GetMyFirmData, GetMyFirmError, GetMyFirmResponse, GetProfileData, GetProfileError, GetProfileResponse, GetPublicDirectoryData, GetPublicDirectoryError, GetPublicDirectoryResponse, GetSiteAnalyticsData, GetSiteAnalyticsError, GetSiteAnalyticsResponse, GetSiteEmailCatchAllData, GetSiteEmailCatchAllError, GetSiteEmailCatchAllResponse, GetSiteEmailData, GetSiteEmailError, GetSiteEmailResponse, GetSiteZoneData, GetSiteZoneError, GetSiteZoneResponse, GetVerificationRecordsData, GetVerificationRecordsError, GetVerificationRecordsResponse, GoogleCallbackData, GoogleCallbackError, GoogleCallbackResponse, GoogleLoginData, GoogleLoginResponse, ListFormsData, ListFormsError, ListFormsResponse, ListLegalResearchConversationMessagesData, ListLegalResearchConversationMessagesError, ListLegalResearchConversationMessagesResponse, ListLegalResearchConversationsData, ListLegalResearchConversationsError, ListLegalResearchConversationsResponse, ListSiteEmailRoutesData, ListSiteEmailRoutesError, ListSiteEmailRoutesResponse, ListSitesData, ListSitesError, ListSitesResponse, ListSubmissionsData, ListSubmissionsError, ListSubmissionsResponse, ListThemesData, ListThemesError, ListThemesResponse, ListUsersData, ListUsersError, ListUsersResponse, SaveProfileData, SaveProfileError, SaveProfileResponse, SearchFirmsData, SearchFirmsError, SearchFirmsResponse, SetAccountTypeData, SetAccountTypeError, SetAccountTypeResponse, SetSiteEmailCatchAllData, SetSiteEmailCatchAllError, SetSiteEmailCatchAllResponse, SubmitFormData, SubmitFormError, SubmitFormResponse, UpdateFirmData, UpdateFirmError, UpdateFirmResponse, UpdateProfileVisibilityData, UpdateProfileVisibilityError, UpdateProfileVisibilityResponse, UploadFileData, UploadFileError, UploadFileResponse, VerifyDnsData, VerifyDnsError, VerifyDnsResponse } from '../types.gen';
+import { chatLegalResearch, checkDomainAvailability, createFirm, createForm, createGaProperty, createSite, createSiteEmailRoute, createSiteZone, createVerificationRecords, deleteSite, deleteSiteEmailRoute, deploySite, enableSiteEmail, getAccountType, getLegalResearchDocument, getMyFirm, getProfile, getPublicDirectory, getSiteAnalytics, getSiteEmail, getSiteEmailCatchAll, getSiteZone, getVerificationRecords, googleCallback, googleLogin, listForms, listLegalResearchConversationMessages, listLegalResearchConversations, listSiteEmailRoutes, listSites, listSubmissions, listThemes, listUsers, type Options, saveProfile, searchFirms, setAccountType, setSiteEmailCatchAll, submitForm, updateFirm, updateProfileVisibility, uploadFile, verifyDns } from '../sdk.gen';
+import type { ChatLegalResearchData, ChatLegalResearchError, ChatLegalResearchResponse, CheckDomainAvailabilityData, CheckDomainAvailabilityError, CheckDomainAvailabilityResponse, CreateFirmData, CreateFirmError, CreateFirmResponse, CreateFormData, CreateFormError, CreateFormResponse, CreateGaPropertyData, CreateGaPropertyError, CreateGaPropertyResponse, CreateSiteData, CreateSiteEmailRouteData, CreateSiteEmailRouteError, CreateSiteEmailRouteResponse, CreateSiteError, CreateSiteResponse, CreateSiteZoneData, CreateSiteZoneError, CreateSiteZoneResponse, CreateVerificationRecordsData, CreateVerificationRecordsError, CreateVerificationRecordsResponse, DeleteSiteData, DeleteSiteEmailRouteData, DeleteSiteEmailRouteError, DeleteSiteEmailRouteResponse, DeleteSiteError, DeleteSiteResponse, DeploySiteData, DeploySiteError, DeploySiteResponse, EnableSiteEmailData, EnableSiteEmailError, EnableSiteEmailResponse, GetAccountTypeData, GetAccountTypeError, GetAccountTypeResponse, GetLegalResearchDocumentData, GetLegalResearchDocumentError, GetLegalResearchDocumentResponse, GetMyFirmData, GetMyFirmError, GetMyFirmResponse, GetProfileData, GetProfileError, GetProfileResponse, GetPublicDirectoryData, GetPublicDirectoryError, GetPublicDirectoryResponse, GetSiteAnalyticsData, GetSiteAnalyticsError, GetSiteAnalyticsResponse, GetSiteEmailCatchAllData, GetSiteEmailCatchAllError, GetSiteEmailCatchAllResponse, GetSiteEmailData, GetSiteEmailError, GetSiteEmailResponse, GetSiteZoneData, GetSiteZoneError, GetSiteZoneResponse, GetVerificationRecordsData, GetVerificationRecordsError, GetVerificationRecordsResponse, GoogleCallbackData, GoogleCallbackError, GoogleCallbackResponse, GoogleLoginData, GoogleLoginResponse, ListFormsData, ListFormsError, ListFormsResponse, ListLegalResearchConversationMessagesData, ListLegalResearchConversationMessagesError, ListLegalResearchConversationMessagesResponse, ListLegalResearchConversationsData, ListLegalResearchConversationsError, ListLegalResearchConversationsResponse, ListSiteEmailRoutesData, ListSiteEmailRoutesError, ListSiteEmailRoutesResponse, ListSitesData, ListSitesError, ListSitesResponse, ListSubmissionsData, ListSubmissionsError, ListSubmissionsResponse, ListThemesData, ListThemesError, ListThemesResponse, ListUsersData, ListUsersError, ListUsersResponse, SaveProfileData, SaveProfileError, SaveProfileResponse, SearchFirmsData, SearchFirmsError, SearchFirmsResponse, SetAccountTypeData, SetAccountTypeError, SetAccountTypeResponse, SetSiteEmailCatchAllData, SetSiteEmailCatchAllError, SetSiteEmailCatchAllResponse, SubmitFormData, SubmitFormError, SubmitFormResponse, UpdateFirmData, UpdateFirmError, UpdateFirmResponse, UpdateProfileVisibilityData, UpdateProfileVisibilityError, UpdateProfileVisibilityResponse, UploadFileData, UploadFileError, UploadFileResponse, VerifyDnsData, VerifyDnsError, VerifyDnsResponse } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -316,6 +316,9 @@ export const getVerificationRecordsQueryKey = (options: Options<GetVerificationR
 
 /**
  * Get DNS verification records
+ *
+ * A pure read. 404s when the records have not been generated yet — POST to this path (cname mode) or to `/api/sites/{domain}/zone` (nameserver mode) first.
+ *
  */
 export const getVerificationRecordsOptions = (options: Options<GetVerificationRecordsData>) => queryOptions<GetVerificationRecordsResponse, GetVerificationRecordsError, GetVerificationRecordsResponse, ReturnType<typeof getVerificationRecordsQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
@@ -329,6 +332,26 @@ export const getVerificationRecordsOptions = (options: Options<GetVerificationRe
     },
     queryKey: getVerificationRecordsQueryKey(options)
 });
+
+/**
+ * Generate the site's DNS verification records (cname mode)
+ *
+ * Issues the ownership token and returns the TXT and CNAME records the customer has to publish. Idempotent — a site that already has a token gets the same records back, so a retry never invalidates instructions the customer is already acting on. In nameserver mode there is no token to issue (the delegation is the proof) and this behaves as a read, 404ing until POST /api/sites/{domain}/zone has created the zone.
+ *
+ */
+export const createVerificationRecordsMutation = (options?: Partial<Options<CreateVerificationRecordsData>>): UseMutationOptions<CreateVerificationRecordsResponse, CreateVerificationRecordsError, Options<CreateVerificationRecordsData>> => {
+    const mutationOptions: UseMutationOptions<CreateVerificationRecordsResponse, CreateVerificationRecordsError, Options<CreateVerificationRecordsData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await createVerificationRecords({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
 
 /**
  * Verify DNS records and trigger deployment

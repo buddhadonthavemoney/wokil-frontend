@@ -4,7 +4,7 @@ import { Globe, ExternalLink, Edit, IdCard, Loader2, ShieldCheck, Plus, Trash2, 
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getProfile, listSites, createSite, deleteSite, verifyDns, getVerificationRecords, createSiteZone } from '@/generated/wokil-api';
+import { getProfile, listSites, createSite, deleteSite, verifyDns, getVerificationRecords, createVerificationRecords, createSiteZone } from '@/generated/wokil-api';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -42,9 +42,18 @@ import {
 } from "@/components/ui/alert";
 import QRCode from "react-qr-code";
 import { toast } from "sonner";
-import { VerificationRecord } from '@/types/site';
 import { useDeployStream } from '@/hooks/useDeployStream';
 import { DeployProgressModal } from '@/components/deploy/DeployProgressModal';
+
+// The two rows the cname dialog renders. A view shape, not an API one — the
+// wire type is generated, and the hand-written duplicates that used to shadow
+// it in src/types/site.ts had already drifted (no `failed` status, no
+// `dns_mode`), so they are gone.
+type VerificationRecord = {
+  type: 'TXT' | 'CNAME';
+  name: string;
+  value: string;
+};
 
 // Verification is throttled server-side to one attempt per domain per minute
 // (it queries the zone's authoritative nameservers, and retrying sooner can't
@@ -81,9 +90,10 @@ export default function Sites() {
   // Set only after a delete has been refused because the domain is still
   // delegated to us; holds the backend's explanation of what breaks.
   const [deleteConfirmMessage, setDeleteConfirmMessage] = useState<string | null>(null);
-  const [siteToVerify, setSiteToVerify] = useState<string | null>(null);
-  // Non-empty only while the open verification dialog is for a nameserver-mode
-  // site — switches the dialog from DNS records to registrar delegation.
+  // The domain the verification dialog is open for, with the mode read off the
+  // site row rather than inferred from what came back — `nameservers.length > 0`
+  // could not tell "cname site" apart from "nameserver site with no zone yet".
+  const [verifyTarget, setVerifyTarget] = useState<{ domain: string; dns_mode: 'cname' | 'nameserver' } | null>(null);
   const [nameservers, setNameservers] = useState<string[]>([]);
   const [verificationRecords, setVerificationRecords] = useState<VerificationRecord[]>([]);
   const [isLoadingRecords, setIsLoadingRecords] = useState(false);
@@ -115,6 +125,13 @@ export default function Sites() {
     return () => clearInterval(id);
   }, [verifyCooldown]);
 
+  const siteToVerify = verifyTarget?.domain ?? null;
+  // Nothing to publish yet — the records/nameservers have not been generated.
+  // This is what makes step 2 a step: the dialog opens on it and waits for a
+  // click, instead of provisioning on the way in.
+  const hasRecords = nameservers.length > 0 || verificationRecords.length > 0;
+  const isNameserverMode = verifyTarget?.dns_mode === 'nameserver';
+
   const cooldownSeconds =
     verifyCooldown && verifyCooldown.domain === siteToVerify
       ? Math.max(0, Math.ceil((verifyCooldown.until - nowMs) / 1000))
@@ -138,10 +155,10 @@ export default function Sites() {
       setIsCreateDialogOpen(false);
       setNewSite({ domain: '', dns_mode: 'nameserver' });
       toast.success("Site created successfully!");
-      // An onboarded domain is unusable until its DNS records are added, so go
-      // straight to them rather than making the user find the new card and
-      // click "Verify Domain" as a separate step.
-      handleFetchRecords(variables.domain);
+      // Straight on to step 2 rather than making the user find the new card —
+      // but this only opens the dialog and reads. Nothing is provisioned until
+      // they press the button there.
+      openVerifyDialog({ domain: variables.domain, dns_mode: variables.dns_mode });
     },
     onError: (error: unknown) => {
       // Carries the "nameserver mode is not enabled on this deployment" 400,
@@ -202,7 +219,7 @@ export default function Sites() {
       }
     },
     onSuccess: (_data, domain) => {
-      setSiteToVerify(null);
+      setVerifyTarget(null);
       // No toast here: DeployProgressModal takes over the instant
       // activeDeployDomain is set below, showing its own progress state.
       lastDeployDomainRef.current = domain;
@@ -243,42 +260,59 @@ export default function Sites() {
     },
   });
 
-  const handleFetchRecords = async (domain: string) => {
+  // applyRecords maps a verification response onto whichever of the two dialog
+  // shapes it is. Shared by the read below and the generate step, so both land
+  // on the same state.
+  const applyRecords = (data: { mode: string; txt_record: string; cname_host: string; cname_value: string; nameservers?: Array<string> }) => {
+    if (data.mode === 'nameserver') {
+      setNameservers(data.nameservers ?? []);
+      setVerificationRecords([]);
+      return;
+    }
+    setNameservers([]);
+    setVerificationRecords([
+      { type: 'TXT', name: '@ / ' + data.cname_host, value: data.txt_record },
+      { type: 'CNAME', name: data.cname_host, value: data.cname_value },
+    ]);
+  };
+
+  // Step 2 of onboarding, and the only place the dialog provisions anything:
+  // the zone in nameserver mode, the verification token in cname mode. Both are
+  // idempotent server-side, so a retry after a timeout is safe.
+  const generateMutation = useMutation({
+    mutationFn: async ({ domain, dns_mode }: { domain: string; dns_mode: 'cname' | 'nameserver' }) => {
+      if (dns_mode === 'nameserver') {
+        const { data } = await createSiteZone({ path: { domain }, throwOnError: true });
+        return { mode: 'nameserver', txt_record: '', cname_host: domain, cname_value: '', nameservers: data.nameservers };
+      }
+      return (await createVerificationRecords({ path: { domain }, throwOnError: true })).data;
+    },
+    onSuccess: (data) => {
+      applyRecords(data);
+      // Creating the zone drops the site back to link_pending server-side.
+      queryClient.invalidateQueries({ queryKey: ['sites'] });
+    },
+    onError: (error: unknown) => {
+      toast.error(apiErrorMessage(error, "Couldn't get your DNS settings. Please try again."));
+    },
+  });
+
+  // Opens the verification dialog. A read and nothing else: a 404 just means
+  // this domain is still on step 2, which the dialog renders as a button the
+  // user has to press. Adding a domain and closing the dialog now provisions
+  // nothing — it used to create a Cloudflare zone on the way past.
+  const openVerifyDialog = async (site: { domain: string; dns_mode: 'cname' | 'nameserver' }) => {
+    setVerifyTarget(site);
+    setNameservers([]);
+    setVerificationRecords([]);
     setIsLoadingRecords(true);
     try {
-      const { data, error, response } = await getVerificationRecords({ path: { domain } });
-      // A nameserver-mode site has no zone until it is asked for, and the read
-      // path deliberately refuses to provision one — it 404s with this
-      // sentinel instead, which is the cue to create the zone.
-      const needsZone =
-        response?.status === 404 && typeof error === 'string' && error.includes('no Cloudflare zone');
-      if (needsZone || data?.mode === 'nameserver') {
-        setNameservers(data?.nameservers?.length
-          ? data.nameservers
-          : (await createSiteZone({ path: { domain }, throwOnError: true })).data.nameservers);
-        setVerificationRecords([]);
-      } else if (!response?.ok || !data) {
-        throw new Error(apiErrorMessage(error, 'Failed to fetch verification records'));
-      } else {
-        // Map API response to UI record structure
-        const records: VerificationRecord[] = [
-          {
-            type: 'TXT',
-            name: '@ / ' + domain,
-            value: data.txt_record
-          },
-          {
-            type: 'CNAME',
-            name: data.cname_host,
-            value: data.cname_value
-          }
-        ];
-        setVerificationRecords(records);
-        setNameservers([]);
+      const { data, error, response } = await getVerificationRecords({ path: { domain: site.domain } });
+      if (data) {
+        applyRecords(data);
+      } else if (response && response.status !== 404) {
+        toast.error(apiErrorMessage(error, 'Failed to fetch verification records'));
       }
-      setSiteToVerify(domain);
-    } catch (error: unknown) {
-      toast.error(apiErrorMessage(error, "Failed to fetch verification records"));
     } finally {
       setIsLoadingRecords(false);
     }
@@ -295,8 +329,6 @@ export default function Sites() {
     }
     createSiteMutation.mutate({ ...newSite, domain, status: 'link_pending' });
   };
-
-  const isNameserverMode = nameservers.length > 0;
 
   const isLoading = profileLoading || sitesLoading;
 
@@ -444,7 +476,7 @@ export default function Sites() {
                                 variant="default" 
                                 size="sm" 
                                 className="gap-2 rounded-lg text-xs"
-                                onClick={() => handleFetchRecords(site.domain)}
+                                onClick={() => openVerifyDialog({ domain: site.domain, dns_mode: site.dns_mode })}
                                 disabled={isLoadingRecords && siteToVerify === site.domain}
                             >
                                 {isLoadingRecords && siteToVerify === site.domain ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ShieldCheck className="w-3.5 h-3.5" />}
@@ -638,10 +670,11 @@ export default function Sites() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <Dialog open={siteToVerify !== null} onOpenChange={(open) => {
+      <Dialog open={verifyTarget !== null} onOpenChange={(open) => {
         if (!open) {
-          setSiteToVerify(null);
+          setVerifyTarget(null);
           setNameservers([]);
+          setVerificationRecords([]);
         }
       }}>
         <DialogContent className="sm:max-w-[600px]">
@@ -656,6 +689,30 @@ export default function Sites() {
             </DialogDescription>
           </DialogHeader>
 
+          {isLoadingRecords ? (
+            <div className="flex items-center justify-center py-10">
+              <Loader2 className="w-6 h-6 animate-spin text-primary" />
+            </div>
+          ) : !hasRecords ? (
+            /* Step 2. Nothing has been provisioned for this domain yet, and
+               nothing will be until this button is pressed — which is the whole
+               point of the ticket: opening this dialog is free. */
+            <div className="flex flex-col items-center gap-4 py-8 text-center">
+              <p className="text-xs text-muted-foreground max-w-sm">
+                {isNameserverMode
+                  ? 'Next we create a DNS zone for this domain and give you the two nameservers to set at your registrar.'
+                  : 'Next we generate the two DNS records that prove you own this domain.'}
+              </p>
+              <Button
+                onClick={() => verifyTarget && generateMutation.mutate(verifyTarget)}
+                disabled={generateMutation.isPending}
+              >
+                {generateMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {isNameserverMode ? 'Get nameservers' : 'Get DNS records'}
+              </Button>
+            </div>
+          ) : (
+          <>
           <ol className="flex flex-col gap-2 text-xs text-muted-foreground list-decimal pl-4 marker:text-muted-foreground">
             {isNameserverMode ? (
               <>
@@ -728,9 +785,11 @@ export default function Sites() {
               </div>
             ))}
           </div>
+          </>
+          )}
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setSiteToVerify(null)}>
+            <Button variant="outline" onClick={() => setVerifyTarget(null)}>
               Configure Later
             </Button>
             <Button
@@ -738,7 +797,9 @@ export default function Sites() {
                 // The backend's 429 + Retry-After is the throttle, and the
                 // cooldown above mirrors it — so let the user click and get a
                 // real answer instead of pre-gating on a zone read.
-                disabled={verifyMutation.isPending || cooldownSeconds > 0}
+                // Step 3 is unreachable until step 2 has run: there is nothing
+                // published to verify against yet.
+                disabled={!hasRecords || verifyMutation.isPending || cooldownSeconds > 0}
             >
               {verifyMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {cooldownSeconds > 0 ? `Try again in ${cooldownSeconds}s` : 'Verify & Link Site'}

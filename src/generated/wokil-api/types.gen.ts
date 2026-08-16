@@ -1156,6 +1156,45 @@ export type GetVerificationRecordsResponses = {
 
 export type GetVerificationRecordsResponse = GetVerificationRecordsResponses[keyof GetVerificationRecordsResponses];
 
+export type CreateVerificationRecordsData = {
+    body?: never;
+    path: {
+        domain: string;
+    };
+    query?: never;
+    url: '/api/sites/{domain}/verification';
+};
+
+export type CreateVerificationRecordsErrors = {
+    /**
+     * Invalid request
+     */
+    400: string;
+    /**
+     * Missing or invalid bearer token
+     */
+    401: string;
+    /**
+     * Resource not found
+     */
+    404: string;
+    /**
+     * Internal server error
+     */
+    500: string;
+};
+
+export type CreateVerificationRecordsError = CreateVerificationRecordsErrors[keyof CreateVerificationRecordsErrors];
+
+export type CreateVerificationRecordsResponses = {
+    /**
+     * OK
+     */
+    200: VerificationRecords;
+};
+
+export type CreateVerificationRecordsResponse = CreateVerificationRecordsResponses[keyof CreateVerificationRecordsResponses];
+
 export type VerifyDnsData = {
     body?: never;
     path: {

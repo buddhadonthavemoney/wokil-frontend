@@ -605,6 +605,15 @@ export const zGetVerificationRecordsPath = z.object({
  */
 export const zGetVerificationRecordsResponse = zVerificationRecords;
 
+export const zCreateVerificationRecordsPath = z.object({
+    domain: z.string()
+});
+
+/**
+ * OK
+ */
+export const zCreateVerificationRecordsResponse = zVerificationRecords;
+
 export const zVerifyDnsPath = z.object({
     domain: z.string()
 });
