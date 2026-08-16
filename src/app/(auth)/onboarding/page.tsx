@@ -119,7 +119,7 @@ export default function OnboardingChoice() {
 
                 <Button
                   variant="ghost"
-                  className="mt-auto self-start gap-2 px-0 font-bold text-xs uppercase tracking-widest text-primary hover:bg-transparent hover:text-primary"
+                  className="mt-auto self-start gap-2 px-0 label-caps text-xs text-primary hover:bg-transparent hover:text-primary"
                   disabled={Boolean(pending)}
                 >
                   {isPending ? (

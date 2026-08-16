@@ -129,7 +129,7 @@ export function WizardShell<T, K extends Extract<keyof T, string>>({
                   size="sm"
                   onClick={onFillSample}
                   disabled={!onFillSample || currentStep === totalSteps}
-                  className="h-8 text-[10px] font-bold uppercase tracking-widest text-primary hover:text-primary hover:bg-primary/5 gap-2"
+                  className="h-8 text-[10px] label-caps text-primary hover:text-primary hover:bg-primary/5 gap-2"
                 >
                   <Sparkles className="w-3.5 h-3.5" />
                   Fill Sample Data
@@ -139,7 +139,7 @@ export function WizardShell<T, K extends Extract<keyof T, string>>({
                   size="sm"
                   onClick={onClear}
                   disabled={!onClear || currentStep === totalSteps}
-                  className="h-8 text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-destructive hover:bg-destructive/5 gap-2"
+                  className="h-8 text-[10px] label-caps text-muted-foreground hover:text-destructive hover:bg-destructive/5 gap-2"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                   Clear
@@ -166,7 +166,7 @@ export function WizardShell<T, K extends Extract<keyof T, string>>({
               </div>
             </div>
 
-            <p className="text-center text-[10px] font-bold text-muted-foreground uppercase tracking-widest opacity-50">
+            <p className="text-center text-[10px] label-caps text-muted-foreground opacity-50">
               {/* Counted against the reachable steps, so a locked tail doesn't
                   read as progress the user still owes. Clamped for the case of
                   landing on a locked step by URL. */}

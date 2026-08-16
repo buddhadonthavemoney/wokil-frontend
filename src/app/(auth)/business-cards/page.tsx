@@ -67,7 +67,7 @@ function EmptyState({
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
       <div className="max-w-md w-full bg-card rounded-xl shadow-premium p-10 text-center space-y-6 animate-fade-in">
-        <div className="w-20 h-20 bg-amber-50 rounded-2xl flex items-center justify-center mx-auto mb-2">
+        <div className="w-20 h-20 bg-accent/12 rounded-2xl flex items-center justify-center mx-auto mb-2">
           {icon}
         </div>
 
@@ -145,7 +145,7 @@ function CardStudio({
                   >
                     <Nfc className="w-4 h-4" />
                     NFC Digital Card
-                    <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/40 border border-border rounded px-1.5 py-0.5">
+                    <span className="text-[9px] label-caps text-muted-foreground/40 border border-border rounded px-1.5 py-0.5">
                       Soon
                     </span>
                   </div>
@@ -157,13 +157,13 @@ function CardStudio({
               <div className="flex flex-col sm:flex-row gap-6 justify-center items-center border-b border-border/50 pb-6">
                 {/* Layout Selector */}
                 <div className="flex flex-col gap-3">
-                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest text-center">Layout Style</label>
-                  <div className="flex items-center justify-center gap-2 bg-muted/30 p-1 rounded-xl">
+                  <label className="text-xs label-caps text-muted-foreground text-center">Layout Style</label>
+                  <div className="flex items-center justify-center gap-2 bg-surface-low border border-border p-1 rounded-xl">
                     {(['classic', 'minimal', 'modern'] as CardLayout[]).map((layout) => (
                       <button
                         key={layout}
                         onClick={() => setCardLayout(layout)}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${cardLayout === layout ? 'bg-card text-primary shadow-sm' : 'text-muted-foreground hover:bg-card/50 hover:text-foreground'}`}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${cardLayout === layout ? 'bg-card text-primary shadow-sm' : 'text-muted-foreground hover:bg-card/60 hover:text-primary'}`}
                       >
                         {layout.charAt(0).toUpperCase() + layout.slice(1)}
                       </button>
@@ -173,13 +173,13 @@ function CardStudio({
 
                 {/* Color Selector */}
                 <div className="flex flex-col gap-3">
-                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest text-center">Color Theme</label>
+                  <label className="text-xs label-caps text-muted-foreground text-center">Color Theme</label>
                   <div className="flex items-center justify-center gap-3">
                     {(['slate', 'blue', 'emerald', 'indigo', 'amber'] as CardColor[]).map((color) => (
                       <button
                         key={color}
                         onClick={() => setCardColor(color)}
-                        className={`w-10 h-10 rounded-full border-4 transition-all ${cardColor === color ? 'border-primary/20 scale-110' : 'border-transparent hover:scale-105'}`}
+                        className={`w-10 h-10 rounded-full border-4 transition-all ${cardColor === color ? 'border-accent scale-110' : 'border-transparent hover:scale-105'}`}
                         style={{
                           background: color === 'slate' ? '#0f172a' :
                             color === 'blue' ? '#2563eb' :
@@ -194,7 +194,7 @@ function CardStudio({
                 </div>
               </div>
 
-              <div className="w-full flex justify-center bg-muted/30 rounded-xl border border-dashed border-border p-6">
+              <div className="w-full flex justify-center bg-surface-low rounded-xl border border-dashed border-border p-6">
                 <div className="w-full max-w-4xl">
                   <BusinessCard ref={componentRef} profile={profile} publicUrl={publicUrl} layout={cardLayout} colorTheme={cardColor} />
                 </div>
@@ -232,7 +232,7 @@ function IndividualBusinessCards() {
   if (!profile || !isProfileComplete) {
     return (
       <EmptyState
-        icon={<AlertCircle className="w-10 h-10 text-amber-500" />}
+        icon={<AlertCircle className="w-10 h-10 text-accent" />}
         title="Profile Incomplete"
         description="We need a bit more information before we can generate your professional business card."
         cta="Complete Profile"
@@ -269,11 +269,11 @@ function RequiredFields({ profile }: { profile?: LawyerProfile }) {
 
   return (
     <div className="bg-muted/50 rounded-xl p-4 text-left border border-border">
-      <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-3">Required Fields</p>
+      <p className="text-[11px] label-caps text-muted-foreground mb-3">Required Fields</p>
       <ul className="space-y-2">
         {rows.map(([label, done]) => (
           <li key={label} className="flex items-center gap-2 text-sm text-foreground/80">
-            <div className={`w-1.5 h-1.5 rounded-full ${done ? 'bg-emerald-500' : 'bg-muted-foreground/30'}`} />
+            <div className={`w-1.5 h-1.5 rounded-full ${done ? 'bg-success' : 'bg-muted-foreground/30'}`} />
             {label}
           </li>
         ))}
@@ -299,7 +299,7 @@ function FirmBusinessCards() {
   if (!hasFirm) {
     return (
       <EmptyState
-        icon={<Building2 className="w-10 h-10 text-amber-500" />}
+        icon={<Building2 className="w-10 h-10 text-accent" />}
         title="No firm set up yet"
         description="Create your firm to manage its site and the lawyers who appear on it — their cards come from that roster."
         cta="Set up your firm"
@@ -313,7 +313,7 @@ function FirmBusinessCards() {
   if (roster.length === 0) {
     return (
       <EmptyState
-        icon={<Users className="w-10 h-10 text-amber-500" />}
+        icon={<Users className="w-10 h-10 text-accent" />}
         title="No lawyers on your roster yet"
         description="Business cards are printed for the lawyers on your roster. Add one and their card is ready."
         cta="Add a lawyer"
@@ -331,7 +331,7 @@ function FirmBusinessCards() {
   if (!member.fullName || !member.professionalTitle) {
     return (
       <EmptyState
-        icon={<AlertCircle className="w-10 h-10 text-amber-500" />}
+        icon={<AlertCircle className="w-10 h-10 text-accent" />}
         title="Lawyer Incomplete"
         description="This lawyer needs a name and a title before their card can be printed."
         cta="Edit this lawyer"
@@ -349,7 +349,7 @@ function FirmBusinessCards() {
       description={`Cards for ${firm.firmDetails.name || 'your firm'}. Pick a lawyer, then print.`}
       controls={
         <div className="flex flex-col gap-3">
-          <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest text-center">
+          <label className="text-xs label-caps text-muted-foreground text-center">
             Lawyer
           </label>
           <div className="flex flex-wrap items-center justify-center gap-2">

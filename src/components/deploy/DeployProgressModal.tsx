@@ -46,7 +46,7 @@ export function DeployProgressModal({ phase, steps, message, onClose, siteUrl }:
               className={cn(
                 'mb-5 flex h-16 w-16 items-center justify-center rounded-2xl shadow-lg',
                 isRunning && 'bg-primary/10 text-primary',
-                isSuccess && 'border border-emerald-100 bg-emerald-50 text-emerald-600',
+                isSuccess && 'border border-success/30 bg-success/10 text-success',
                 phase === 'error' && 'border border-rose-100 bg-rose-50 text-rose-600'
               )}
             >
@@ -74,7 +74,7 @@ export function DeployProgressModal({ phase, steps, message, onClose, siteUrl }:
                   <span
                     className={cn(
                       'flex h-5 w-5 shrink-0 items-center justify-center rounded-full transition-colors',
-                      step.done ? 'bg-emerald-500 text-white' : 'bg-primary/10 text-primary'
+                      step.done ? 'bg-success text-success-foreground' : 'bg-surface text-muted-foreground'
                     )}
                   >
                     {step.done ? (

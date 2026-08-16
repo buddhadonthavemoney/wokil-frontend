@@ -34,11 +34,11 @@ function NavLink({ icon, label, path, isActive }: NavLinkProps) {
       href={path}
       prefetch={true}
       className={`
-        w-full flex items-center gap-3 px-4 py-2.5 rounded-lg border-r-2
+        w-full flex items-center gap-3 px-4 py-2.5 rounded-lg border-r-4
         transition-all duration-200 font-medium text-sm
         ${isActive
-          ? 'bg-secondary text-accent font-semibold border-accent'
-          : 'text-muted-foreground border-transparent hover:bg-muted hover:text-foreground'
+          ? 'bg-surface-low text-accent font-semibold border-accent'
+          : 'text-muted-foreground border-transparent hover:bg-surface-low hover:text-primary'
         }
       `}
     >
@@ -64,17 +64,17 @@ function ComingSoonLink({ icon, label, path, isActive }: ComingSoonLinkProps) {
       prefetch={true}
       title="Coming soon"
       className={`
-        w-full flex items-center gap-3 px-4 py-2.5 rounded-lg border-r-2
+        w-full flex items-center gap-3 px-4 py-2.5 rounded-lg border-r-4
         transition-all duration-200 text-sm font-medium
         ${isActive
-          ? 'bg-secondary text-accent font-semibold border-accent'
-          : 'text-muted-foreground/70 border-transparent hover:bg-muted hover:text-foreground'
+          ? 'bg-surface-low text-accent font-semibold border-accent'
+          : 'text-muted-foreground/70 border-transparent hover:bg-surface-low hover:text-primary'
         }
       `}
     >
       <span className={isActive ? 'text-accent' : 'text-muted-foreground/70'}>{icon}</span>
       <span className="flex-1">{label}</span>
-      <span className="text-[9px] font-bold uppercase tracking-widest text-accent border border-accent/40 rounded px-1.5 py-0.5">
+      <span className="text-[9px] label-caps text-accent border border-accent/40 rounded px-1.5 py-0.5">
         Soon
       </span>
     </Link>
@@ -112,11 +112,11 @@ function NavGroup({
         onClick={() => setIsOpen((open) => !open)}
         aria-expanded={isOpen}
         className={`
-          w-full flex items-center justify-between px-4 py-2.5 rounded-lg border-r-2
+          w-full flex items-center justify-between px-4 py-2.5 rounded-lg border-r-4
           transition-all duration-200 font-medium text-sm
           ${hasActiveChild
-            ? 'bg-secondary text-accent font-semibold border-accent'
-            : 'text-muted-foreground border-transparent hover:bg-muted hover:text-foreground'
+            ? 'bg-surface-low text-accent font-semibold border-accent'
+            : 'text-muted-foreground border-transparent hover:bg-surface-low hover:text-primary'
           }
         `}
       >
@@ -155,7 +155,7 @@ function NavGroup({
 function NavSection({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="mb-4">
-      <p className="px-4 mb-1.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-widest">
+      <p className="px-4 mb-1.5 text-[11px] label-caps text-muted-foreground">
         {label}
       </p>
       <div className="flex flex-col gap-1">{children}</div>
@@ -236,7 +236,7 @@ export default function Sidebar() {
               <h1 className="font-heading font-bold text-lg leading-tight text-foreground group-hover:text-primary transition-colors">
                 Wokil
               </h1>
-              <p className="text-xs text-muted-foreground uppercase tracking-widest font-semibold">
+              <p className="text-xs label-caps text-muted-foreground">
                 Professional
               </p>
             </div>
@@ -296,7 +296,7 @@ export default function Sidebar() {
 
           <NavSection label="Tools">
             <div onClick={handleNavClick}>
-              <ComingSoonLink icon={<Gavel className="w-5 h-5" />} label="Legal Research" path="/legal-research" isActive={pathname === '/legal-research'} />
+              <NavLink icon={<Gavel className="w-5 h-5" />} label="Legal Research" path="/legal-research" isActive={pathname === '/legal-research'} />
             </div>
             <div onClick={handleNavClick}>
               <ComingSoonLink icon={<CalendarDays className="w-5 h-5" />} label="Court Calendar" path="/court-calendar" isActive={pathname === '/court-calendar'} />
@@ -316,7 +316,7 @@ export default function Sidebar() {
             variant="ghost"
             size="sm"
             onClick={handleLogout}
-            className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground hover:bg-muted font-medium"
+            className="w-full justify-start gap-3 text-muted-foreground hover:text-primary hover:bg-surface-low font-medium"
           >
             <LogOut className="w-5 h-5" />
             Log Out

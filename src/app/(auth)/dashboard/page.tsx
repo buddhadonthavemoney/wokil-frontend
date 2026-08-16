@@ -203,8 +203,8 @@ function DashboardContent() {
                     <HoverCardTrigger asChild>
                       <div className="relative">
                         {showGuideArrow && (
-                          <div className="absolute -right-10 top-1/2 animate-bounce-horizontal text-emerald-600 z-10 pointer-events-none">
-                            <ArrowLeft className="w-8 h-8 fill-emerald-600/10" />
+                          <div className="absolute -right-10 top-1/2 animate-bounce-horizontal text-success z-10 pointer-events-none">
+                            <ArrowLeft className="w-8 h-8 fill-success/10" />
                           </div>
                         )}
                         <Button
@@ -212,7 +212,7 @@ function DashboardContent() {
                           size="sm"
                           className={cn(
                             "gap-2 rounded-lg font-medium shadow-lg shadow-primary/10 hover:shadow-primary/20 transition-all text-primary-foreground bg-primary hover:bg-primary/90 border-none relative overflow-visible",
-                            highlightViewSite && "animate-highlight-glow ring-2 ring-emerald-500 ring-offset-2 ring-offset-background"
+                            highlightViewSite && "animate-highlight-glow ring-2 ring-success ring-offset-2 ring-offset-background"
                           )}
                           disabled={(!profile.slug && !profile.id) || !profile.isPublished || !getPublicUrl()}
                         >
@@ -226,7 +226,7 @@ function DashboardContent() {
                       <div className="flex flex-col items-center gap-2">
                         {getPublicUrl() ? (
                           <>
-                            <div className="p-2 bg-white rounded-lg border border-border">
+                            <div className="p-2 bg-card rounded-lg border border-border">
                               <QRCode
                                 value={getPublicUrl()}
                                 size={128}
@@ -234,10 +234,10 @@ function DashboardContent() {
                                 viewBox={`0 0 256 256`}
                               />
                             </div>
-                            <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest text-center mt-1">Scan to Visit</p>
+                            <p className="text-[10px] text-muted-foreground label-caps text-center mt-1">Scan to Visit</p>
                           </>
                         ) : (
-                          <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest text-center max-w-[128px]">No live site yet</p>
+                          <p className="text-[10px] text-muted-foreground label-caps text-center max-w-[128px]">No live site yet</p>
                         )}
                       </div>
                     </HoverCardContent>
@@ -294,7 +294,7 @@ function DashboardContent() {
                           <Badge
                             key={jurisdiction}
                             variant="outline"
-                            className="gap-1 rounded-md border-border bg-muted/30 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground"
+                            className="gap-1 rounded-md border-border bg-muted/30 px-3 py-1 text-[10px] label-caps text-muted-foreground"
                           >
                             <Gavel className="w-3 h-3" />
                             {jurisdiction}
@@ -303,7 +303,7 @@ function DashboardContent() {
                         {profile.basicInformation.yearsOfExperience > 0 && (
                           <Badge
                             variant="outline"
-                            className="rounded-md border-border bg-muted/30 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground"
+                            className="rounded-md border-border bg-muted/30 px-3 py-1 text-[10px] label-caps text-muted-foreground"
                           >
                             {profile.basicInformation.yearsOfExperience}+ Years Exp.
                           </Badge>
@@ -311,7 +311,7 @@ function DashboardContent() {
                         {profile.contactInformation.officeAddress && (
                           <Badge
                             variant="outline"
-                            className="gap-1 rounded-md border-border bg-muted/30 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground"
+                            className="gap-1 rounded-md border-border bg-muted/30 px-3 py-1 text-[10px] label-caps text-muted-foreground"
                           >
                             <MapPin className="w-3 h-3" />
                             {profile.contactInformation.officeAddress}
@@ -348,7 +348,7 @@ function DashboardContent() {
           <InsightsSection enabled={!!profile?.googleAnalyticsId} />
 
           {profile.publishedAt && (
-            <footer className="pt-8 border-t border-border/50 flex flex-col sm:flex-row items-center gap-4 sm:gap-6 text-[10px] text-muted-foreground font-bold uppercase tracking-widest">
+            <footer className="pt-8 border-t border-border/50 flex flex-col sm:flex-row items-center gap-4 sm:gap-6 text-[10px] text-muted-foreground label-caps">
               <div className="flex items-center gap-2">
                 <Calendar className="w-3.5 h-3.5 text-primary/60" />
                 <span>Established {new Date(profile.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>

@@ -40,9 +40,9 @@ export function InfoModal({
             <DialogContent className="sm:max-w-md">
                 <DialogHeader>
                     <div className="flex items-center gap-4 mb-2">
-                        {type === 'success' && <CheckCircle2 className="w-6 h-6 text-green-500" />}
-                        {type === 'error' && <AlertCircle className="w-6 h-6 text-red-500" />}
-                        {type === 'info' && <Info className="w-6 h-6 text-blue-500" />}
+                        {type === 'success' && <CheckCircle2 className="w-6 h-6 text-success" />}
+                        {type === 'error' && <AlertCircle className="w-6 h-6 text-destructive" />}
+                        {type === 'info' && <Info className="w-6 h-6 text-accent" />}
                         <DialogTitle className="text-xl">{title}</DialogTitle>
                     </div>
                     <DialogDescription className="text-base">

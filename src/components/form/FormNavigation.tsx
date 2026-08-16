@@ -32,7 +32,7 @@ export function FormNavigation({
         variant="ghost"
         onClick={onPrev}
         disabled={isFirstStep}
-        className="gap-2 font-bold text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground hover:bg-muted"
+        className="gap-2 label-caps text-xs text-muted-foreground hover:text-foreground hover:bg-muted"
       >
         <ArrowLeft className="w-4 h-4" />
         Back
@@ -41,7 +41,7 @@ export function FormNavigation({
       <Button
         onClick={onNext}
         disabled={isNextDisabled}
-        className="gap-2 font-bold text-xs uppercase tracking-widest px-8 shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all hover:translate-y-[-1px]"
+        className="gap-2 label-caps text-xs px-8 shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all hover:translate-y-[-1px]"
       >
         {nextLabel || (isLastStep ? 'Preview Website' : 'Continue')}
         {!isLastStep && <ArrowRight className="w-4 h-4" />}

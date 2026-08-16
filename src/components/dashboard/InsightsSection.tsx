@@ -49,8 +49,8 @@ export function InsightsSection({ enabled }: InsightsSectionProps) {
     <section className="space-y-6 relative">
       <div className="flex items-center justify-between">
         <h2 className="font-heading text-2xl font-bold tracking-tight text-foreground">Insights</h2>
-        <div className="text-xs text-muted-foreground font-medium uppercase tracking-widest flex items-center gap-2">
-          <TrendingUp className="w-3.5 h-3.5 text-green-600" />
+        <div className="text-xs label-caps text-muted-foreground flex items-center gap-2">
+          <TrendingUp className="w-3.5 h-3.5 text-success" />
           Live Activity
         </div>
       </div>
@@ -75,14 +75,14 @@ export function InsightsSection({ enabled }: InsightsSectionProps) {
             <div className="bg-card border border-border rounded-xl p-8 shadow-premium hover:shadow-md transition-shadow">
               <div className="flex items-center justify-between mb-4">
                 <span className="text-sm font-medium text-muted-foreground">Total Views</span>
-                <Eye className="w-4 h-4 text-blue-500" />
+                <Eye className="w-4 h-4 text-accent" />
               </div>
               <div className="text-3xl font-bold">{analytics?.totalViews || 0}</div>
             </div>
             <div className="bg-card border border-border rounded-xl p-8 shadow-premium hover:shadow-md transition-shadow">
               <div className="flex items-center justify-between mb-4">
                 <span className="text-sm font-medium text-muted-foreground">Unique Visitors</span>
-                <Users className="w-4 h-4 text-green-500" />
+                <Users className="w-4 h-4 text-success" />
               </div>
               <div className="text-3xl font-bold">{analytics?.visitors || 0}</div>
             </div>

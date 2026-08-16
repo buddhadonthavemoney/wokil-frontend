@@ -3,8 +3,8 @@
 import { type DefaultError, queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { chatLegalResearch, checkDomainAvailability, createFirm, createForm, createGaProperty, createSite, deleteSite, deploySite, getAccountType, getMyFirm, getProfile, getPublicDirectory, getSiteAnalytics, getVerificationRecords, googleCallback, googleLogin, listForms, listLegalResearchConversations, listSites, listSubmissions, listThemes, listUsers, type Options, saveProfile, searchFirms, setAccountType, submitForm, updateFirm, updateProfileVisibility, uploadFile, verifyDns } from '../sdk.gen';
-import type { ChatLegalResearchData, ChatLegalResearchError, ChatLegalResearchResponse, CheckDomainAvailabilityData, CheckDomainAvailabilityError, CheckDomainAvailabilityResponse, CreateFirmData, CreateFirmError, CreateFirmResponse, CreateFormData, CreateFormError, CreateFormResponse, CreateGaPropertyData, CreateGaPropertyError, CreateGaPropertyResponse, CreateSiteData, CreateSiteError, CreateSiteResponse, DeleteSiteData, DeleteSiteError, DeleteSiteResponse, DeploySiteData, DeploySiteError, DeploySiteResponse, GetAccountTypeData, GetAccountTypeError, GetAccountTypeResponse, GetMyFirmData, GetMyFirmError, GetMyFirmResponse, GetProfileData, GetProfileError, GetProfileResponse, GetPublicDirectoryData, GetPublicDirectoryError, GetPublicDirectoryResponse, GetSiteAnalyticsData, GetSiteAnalyticsError, GetSiteAnalyticsResponse, GetVerificationRecordsData, GetVerificationRecordsError, GetVerificationRecordsResponse, GoogleCallbackData, GoogleCallbackError, GoogleCallbackResponse, GoogleLoginData, GoogleLoginResponse, ListFormsData, ListFormsError, ListFormsResponse, ListLegalResearchConversationsData, ListLegalResearchConversationsError, ListLegalResearchConversationsResponse, ListSitesData, ListSitesError, ListSitesResponse, ListSubmissionsData, ListSubmissionsError, ListSubmissionsResponse, ListThemesData, ListThemesError, ListThemesResponse, ListUsersData, ListUsersError, ListUsersResponse, SaveProfileData, SaveProfileError, SaveProfileResponse, SearchFirmsData, SearchFirmsError, SearchFirmsResponse, SetAccountTypeData, SetAccountTypeError, SetAccountTypeResponse, SubmitFormData, SubmitFormError, SubmitFormResponse, UpdateFirmData, UpdateFirmError, UpdateFirmResponse, UpdateProfileVisibilityData, UpdateProfileVisibilityError, UpdateProfileVisibilityResponse, UploadFileData, UploadFileError, UploadFileResponse, VerifyDnsData, VerifyDnsError, VerifyDnsResponse } from '../types.gen';
+import { chatLegalResearch, checkDomainAvailability, createFirm, createForm, createGaProperty, createSite, deleteSite, deploySite, getAccountType, getLegalResearchDocument, getMyFirm, getProfile, getPublicDirectory, getSiteAnalytics, getVerificationRecords, googleCallback, googleLogin, listForms, listLegalResearchConversationMessages, listLegalResearchConversations, listSites, listSubmissions, listThemes, listUsers, type Options, saveProfile, searchFirms, setAccountType, submitForm, updateFirm, updateProfileVisibility, uploadFile, verifyDns } from '../sdk.gen';
+import type { ChatLegalResearchData, ChatLegalResearchError, ChatLegalResearchResponse, CheckDomainAvailabilityData, CheckDomainAvailabilityError, CheckDomainAvailabilityResponse, CreateFirmData, CreateFirmError, CreateFirmResponse, CreateFormData, CreateFormError, CreateFormResponse, CreateGaPropertyData, CreateGaPropertyError, CreateGaPropertyResponse, CreateSiteData, CreateSiteError, CreateSiteResponse, DeleteSiteData, DeleteSiteError, DeleteSiteResponse, DeploySiteData, DeploySiteError, DeploySiteResponse, GetAccountTypeData, GetAccountTypeError, GetAccountTypeResponse, GetLegalResearchDocumentData, GetLegalResearchDocumentError, GetLegalResearchDocumentResponse, GetMyFirmData, GetMyFirmError, GetMyFirmResponse, GetProfileData, GetProfileError, GetProfileResponse, GetPublicDirectoryData, GetPublicDirectoryError, GetPublicDirectoryResponse, GetSiteAnalyticsData, GetSiteAnalyticsError, GetSiteAnalyticsResponse, GetVerificationRecordsData, GetVerificationRecordsError, GetVerificationRecordsResponse, GoogleCallbackData, GoogleCallbackError, GoogleCallbackResponse, GoogleLoginData, GoogleLoginResponse, ListFormsData, ListFormsError, ListFormsResponse, ListLegalResearchConversationMessagesData, ListLegalResearchConversationMessagesError, ListLegalResearchConversationMessagesResponse, ListLegalResearchConversationsData, ListLegalResearchConversationsError, ListLegalResearchConversationsResponse, ListSitesData, ListSitesError, ListSitesResponse, ListSubmissionsData, ListSubmissionsError, ListSubmissionsResponse, ListThemesData, ListThemesError, ListThemesResponse, ListUsersData, ListUsersError, ListUsersResponse, SaveProfileData, SaveProfileError, SaveProfileResponse, SearchFirmsData, SearchFirmsError, SearchFirmsResponse, SetAccountTypeData, SetAccountTypeError, SetAccountTypeResponse, SubmitFormData, SubmitFormError, SubmitFormResponse, UpdateFirmData, UpdateFirmError, UpdateFirmResponse, UpdateProfileVisibilityData, UpdateProfileVisibilityError, UpdateProfileVisibilityResponse, UploadFileData, UploadFileError, UploadFileResponse, VerifyDnsData, VerifyDnsError, VerifyDnsResponse } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -584,4 +584,44 @@ export const listLegalResearchConversationsOptions = (options?: Options<ListLega
         return data;
     },
     queryKey: listLegalResearchConversationsQueryKey(options)
+});
+
+export const listLegalResearchConversationMessagesQueryKey = (options: Options<ListLegalResearchConversationMessagesData>) => createQueryKey('listLegalResearchConversationMessages', options);
+
+/**
+ * List a conversation's messages
+ *
+ * The full transcript of one of the caller's conversations, oldest first. Ownership-scoped like the chat endpoint: an unknown or foreign conversation_id is a 404. Sources is each turn's point-in-time citation snapshot (the LegalResearchFile shape).
+ */
+export const listLegalResearchConversationMessagesOptions = (options: Options<ListLegalResearchConversationMessagesData>) => queryOptions<ListLegalResearchConversationMessagesResponse, ListLegalResearchConversationMessagesError, ListLegalResearchConversationMessagesResponse, ReturnType<typeof listLegalResearchConversationMessagesQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await listLegalResearchConversationMessages({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: listLegalResearchConversationMessagesQueryKey(options)
+});
+
+export const getLegalResearchDocumentQueryKey = (options: Options<GetLegalResearchDocumentData>) => createQueryKey('getLegalResearchDocument', options);
+
+/**
+ * Get one corpus document (metadata + full text)
+ *
+ * Proxied from wokil-rag's /documents/{id} and /documents/{id}/chunks. Any authenticated user may open a corpus document; the id is RAG's opaque document id as returned in chat files/sources. 404 when the corpus has no such document or RAG is unreachable.
+ */
+export const getLegalResearchDocumentOptions = (options: Options<GetLegalResearchDocumentData>) => queryOptions<GetLegalResearchDocumentResponse, GetLegalResearchDocumentError, GetLegalResearchDocumentResponse, ReturnType<typeof getLegalResearchDocumentQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getLegalResearchDocument({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getLegalResearchDocumentQueryKey(options)
 });

@@ -100,7 +100,7 @@ export default function RosterMemberPage() {
           }
         />
 
-        <section className="bg-white border-none rounded-3xl p-6 md:p-8 shadow-premium">
+        <section className="bg-card border border-border rounded-xl p-6 md:p-8 shadow-sm">
           <RosterMemberFields
             member={member}
             idPrefix={String(index)}

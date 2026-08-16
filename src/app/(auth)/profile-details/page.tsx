@@ -75,7 +75,7 @@ export default function ProfileDetails() {
         ) : (
           <div className="space-y-6">
             {sections.map((section) => (
-              <section key={section.key} className="bg-white border-none rounded-3xl p-6 md:p-8 shadow-premium">
+              <section key={section.key} className="bg-card border border-border rounded-xl p-6 md:p-8 shadow-sm">
                 {section}
               </section>
             ))}
