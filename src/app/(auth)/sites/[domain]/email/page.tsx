@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Loader2, Mail, Plus, Trash2 } from 'lucide-react';
+import { ArrowLeft, Copy, ExternalLink, Loader2, Mail, Plus, Trash2 } from 'lucide-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
@@ -24,6 +24,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 // Same fetch-client caveat as the sites page: error bodies are text/plain
 // (http.Error), so a rejected request carries the message as a bare string.
@@ -32,6 +33,100 @@ const apiErrorMessage = (error: unknown, fallback: string) => {
   if (error instanceof Error && error.message) return error.message;
   return fallback;
 };
+
+const copyToClipboard = (text: string) => {
+  navigator.clipboard.writeText(text);
+  toast.success('Copied to clipboard');
+};
+
+/** Monospace value with a copy button — the fields users retype wrongly. */
+function CopyValue({ value }: { value: string }) {
+  return (
+    <span className="inline-flex items-center gap-1 align-middle">
+      <code className="px-1.5 py-0.5 bg-muted/50 rounded border border-border/50 text-[11px] font-mono break-all">
+        {value}
+      </code>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-6 w-6 shrink-0"
+        aria-label={`Copy ${value}`}
+        onClick={() => copyToClipboard(value)}
+      >
+        <Copy className="h-3 w-3" />
+      </Button>
+    </span>
+  );
+}
+
+function GuideLink({ href, children }: { href: string; children: React.ReactNode }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="inline-flex items-center gap-1 text-accent underline underline-offset-2"
+    >
+      {children}
+      <ExternalLink className="h-3 w-3" />
+    </a>
+  );
+}
+
+/**
+ * Forwarding only gets mail in. Gmail can send *as* one of these addresses over
+ * SMTP, but it confirms ownership by mailing a code to the address itself —
+ * which only arrives because forwarding is already set up. Hence the guide
+ * living here, under the addresses, rather than anywhere earlier in the flow.
+ */
+function SendAsGuide({ addresses }: { addresses: string[] }) {
+  return (
+    <Accordion type="single" collapsible>
+      <AccordionItem value="send-as" className="border-b-0 border-t border-border/50">
+        <AccordionTrigger className="text-sm">Send mail from these addresses in Gmail</AccordionTrigger>
+        <AccordionContent>
+          <ol className="flex flex-col gap-3 text-xs text-muted-foreground list-decimal pl-4 marker:text-muted-foreground">
+            <li>
+              Turn on{' '}
+              <GuideLink href="https://myaccount.google.com/signinoptions/two-step-verification">
+                2-Step Verification
+              </GuideLink>{' '}
+              on your Google account. Google hides App Passwords until it is on.
+            </li>
+            <li>
+              Create an{' '}
+              <GuideLink href="https://myaccount.google.com/apppasswords">App Password</GuideLink> — Google
+              shows a 16-character password once. Copy it now; it is not shown again.
+            </li>
+            <li>
+              In Gmail, go to Settings → See all settings → Accounts and Import → &quot;Send mail as&quot; →
+              Add another email address.
+            </li>
+            <li>
+              <span className="flex flex-wrap items-center gap-x-1 gap-y-1">
+                Enter your name and the address:
+                {addresses.map((address) => (
+                  <CopyValue key={address} value={address} />
+                ))}
+              </span>
+              Leave &quot;Treat as an alias&quot; checked.
+            </li>
+            <li>
+              <span className="flex flex-wrap items-center gap-x-1 gap-y-1">
+                SMTP server <CopyValue value="smtp.gmail.com" />, port <CopyValue value="587" />,
+              </span>
+              username = your full Gmail address, password = the App Password from step 2, and TLS.
+            </li>
+            <li>
+              Gmail emails a confirmation code to the address above. Your forwarding delivers it to your
+              inbox — paste it back into Gmail and the address is ready to send from.
+            </li>
+          </ol>
+        </AccordionContent>
+      </AccordionItem>
+    </Accordion>
+  );
+}
 
 export default function SiteEmailPage() {
   const params = useParams<{ domain: string }>();
@@ -294,6 +389,7 @@ export default function SiteEmailPage() {
           </form>
 
           {routes && routes.length > 0 ? (
+            <>
             <Table>
               <TableHeader>
                 <TableRow>
@@ -322,6 +418,8 @@ export default function SiteEmailPage() {
                 ))}
               </TableBody>
             </Table>
+            <SendAsGuide addresses={routes.map((route) => route.address)} />
+            </>
           ) : (
             <p className="text-xs text-muted-foreground">
               No forwarding addresses yet. Add one above — <span className="font-mono">contact</span> is a good start.

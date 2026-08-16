@@ -18,6 +18,7 @@ import {
   Gavel,
   CalendarDays,
   ChevronDown,
+  Mail,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -288,6 +289,10 @@ export default function Sidebar() {
           <NavSection label="Management">
             <div onClick={handleNavClick}>
               <NavLink icon={<Globe className="w-5 h-5" />} label="Sites" path="/sites" isActive={pathname === '/sites'} />
+            </div>
+            <div onClick={handleNavClick}>
+              {/* /email resolves the domain, then hands off to /sites/[domain]/email. */}
+              <NavLink icon={<Mail className="w-5 h-5" />} label="Email" path="/email" isActive={pathname === '/email' || Boolean(pathname?.endsWith('/email'))} />
             </div>
             <div onClick={handleNavClick}>
               <NavLink icon={<IdCard className="w-5 h-5" />} label="Business Cards" path="/business-cards" isActive={pathname === '/business-cards'} />
