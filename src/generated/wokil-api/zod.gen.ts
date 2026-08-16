@@ -294,6 +294,53 @@ export const zAccountTypeRequest = z.object({
     accountType: z.enum(['individual', 'firm'])
 });
 
+export const zLegalResearchChatRequest = z.object({
+    question: z.string(),
+    top_k: z.int().gte(1).lte(25).optional().default(5),
+    conversation_id: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).nullish()
+});
+
+export const zLegalResearchSource = z.object({
+    document_id: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }),
+    document_title: z.string(),
+    citation: z.string(),
+    text: z.string(),
+    page_start: z.int().nullish(),
+    score: z.number()
+});
+
+/**
+ * One unique source document behind the answer (deduplicated from the passage list, ordered by best score).
+ */
+export const zLegalResearchFile = z.object({
+    document_id: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }),
+    document_title: z.string(),
+    collection: z.string().nullish(),
+    category: z.string().nullish(),
+    score: z.number()
+});
+
+export const zLegalResearchChatResponse = z.object({
+    conversation_id: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).nullish(),
+    answer: z.string(),
+    used_llm: z.boolean(),
+    from_general_knowledge: z.boolean(),
+    sources: z.array(zLegalResearchSource),
+    files: z.array(zLegalResearchFile)
+});
+
+/**
+ * One conversation owned by the calling user (wokil-go's table, not RAG's). Powers the "Recent Research" section.
+ */
+export const zLegalResearchConversation = z.object({
+    id: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }),
+    title: z.string(),
+    created_at: z.iso.datetime(),
+    updated_at: z.iso.datetime(),
+    message_count: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }),
+    last_question: z.string().nullish()
+});
+
 export const zProfessionalProfileWritable = z.object({
     bio: z.string().optional(),
     officeHours: z.string().optional(),
@@ -546,3 +593,15 @@ export const zUploadFileBody = z.object({
 export const zUploadFileResponse = z.object({
     url: z.string()
 });
+
+export const zChatLegalResearchBody = zLegalResearchChatRequest;
+
+/**
+ * OK
+ */
+export const zChatLegalResearchResponse = zLegalResearchChatResponse;
+
+/**
+ * OK
+ */
+export const zListLegalResearchConversationsResponse = z.array(zLegalResearchConversation);

@@ -361,6 +361,68 @@ export type AccountTypeRequest = {
     accountType: 'individual' | 'firm';
 };
 
+export type LegalResearchChatRequest = {
+    question: string;
+    top_k?: number;
+    /**
+     * wokil-go's own conversation id (NOT RAG's session_id). Accepted now, persisted from Phase 4.
+     */
+    conversation_id?: number | null;
+};
+
+export type LegalResearchSource = {
+    /**
+     * RAG's opaque document id (never joined against wokil_db).
+     */
+    document_id: number;
+    document_title: string;
+    citation: string;
+    text: string;
+    page_start?: number | null;
+    score: number;
+};
+
+/**
+ * One unique source document behind the answer (deduplicated from the passage list, ordered by best score).
+ */
+export type LegalResearchFile = {
+    document_id: number;
+    document_title: string;
+    collection?: string | null;
+    category?: string | null;
+    score: number;
+};
+
+export type LegalResearchChatResponse = {
+    /**
+     * Echoed/created wokil-go conversation id once persistence lands (Phase 4).
+     */
+    conversation_id?: number | null;
+    answer: string;
+    /**
+     * Whether the answer was synthesized by an LLM.
+     */
+    used_llm: boolean;
+    /**
+     * True when nothing in the corpus matched and the answer came from the model's general knowledge. Clients MUST present this distinction.
+     */
+    from_general_knowledge: boolean;
+    sources: Array<LegalResearchSource>;
+    files: Array<LegalResearchFile>;
+};
+
+/**
+ * One conversation owned by the calling user (wokil-go's table, not RAG's). Powers the "Recent Research" section.
+ */
+export type LegalResearchConversation = {
+    id: number;
+    title: string;
+    created_at: string;
+    updated_at: string;
+    message_count: number;
+    last_question?: string | null;
+};
+
 export type ProfessionalProfileWritable = {
     bio?: string;
     officeHours?: string;
@@ -1344,3 +1406,77 @@ export type UploadFileResponses = {
 };
 
 export type UploadFileResponse = UploadFileResponses[keyof UploadFileResponses];
+
+export type ChatLegalResearchData = {
+    body: LegalResearchChatRequest;
+    path?: never;
+    query?: never;
+    url: '/api/legal-research/chat';
+};
+
+export type ChatLegalResearchErrors = {
+    /**
+     * Invalid request
+     */
+    400: string;
+    /**
+     * Missing or invalid bearer token
+     */
+    401: string;
+    /**
+     * Resource not found
+     */
+    404: string;
+    /**
+     * Internal server error
+     */
+    500: string;
+    /**
+     * Upstream service (wokil-rag) returned a bad response
+     */
+    502: string;
+    /**
+     * Upstream service (wokil-rag) unavailable
+     */
+    503: string;
+};
+
+export type ChatLegalResearchError = ChatLegalResearchErrors[keyof ChatLegalResearchErrors];
+
+export type ChatLegalResearchResponses = {
+    /**
+     * OK
+     */
+    200: LegalResearchChatResponse;
+};
+
+export type ChatLegalResearchResponse = ChatLegalResearchResponses[keyof ChatLegalResearchResponses];
+
+export type ListLegalResearchConversationsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/legal-research/conversations';
+};
+
+export type ListLegalResearchConversationsErrors = {
+    /**
+     * Missing or invalid bearer token
+     */
+    401: string;
+    /**
+     * Internal server error
+     */
+    500: string;
+};
+
+export type ListLegalResearchConversationsError = ListLegalResearchConversationsErrors[keyof ListLegalResearchConversationsErrors];
+
+export type ListLegalResearchConversationsResponses = {
+    /**
+     * OK
+     */
+    200: Array<LegalResearchConversation>;
+};
+
+export type ListLegalResearchConversationsResponse = ListLegalResearchConversationsResponses[keyof ListLegalResearchConversationsResponses];
