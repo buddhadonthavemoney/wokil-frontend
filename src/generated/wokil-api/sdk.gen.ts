@@ -129,6 +129,9 @@ export const updateProfileVisibility = <ThrowOnError extends boolean = false>(op
 
 /**
  * List the user's sites
+ *
+ * Every filter below is optional and they combine with AND. Omitting one means "any value", so a call with no query at all returns the full list exactly as it always has.
+ *
  */
 export const listSites = <ThrowOnError extends boolean = false>(options?: Options<ListSitesData, ThrowOnError>): RequestResult<ListSitesResponses, ListSitesErrors, ThrowOnError> => (options?.client ?? client).get<ListSitesResponses, ListSitesErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

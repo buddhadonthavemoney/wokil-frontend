@@ -473,7 +473,10 @@ export default function Sites() {
                               <IdCard className="w-3.5 h-3.5" />
                               Business Card
                           </Button>
-                          {site.type === 'external' && isLive && (
+                          {/* Email routing needs us to hold the zone, which only
+                              nameserver mode does — without this a CNAME domain
+                              offered an Email button that failed after navigation. */}
+                          {site.type === 'external' && site.dns_mode === 'nameserver' && isLive && (
                             <Button
                                 variant="outline"
                                 size="sm"

@@ -261,6 +261,9 @@ export const listSitesQueryKey = (options?: Options<ListSitesData>) => createQue
 
 /**
  * List the user's sites
+ *
+ * Every filter below is optional and they combine with AND. Omitting one means "any value", so a call with no query at all returns the full list exactly as it always has.
+ *
  */
 export const listSitesOptions = (options?: Options<ListSitesData>) => queryOptions<ListSitesResponse, ListSitesError, ListSitesResponse, ReturnType<typeof listSitesQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {

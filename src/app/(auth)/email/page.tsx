@@ -14,18 +14,22 @@ import { Card, CardContent } from '@/components/ui/card';
 /**
  * Email settings are per-domain, but the sidebar entry has to be static — so
  * this picks the domain. Eligibility matches the "Email" button on the site
- * cards exactly (external + deployed): a `subdomain` sits on our own zone and
- * can't have mail of its own, and an undeployed domain has no zone to route it.
+ * cards exactly, and the server does the narrowing: a `subdomain` sits on our
+ * own zone and can't have mail of its own, an undeployed domain has no zone to
+ * route it, and only `nameserver` mode puts the zone in our hands at all — which
+ * is what `emailZone` on the backend actually requires.
  */
 export default function EmailPage() {
   const router = useRouter();
 
+  const emailEligible = { dns_mode: 'nameserver', status: 'deployed', type: 'external' } as const;
+
   const { data: sites, isLoading } = useQuery({
-    queryKey: ['sites'],
-    queryFn: async () => (await listSites({ throwOnError: true })).data,
+    queryKey: ['sites', emailEligible],
+    queryFn: async () => (await listSites({ query: emailEligible, throwOnError: true })).data,
   });
 
-  const domains = sites?.filter((site) => site.type === 'external' && site.status === 'deployed') ?? [];
+  const domains = sites ?? [];
   const onlyDomain = domains.length === 1 ? domains[0].domain : null;
 
   // One domain is the common case — showing a list of one is just a click the

@@ -222,6 +222,11 @@ export type Site = {
     reference: string;
     status: 'deployed' | 'requested' | 'link_pending' | 'failed';
     type: 'subdomain' | 'external';
+    /**
+     * How the customer points the domain at us. `cname` is the TXT + CNAME flow; `nameserver` means the domain is delegated to a Cloudflare zone of its own. Required because the column is `NOT NULL DEFAULT 'cname'` — a site always has a mode. Features that need us to hold the zone (email routing, for one) are only available in `nameserver` mode, so a client can use this to gate them without a round trip.
+     *
+     */
+    dns_mode: 'cname' | 'nameserver';
     created_at: string;
     updated_at: string;
 };
@@ -988,11 +993,28 @@ export type UpdateProfileVisibilityResponse = UpdateProfileVisibilityResponses[k
 export type ListSitesData = {
     body?: never;
     path?: never;
-    query?: never;
+    query?: {
+        /**
+         * Only sites pointed at us this way.
+         */
+        dns_mode?: 'cname' | 'nameserver';
+        /**
+         * Only sites in this lifecycle state.
+         */
+        status?: 'deployed' | 'requested' | 'link_pending' | 'failed';
+        /**
+         * Only sites of this kind.
+         */
+        type?: 'subdomain' | 'external';
+    };
     url: '/api/sites';
 };
 
 export type ListSitesErrors = {
+    /**
+     * Invalid request
+     */
+    400: string;
     /**
      * Missing or invalid bearer token
      */
@@ -1238,6 +1260,10 @@ export type CreateSiteZoneErrors = {
      * Resource not found
      */
     404: string;
+    /**
+     * Rate limited; retry after the interval in the Retry-After header
+     */
+    429: string;
     /**
      * Internal server error
      */

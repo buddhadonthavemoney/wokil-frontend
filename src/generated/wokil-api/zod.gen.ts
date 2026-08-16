@@ -190,6 +190,7 @@ export const zSite = z.object({
         'failed'
     ]),
     type: z.enum(['subdomain', 'external']),
+    dns_mode: z.enum(['cname', 'nameserver']),
     created_at: z.iso.datetime(),
     updated_at: z.iso.datetime()
 });
@@ -558,6 +559,17 @@ export const zUpdateProfileVisibilityBody = zVisibilityRequest;
  * Plain-text "Success"
  */
 export const zUpdateProfileVisibilityResponse = z.string();
+
+export const zListSitesQuery = z.object({
+    dns_mode: z.enum(['cname', 'nameserver']).optional(),
+    status: z.enum([
+        'deployed',
+        'requested',
+        'link_pending',
+        'failed'
+    ]).optional(),
+    type: z.enum(['subdomain', 'external']).optional()
+});
 
 /**
  * OK
