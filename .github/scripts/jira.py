@@ -85,9 +85,20 @@ def transition_issue_by_name(base_url: str, auth_header: str, issue_key: str, ta
     print(f"[jira] {issue_key} -> {target_status_name}")
 
 
+def base_url_from_env() -> str:
+    """The JIRA_BASE_URL secret is written by hand, so it may arrive without a
+    scheme or with a trailing slash. urllib rejects a scheme-less URL with a
+    bare `unknown url type`, and the secret is masked to `***` in Actions logs,
+    which makes that failure near-impossible to read. Normalize instead."""
+    raw = os.environ["JIRA_BASE_URL"].strip().rstrip("/")
+    if not raw:
+        raise RuntimeError("JIRA_BASE_URL is empty")
+    return raw if "://" in raw else f"https://{raw}"
+
+
 def main() -> None:
     status_name = sys.argv[1]
-    base_url = os.environ["JIRA_BASE_URL"]
+    base_url = base_url_from_env()
     token = base64.b64encode(
         f'{os.environ["JIRA_USER_EMAIL"]}:{os.environ["JIRA_API_TOKEN"]}'.encode()
     ).decode()
