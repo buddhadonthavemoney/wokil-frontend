@@ -2,7 +2,7 @@
 
 import { type Client, type ClientMeta, formDataBodySerializer, type Options as Options2, type RequestResult, type ServerSentEventsResult, type TDataShape } from './client';
 import { client } from './client.gen';
-import type { ChatLegalResearchData, ChatLegalResearchErrors, ChatLegalResearchResponses, CheckDomainAvailabilityData, CheckDomainAvailabilityErrors, CheckDomainAvailabilityResponses, CreateFirmData, CreateFirmErrors, CreateFirmResponses, CreateFormData, CreateFormErrors, CreateFormResponses, CreateGaPropertyData, CreateGaPropertyErrors, CreateGaPropertyResponses, CreateSiteData, CreateSiteEmailRouteData, CreateSiteEmailRouteErrors, CreateSiteEmailRouteResponses, CreateSiteErrors, CreateSiteResponses, CreateSiteZoneData, CreateSiteZoneErrors, CreateSiteZoneResponses, CreateVerificationRecordsData, CreateVerificationRecordsErrors, CreateVerificationRecordsResponses, DeleteSiteData, DeleteSiteEmailRouteData, DeleteSiteEmailRouteErrors, DeleteSiteEmailRouteResponses, DeleteSiteErrors, DeleteSiteResponses, DeploySiteData, DeploySiteErrors, DeploySiteResponses, EnableSiteEmailData, EnableSiteEmailErrors, EnableSiteEmailResponses, GetAccountTypeData, GetAccountTypeErrors, GetAccountTypeResponses, GetLegalResearchDocumentData, GetLegalResearchDocumentErrors, GetLegalResearchDocumentResponses, GetMyFirmData, GetMyFirmErrors, GetMyFirmResponses, GetProfileData, GetProfileErrors, GetProfileResponses, GetPublicDirectoryData, GetPublicDirectoryErrors, GetPublicDirectoryResponses, GetSiteAnalyticsData, GetSiteAnalyticsErrors, GetSiteAnalyticsResponses, GetSiteEmailCatchAllData, GetSiteEmailCatchAllErrors, GetSiteEmailCatchAllResponses, GetSiteEmailData, GetSiteEmailErrors, GetSiteEmailResponses, GetSiteZoneData, GetSiteZoneErrors, GetSiteZoneResponses, GetVerificationRecordsData, GetVerificationRecordsErrors, GetVerificationRecordsResponses, GoogleCallbackData, GoogleCallbackErrors, GoogleCallbackResponses, GoogleLoginData, GoogleLoginResponses, ListFormsData, ListFormsErrors, ListFormsResponses, ListLegalResearchConversationMessagesData, ListLegalResearchConversationMessagesErrors, ListLegalResearchConversationMessagesResponses, ListLegalResearchConversationsData, ListLegalResearchConversationsErrors, ListLegalResearchConversationsResponses, ListSiteEmailRoutesData, ListSiteEmailRoutesErrors, ListSiteEmailRoutesResponses, ListSitesData, ListSitesErrors, ListSitesResponses, ListSubmissionsData, ListSubmissionsErrors, ListSubmissionsResponses, ListThemesData, ListThemesErrors, ListThemesResponses, ListUsersData, ListUsersErrors, ListUsersResponses, SaveProfileData, SaveProfileErrors, SaveProfileResponses, SearchFirmsData, SearchFirmsErrors, SearchFirmsResponses, SetAccountTypeData, SetAccountTypeErrors, SetAccountTypeResponses, SetSiteEmailCatchAllData, SetSiteEmailCatchAllErrors, SetSiteEmailCatchAllResponses, StreamDeployStatusData, StreamDeployStatusErrors, StreamDeployStatusResponse, StreamDeployStatusResponses, SubmitFormData, SubmitFormErrors, SubmitFormResponses, UpdateFirmData, UpdateFirmErrors, UpdateFirmResponses, UpdateProfileVisibilityData, UpdateProfileVisibilityErrors, UpdateProfileVisibilityResponses, UploadFileData, UploadFileErrors, UploadFileResponses, VerifyDnsData, VerifyDnsErrors, VerifyDnsResponses } from './types.gen';
+import type { ChatLegalResearchData, ChatLegalResearchErrors, ChatLegalResearchResponses, CheckDomainAvailabilityData, CheckDomainAvailabilityErrors, CheckDomainAvailabilityResponses, CreateDomainOrderData, CreateDomainOrderErrors, CreateDomainOrderResponses, CreateFirmData, CreateFirmErrors, CreateFirmResponses, CreateFormData, CreateFormErrors, CreateFormResponses, CreateGaPropertyData, CreateGaPropertyErrors, CreateGaPropertyResponses, CreateSiteData, CreateSiteEmailRouteData, CreateSiteEmailRouteErrors, CreateSiteEmailRouteResponses, CreateSiteErrors, CreateSiteResponses, CreateSiteZoneData, CreateSiteZoneErrors, CreateSiteZoneResponses, CreateVerificationRecordsData, CreateVerificationRecordsErrors, CreateVerificationRecordsResponses, DeleteSiteData, DeleteSiteEmailRouteData, DeleteSiteEmailRouteErrors, DeleteSiteEmailRouteResponses, DeleteSiteErrors, DeleteSiteResponses, DeploySiteData, DeploySiteErrors, DeploySiteResponses, EnableSiteEmailData, EnableSiteEmailErrors, EnableSiteEmailResponses, GetAccountTypeData, GetAccountTypeErrors, GetAccountTypeResponses, GetDomainOrderData, GetDomainOrderErrors, GetDomainOrderResponses, GetLegalResearchDocumentData, GetLegalResearchDocumentErrors, GetLegalResearchDocumentResponses, GetMyFirmData, GetMyFirmErrors, GetMyFirmResponses, GetProfileData, GetProfileErrors, GetProfileResponses, GetPublicDirectoryData, GetPublicDirectoryErrors, GetPublicDirectoryResponses, GetRegistrantData, GetRegistrantErrors, GetRegistrantResponses, GetSiteAnalyticsData, GetSiteAnalyticsErrors, GetSiteAnalyticsResponses, GetSiteEmailCatchAllData, GetSiteEmailCatchAllErrors, GetSiteEmailCatchAllResponses, GetSiteEmailData, GetSiteEmailErrors, GetSiteEmailResponses, GetSiteZoneData, GetSiteZoneErrors, GetSiteZoneResponses, GetVerificationRecordsData, GetVerificationRecordsErrors, GetVerificationRecordsResponses, GoogleCallbackData, GoogleCallbackErrors, GoogleCallbackResponses, GoogleLoginData, GoogleLoginResponses, ListDomainOrdersData, ListDomainOrdersErrors, ListDomainOrdersResponses, ListFormsData, ListFormsErrors, ListFormsResponses, ListLegalResearchConversationMessagesData, ListLegalResearchConversationMessagesErrors, ListLegalResearchConversationMessagesResponses, ListLegalResearchConversationsData, ListLegalResearchConversationsErrors, ListLegalResearchConversationsResponses, ListSiteEmailRoutesData, ListSiteEmailRoutesErrors, ListSiteEmailRoutesResponses, ListSitesData, ListSitesErrors, ListSitesResponses, ListSubmissionsData, ListSubmissionsErrors, ListSubmissionsResponses, ListThemesData, ListThemesErrors, ListThemesResponses, ListUsersData, ListUsersErrors, ListUsersResponses, MarkDomainOrderPaidData, MarkDomainOrderPaidErrors, MarkDomainOrderPaidResponses, RemoveSiteEmailDestinationData, RemoveSiteEmailDestinationErrors, RemoveSiteEmailDestinationResponses, ResendRegistrantVerificationData, ResendRegistrantVerificationErrors, ResendRegistrantVerificationResponses, RetryDomainOrderData, RetryDomainOrderErrors, RetryDomainOrderResponses, SaveProfileData, SaveProfileErrors, SaveProfileResponses, SaveRegistrantData, SaveRegistrantErrors, SaveRegistrantResponses, SearchDomainsData, SearchDomainsErrors, SearchDomainsResponses, SearchFirmsData, SearchFirmsErrors, SearchFirmsResponses, SetAccountTypeData, SetAccountTypeErrors, SetAccountTypeResponses, SetSiteEmailCatchAllData, SetSiteEmailCatchAllErrors, SetSiteEmailCatchAllResponses, StreamDeployStatusData, StreamDeployStatusErrors, StreamDeployStatusResponse, StreamDeployStatusResponses, SubmitFormData, SubmitFormErrors, SubmitFormResponses, UpdateFirmData, UpdateFirmErrors, UpdateFirmResponses, UpdateProfileVisibilityData, UpdateProfileVisibilityErrors, UpdateProfileVisibilityResponses, UploadFileData, UploadFileErrors, UploadFileResponses, VerifyDnsData, VerifyDnsErrors, VerifyDnsResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -218,7 +218,7 @@ export const createSiteZone = <ThrowOnError extends boolean = false>(options: Op
 /**
  * Enable Email Routing on the site's zone (nameserver mode)
  *
- * Switches on Cloudflare Email Routing for the site's own zone — which adds and locks the MX and SPF records itself, so the customer has nothing to do — and registers `destination` as the inbox to forward to. Cloudflare emails that address a verification link; poll the status endpoint until `verified` is true. Requires an `active` zone. Idempotent: an already-registered destination is adopted.
+ * Switches on Cloudflare Email Routing for the site's own zone — which adds and locks the MX and SPF records itself, so the customer has nothing to do — and adds `destination` to the site's forwarding inboxes. Cloudflare emails that address a verification link; poll the status endpoint until it comes back verified. Requires an `active` zone. Idempotent: an already-registered destination is adopted. Call it again with another address to add a second inbox.
  *
  */
 export const enableSiteEmail = <ThrowOnError extends boolean = false>(options: Options<EnableSiteEmailData, ThrowOnError>): RequestResult<EnableSiteEmailResponses, EnableSiteEmailErrors, ThrowOnError> => (options.client ?? client).post<EnableSiteEmailResponses, EnableSiteEmailErrors, ThrowOnError>({
@@ -234,12 +234,24 @@ export const enableSiteEmail = <ThrowOnError extends boolean = false>(options: O
 /**
  * Get Email Routing status for the site's zone
  *
- * Read live from Cloudflare, which is the source of truth for both the routing switch and the destination's verification state. Pass `destination` to learn whether that address has been verified; without it only the routing switch is reported.
+ * The inbox list comes from our mirror; the routing switch and each inbox's verification state are read live from Cloudflare, which owns them. Poll this while the customer goes to click Cloudflare's links.
  *
  */
 export const getSiteEmail = <ThrowOnError extends boolean = false>(options: Options<GetSiteEmailData, ThrowOnError>): RequestResult<GetSiteEmailResponses, GetSiteEmailErrors, ThrowOnError> => (options.client ?? client).get<GetSiteEmailResponses, GetSiteEmailErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/sites/{domain}/email/status',
+    ...options
+});
+
+/**
+ * Remove a forwarding inbox from the site
+ *
+ * Drops the inbox from this site's list. Refused with 400 while any forwarding address (or the catch-all) still points at it — delete those first. The Cloudflare destination address itself is left alone: it is account-scoped and may serve another site.
+ *
+ */
+export const removeSiteEmailDestination = <ThrowOnError extends boolean = false>(options: Options<RemoveSiteEmailDestinationData, ThrowOnError>): RequestResult<RemoveSiteEmailDestinationResponses, RemoveSiteEmailDestinationErrors, ThrowOnError> => (options.client ?? client).delete<RemoveSiteEmailDestinationResponses, RemoveSiteEmailDestinationErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/sites/{domain}/email/destinations/{address}',
     ...options
 });
 
@@ -258,7 +270,7 @@ export const listSiteEmailRoutes = <ThrowOnError extends boolean = false>(option
 /**
  * Forward an address on the site's domain to a verified inbox
  *
- * Creates a Cloudflare routing rule sending `localPart`@domain to `destination`. Rejected unless the destination has been verified, since Cloudflare will not deliver to an unverified address.
+ * Creates a Cloudflare routing rule sending `localPart`@domain to every address in `destinations`. Rejected unless all of them have been verified, since Cloudflare will not deliver to an unverified address.
  *
  */
 export const createSiteEmailRoute = <ThrowOnError extends boolean = false>(options: Options<CreateSiteEmailRouteData, ThrowOnError>): RequestResult<CreateSiteEmailRouteResponses, CreateSiteEmailRouteErrors, ThrowOnError> => (options.client ?? client).post<CreateSiteEmailRouteResponses, CreateSiteEmailRouteErrors, ThrowOnError>({
@@ -316,6 +328,137 @@ export const checkDomainAvailability = <ThrowOnError extends boolean = false>(op
         'Content-Type': 'application/json',
         ...options.headers
     }
+});
+
+/**
+ * Search buyable domains and their prices
+ *
+ * Availability and price for the queried name across the TLD set this deployment sells.
+ *
+ * **The price is a quote, not a charge.** It is re-checked against the registrar and frozen onto the order when the domain is actually bought, so a client must never present this number as the amount payable or send it back as the price to charge.
+ *
+ * Results are cached briefly and the upstream call is rate-limited per user; a 429 carries Retry-After.
+ *
+ */
+export const searchDomains = <ThrowOnError extends boolean = false>(options: Options<SearchDomainsData, ThrowOnError>): RequestResult<SearchDomainsResponses, SearchDomainsErrors, ThrowOnError> => (options.client ?? client).post<SearchDomainsResponses, SearchDomainsErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/domains/search',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * The registrant a purchased domain would be registered to
+ *
+ * Returns the stored registrant, or — when none has been saved — a draft prefilled from the lawyer profile with `saved: false`. A draft's name is a guess split on the last space and its address is always empty, because the profile stores one free-text address line that cannot be split into the fields a registry requires.
+ *
+ */
+export const getRegistrant = <ThrowOnError extends boolean = false>(options?: Options<GetRegistrantData, ThrowOnError>): RequestResult<GetRegistrantResponses, GetRegistrantErrors, ThrowOnError> => (options?.client ?? client).get<GetRegistrantResponses, GetRegistrantErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/domains/registrant',
+    ...options
+});
+
+/**
+ * Save the registrant and sync it to the registrar
+ *
+ * Validates server-side, stores the registrant, then creates the registrar customer the first time and updates it thereafter — the handle does not change on later saves.
+ *
+ * Validation is a trust boundary: a malformed phone number or a wrong country code is rejected by the registry *after* payment and after a registration that cannot be refunded. A 400 names the offending field.
+ *
+ * The name and company name reach the registrar only on the first save. A handle's legal identity is fixed once created; changing the owner of a registered domain is a registry trade, not a field edit.
+ *
+ */
+export const saveRegistrant = <ThrowOnError extends boolean = false>(options: Options<SaveRegistrantData, ThrowOnError>): RequestResult<SaveRegistrantResponses, SaveRegistrantErrors, ThrowOnError> => (options.client ?? client).put<SaveRegistrantResponses, SaveRegistrantErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/domains/registrant',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Send the ICANN verification email again
+ *
+ * For a customer who lost the original. Rate-limited per user, because this sends mail to an address someone typed.
+ *
+ */
+export const resendRegistrantVerification = <ThrowOnError extends boolean = false>(options?: Options<ResendRegistrantVerificationData, ThrowOnError>): RequestResult<ResendRegistrantVerificationResponses, ResendRegistrantVerificationErrors, ThrowOnError> => (options?.client ?? client).post<ResendRegistrantVerificationResponses, ResendRegistrantVerificationErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/domains/registrant/verification/resend',
+    ...options
+});
+
+/**
+ * The caller's domain orders
+ */
+export const listDomainOrders = <ThrowOnError extends boolean = false>(options?: Options<ListDomainOrdersData, ThrowOnError>): RequestResult<ListDomainOrdersResponses, ListDomainOrdersErrors, ThrowOnError> => (options?.client ?? client).get<ListDomainOrdersResponses, ListDomainOrdersErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/domains/orders',
+    ...options
+});
+
+/**
+ * Order a domain
+ *
+ * Records an intent to buy at a price this server verifies against the registrar and freezes onto the order. Nothing about money is taken from the request.
+ *
+ * Payment happens out of band in v1: the order is created as `pending_payment`, the customer is told how to pay, and an administrator confirms it. No path on this API lets a customer mark their own order paid.
+ *
+ * Requires a saved registrant (see `/api/domains/registrant`) — there has to be someone to register the domain to before money is taken.
+ *
+ */
+export const createDomainOrder = <ThrowOnError extends boolean = false>(options: Options<CreateDomainOrderData, ThrowOnError>): RequestResult<CreateDomainOrderResponses, CreateDomainOrderErrors, ThrowOnError> => (options.client ?? client).post<CreateDomainOrderResponses, CreateDomainOrderErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/domains/orders',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * One of the caller's domain orders
+ *
+ * Someone else's order reports as not found rather than forbidden — confirming that an order exists is itself a leak.
+ *
+ */
+export const getDomainOrder = <ThrowOnError extends boolean = false>(options: Options<GetDomainOrderData, ThrowOnError>): RequestResult<GetDomainOrderResponses, GetDomainOrderErrors, ThrowOnError> => (options.client ?? client).get<GetDomainOrderResponses, GetDomainOrderErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/domains/orders/{orderId}',
+    ...options
+});
+
+/**
+ * Confirm an out-of-band payment (administrators only)
+ *
+ * The one transition that authorises registration, and the only way an order leaves `pending_payment`. Restricted to the configured administrator account; this is the click that spends real money on something that cannot be refunded.
+ *
+ * Called by the Django admin, not by any customer UI.
+ *
+ */
+export const markDomainOrderPaid = <ThrowOnError extends boolean = false>(options: Options<MarkDomainOrderPaidData, ThrowOnError>): RequestResult<MarkDomainOrderPaidResponses, MarkDomainOrderPaidErrors, ThrowOnError> => (options.client ?? client).post<MarkDomainOrderPaidResponses, MarkDomainOrderPaidErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/domains/orders/{orderId}/paid',
+    ...options
+});
+
+/**
+ * Retry a failed registration (administrators only)
+ *
+ * Returns a `failed` order to `paid` so registration runs again. The payment is retained throughout — the money is still ours to honour.
+ *
+ */
+export const retryDomainOrder = <ThrowOnError extends boolean = false>(options: Options<RetryDomainOrderData, ThrowOnError>): RequestResult<RetryDomainOrderResponses, RetryDomainOrderErrors, ThrowOnError> => (options.client ?? client).post<RetryDomainOrderResponses, RetryDomainOrderErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/domains/orders/{orderId}/retry',
+    ...options
 });
 
 /**
