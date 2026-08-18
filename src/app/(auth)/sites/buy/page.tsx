@@ -199,6 +199,9 @@ function BuyDomainContent() {
       (await createDomainOrder({ body: { domain, period_years: PERIOD_YEARS }, throwOnError: true })).data,
     onSuccess: (data) => {
       queryClient.setQueryData(['domain-order', data.id], data);
+      // The sites list caches orders for 30s, which is long enough to walk
+      // back there and not see the purchase you just made.
+      queryClient.invalidateQueries({ queryKey: ['domain-orders'] });
       // Into the URL rather than into state, so this step is reachable again
       // after the tab is closed.
       router.replace(`/sites/buy?order=${data.id}`);
@@ -239,13 +242,16 @@ function BuyDomainContent() {
     active: deployDomain !== null && !deployFinished,
     onDeactivate: () => setDeployFinished(true),
     // Registration hands off to a deploy only when the new zone is already
-    // active at Cloudflare; otherwise the site waits in link_pending and there
-    // is no stream to read. Without this check that ambiguity renders as a
-    // finished deployment for a site that never deployed.
+    // active at Cloudflare; otherwise the site waits in link_pending — the
+    // common case for a name registered seconds ago — and there is no stream
+    // to read. That is neither a finished deployment nor a failed one, so it
+    // closes the modal rather than reporting either.
     confirmAlreadyDone: async () => {
-      if (!deployDomain) return false;
+      if (!deployDomain) return 'idle';
       const { data } = await listSites({ throwOnError: true });
-      return !!data?.some((site) => site.domain === deployDomain && site.status === 'deployed');
+      return data?.some((site) => site.domain === deployDomain && site.status === 'deployed')
+        ? true
+        : 'idle';
     },
     onDone: () => {
       queryClient.invalidateQueries({ queryKey: ['sites'] });
@@ -363,7 +369,9 @@ function BuyDomainContent() {
 
           <Card className="border-none bg-card shadow-premium">
             <CardContent className="p-6 sm:p-8">
-              {step === 1 && (
+              {/* `step` falls back to 1 while an order is still loading, which
+                  would stack a dead search box above "Loading your order…". */}
+              {step === 1 && orderId === 0 && (
                 <div className="flex flex-col gap-6">
                   <div className="grid gap-2">
                     <Label htmlFor="domain-search">What should your domain be called?</Label>

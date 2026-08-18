@@ -1,6 +1,6 @@
 'use client';
 
-import { Globe, ExternalLink, Edit, Loader2, ShieldCheck, Plus, Trash2, Copy, AlertCircle, Mail, ShoppingCart, Clock } from 'lucide-react';
+import { Globe, ExternalLink, Edit, IdCard, Loader2, ShieldCheck, Plus, Trash2, Copy, AlertCircle, Mail, ShoppingCart, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -126,7 +126,7 @@ export default function Sites() {
       ? Math.max(0, Math.ceil((verifyCooldown.until - nowMs) / 1000))
       : 0;
 
-  const { isLoading: profileLoading } = useQuery({
+  const { data: profile, isLoading: profileLoading } = useQuery({
     queryKey: ['profile'],
     queryFn: async () => (await getProfile({ throwOnError: true })).data,
   });
@@ -557,37 +557,58 @@ export default function Sites() {
                           </div>
                       </div>
 
-                      {/* Rendered only when there is something to show: the two
-                          actions are mutually exclusive (one needs a live site,
-                          the other needs a not-yet-linked one), so an always-on
-                          wrapper left a half-width orphan or bare padding. */}
-                      {(canVerify || canEmail) && (
-                        <div className="pt-2">
-                          {canVerify && (
-                            <Button 
-                                variant="default" 
-                                size="sm" 
-                                className="w-full gap-2 rounded-lg text-xs"
+                      {/* Verify and Edit Page are mutually exclusive — one
+                          needs a not-yet-linked site, the other a live one — so
+                          the first cell is always filled and never orphans. */}
+                      <div className="grid grid-cols-2 gap-3 pt-2">
+                          {canVerify ? (
+                            <Button
+                                variant="default"
+                                size="sm"
+                                className="gap-2 rounded-lg text-xs"
                                 onClick={() => openVerifyDialog({ domain: site.domain, dns_mode: site.dns_mode })}
                                 disabled={isLoadingRecords && siteToVerify === site.domain}
                             >
                                 {isLoadingRecords && siteToVerify === site.domain ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ShieldCheck className="w-3.5 h-3.5" />}
                                 Verify Domain
                             </Button>
+                          ) : (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="gap-2 rounded-lg text-xs"
+                                onClick={() => {
+                                    sessionStorage.setItem('editingProfileSlug', profile?.slug || '');
+                                    router.push('/profile-builder');
+                                }}
+                            >
+                                <Edit className="w-3.5 h-3.5" />
+                                Edit Page
+                            </Button>
                           )}
+                          <Button
+                              variant="outline"
+                              size="sm"
+                              className="gap-2 rounded-lg text-xs"
+                              onClick={() => router.push('/business-cards')}
+                          >
+                              <IdCard className="w-3.5 h-3.5" />
+                              Business Card
+                          </Button>
+                          {/* Third of three, so it takes the whole second row
+                              rather than sitting half-width beside nothing. */}
                           {canEmail && (
                             <Button
                                 variant="outline"
                                 size="sm"
-                                className="w-full gap-2 rounded-lg text-xs"
+                                className="col-span-2 gap-2 rounded-lg text-xs"
                                 onClick={() => router.push(`/sites/${encodeURIComponent(site.domain)}/email`)}
                             >
                                 <Mail className="w-3.5 h-3.5" />
                                 Email
                             </Button>
                           )}
-                        </div>
-                      )}
+                      </div>
                     </div>
                   </CardContent>
                 </Card>

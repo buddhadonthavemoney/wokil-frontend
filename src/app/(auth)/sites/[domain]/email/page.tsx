@@ -190,7 +190,10 @@ export default function SiteEmailPage() {
     .filter((address): address is string => !!address && !known.has(address.toLowerCase()));
 
   // Default to the first usable inbox so the form is submittable on arrival.
-  const routeDestination = routeTarget || verifiedDestinations[0] || '';
+  // A pick that has since been removed (or lost its verification) falls back
+  // rather than posting an address Cloudflare no longer knows.
+  const routeDestination =
+    (verifiedDestinations.includes(routeTarget) ? routeTarget : '') || verifiedDestinations[0] || '';
 
   const { data: routes } = useQuery({
     queryKey: ['site-email-routes', domain],
@@ -209,7 +212,10 @@ export default function SiteEmailPage() {
   // What the catch-all Select shows: the user's pick, else whatever Cloudflare
   // already forwards to, else the first usable inbox.
   const catchAllDestination =
-    catchAllTarget || catchAll?.destination || verifiedDestinations[0] || '';
+    (verifiedDestinations.includes(catchAllTarget) ? catchAllTarget : '') ||
+    catchAll?.destination ||
+    verifiedDestinations[0] ||
+    '';
 
   const invalidate = (key: string) => queryClient.invalidateQueries({ queryKey: [key, domain] });
 
