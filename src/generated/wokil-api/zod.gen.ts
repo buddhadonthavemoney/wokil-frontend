@@ -240,13 +240,13 @@ export const zSiteEmail = z.object({
 export const zSiteEmailRoute = z.object({
     tag: z.string(),
     address: z.string(),
-    destinations: z.array(z.string()),
+    destination: z.string(),
     enabled: z.boolean()
 });
 
 export const zSiteEmailRouteRequest = z.object({
     localPart: z.string(),
-    destinations: z.array(z.email()).min(1)
+    destination: z.email()
 });
 
 export const zSiteEmailCatchAll = z.object({

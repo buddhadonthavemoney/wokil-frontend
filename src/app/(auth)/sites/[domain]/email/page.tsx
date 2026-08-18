@@ -258,8 +258,7 @@ export default function SiteEmailPage() {
     mutationFn: async (part: string) =>
       (await createSiteEmailRoute({
         path: { domain },
-        // The field is a list for a future fan-out; Cloudflare takes one today.
-        body: { localPart: part, destinations: [routeDestination] },
+        body: { localPart: part, destination: routeDestination },
         throwOnError: true,
       })).data,
     onSuccess: (route) => {
@@ -496,7 +495,7 @@ export default function SiteEmailPage() {
                   <TableRow key={route.tag} className={route.tag === justAdded ? enterRowClass : undefined}>
                     <TableCell className="font-mono text-xs">{route.address}</TableCell>
                     <TableCell className="font-mono text-xs text-muted-foreground">
-                      {route.destinations.join(', ')}
+                      {route.destination}
                     </TableCell>
                     <TableCell>
                       <Button

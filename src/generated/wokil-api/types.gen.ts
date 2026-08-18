@@ -317,10 +317,10 @@ export type SiteEmailRoute = {
      */
     address: string;
     /**
-     * The verified inboxes this address forwards to — mail is delivered to every one of them.
+     * The verified inbox this address forwards to. Cloudflare's forward action carries a single destination, so an address points at one inbox.
      *
      */
-    destinations: Array<string>;
+    destination: string;
     enabled: boolean;
 };
 
@@ -331,10 +331,10 @@ export type SiteEmailRouteRequest = {
      */
     localPart: string;
     /**
-     * The inboxes to forward to — mail is delivered to every one. Each must already be registered and verified; see the email/enable endpoint.
+     * The inbox to forward to. It must already be registered and verified; see the email/enable endpoint.
      *
      */
-    destinations: Array<string>;
+    destination: string;
 };
 
 export type SiteEmailCatchAll = {
