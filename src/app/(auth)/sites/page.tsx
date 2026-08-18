@@ -1,16 +1,16 @@
 'use client';
 
-import { Globe, ExternalLink, Edit, IdCard, Loader2, ShieldCheck, Plus, Trash2, Copy, AlertCircle, Mail } from 'lucide-react';
+import { Globe, ExternalLink, Edit, Loader2, ShieldCheck, Plus, Trash2, Copy, AlertCircle, Mail, ShoppingCart, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getProfile, listSites, createSite, deleteSite, verifyDns, getVerificationRecords, createVerificationRecords, createSiteZone } from '@/generated/wokil-api';
+import { getProfile, listSites, createSite, deleteSite, verifyDns, getVerificationRecords, createVerificationRecords, createSiteZone, listDomainOrders } from '@/generated/wokil-api';
 import type { VerificationRecords } from '@/generated/wokil-api';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { cn, siteHref, normalizeDomain, isValidDomain } from '@/lib/utils';
-import { apiErrorMessage, copyToClipboard } from '@/lib/client-ui';
+import { apiErrorMessage, copyToClipboard, VerifyRateLimitError, rateLimitError } from '@/lib/client-ui';
 import { useState, useEffect, useRef } from 'react';
 import {
   Dialog,
@@ -55,19 +55,6 @@ type VerificationRecord = {
   name: string;
   value: string;
 };
-
-// Verification is throttled server-side to one attempt per domain per minute
-// (it queries the zone's authoritative nameservers, and retrying sooner can't
-// return a different answer).
-class VerifyRateLimitError extends Error {
-  readonly retryAfterSeconds: number;
-
-  constructor(retryAfterSeconds: number, serverMessage?: string) {
-    super(serverMessage || `Please wait ${retryAfterSeconds} seconds before verifying again.`);
-    this.name = 'VerifyRateLimitError';
-    this.retryAfterSeconds = retryAfterSeconds;
-  }
-}
 
 // The whole card is the hit target, but it stays a real radio underneath —
 // arrow-key navigation and screen readers keep working, which a div+onClick
@@ -139,7 +126,7 @@ export default function Sites() {
       ? Math.max(0, Math.ceil((verifyCooldown.until - nowMs) / 1000))
       : 0;
 
-  const { data: profile, isLoading: profileLoading } = useQuery({
+  const { isLoading: profileLoading } = useQuery({
     queryKey: ['profile'],
     queryFn: async () => (await getProfile({ throwOnError: true })).data,
   });
@@ -148,6 +135,15 @@ export default function Sites() {
     queryKey: ['sites'],
     queryFn: async () => (await listSites({ throwOnError: true })).data,
   });
+
+  // A domain someone paid for and then closed the tab on has to be findable
+  // again, or it becomes a support ticket. Anything not yet registered is
+  // still in flight and gets a row below.
+  const { data: orders } = useQuery({
+    queryKey: ['domain-orders'],
+    queryFn: async () => (await listDomainOrders({ throwOnError: true })).data,
+  });
+  const openOrders = orders?.orders.filter((order) => order.status !== 'registered') ?? [];
 
   const createSiteMutation = useMutation({
     mutationFn: (body: { domain: string; status: 'link_pending'; dns_mode: 'cname' | 'nameserver' }) =>
@@ -208,9 +204,11 @@ export default function Sites() {
       if (!response) {
         throw new Error("Could not reach the server. Check your connection and try again.");
       }
+      // Verification is throttled server-side to one attempt per domain per
+      // minute — it queries the zone's authoritative nameservers, and retrying
+      // sooner cannot return a different answer.
       if (response.status === 429) {
-        const retryAfter = Number(response.headers.get('Retry-After')) || 60;
-        throw new VerifyRateLimitError(retryAfter, typeof error === 'string' ? error : undefined);
+        throw rateLimitError(response, error);
       }
       if (!response.ok) {
         throw new Error(
@@ -382,6 +380,14 @@ export default function Sites() {
     failed: { label: 'Failed', dot: 'bg-destructive', className: 'bg-destructive/10 text-destructive border-destructive/30' },
   };
 
+  // What an in-flight domain purchase is waiting on, in the customer's terms.
+  const orderStatusCopy: Record<string, string> = {
+    pending_payment: 'Waiting for your payment',
+    paid: 'Payment confirmed — registering',
+    registering: 'Registering with the registrar',
+    failed: 'Registration failed',
+  };
+
   const getStatusBadge = (status: string) => {
     const config = statusConfig[status];
     if (!config) return null;
@@ -410,6 +416,42 @@ export default function Sites() {
             description="Manage and monitor your professional published websites."
           />
 
+          {openOrders.length > 0 && (
+            <div className="flex flex-col gap-3">
+              <h2 className="text-sm font-semibold text-muted-foreground">Domain purchases in progress</h2>
+              {openOrders.map((order) => (
+                <Card
+                  key={order.id}
+                  className="border border-border/60 shadow-none bg-card rounded-xl"
+                >
+                  <CardContent className="p-4 flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-9 h-9 rounded-lg bg-accent/10 flex items-center justify-center shrink-0">
+                        {order.status === 'failed'
+                          ? <AlertCircle className="w-4 h-4 text-destructive" />
+                          : <Clock className="w-4 h-4 text-accent-foreground" />}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-semibold truncate">{order.domain}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {orderStatusCopy[order.status] ?? order.status}
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-2 shrink-0"
+                      onClick={() => router.push(`/sites/buy?order=${order.id}`)}
+                    >
+                      {order.status === 'pending_payment' ? 'Pay for this domain' : 'View order'}
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+
           {(!sites || sites.length === 0) ? (
             <div className="bg-card border-2 border-dashed border-border rounded-xl p-12 text-center shadow-none">
               <div className="w-16 h-16 bg-muted flex items-center justify-center mx-auto mb-6 rounded-full">
@@ -417,12 +459,23 @@ export default function Sites() {
               </div>
               <h3 className="text-xl font-bold mb-3">No sites found</h3>
               <p className="text-muted-foreground max-w-md mx-auto mb-8">
-                You haven't published any professional profile sites yet. Complete your profile to get started.
+                You haven&apos;t published any professional profile sites yet. Finish your profile, then put it on a
+                domain — buy a new one through us, or connect one you already own.
               </p>
-              <Button onClick={() => router.push('/profile-builder')} className="gap-2">
-                <Edit className="w-4 h-4" />
-                Finish Your Profile
-              </Button>
+              <div className="flex flex-wrap items-center justify-center gap-3">
+                <Button onClick={() => router.push('/profile-builder')} className="gap-2">
+                  <Edit className="w-4 h-4" />
+                  Finish Your Profile
+                </Button>
+                <Button variant="outline" onClick={() => router.push('/sites/buy')} className="gap-2">
+                  <ShoppingCart className="w-4 h-4" />
+                  Buy a domain
+                </Button>
+                <Button variant="outline" onClick={() => setIsCreateDialogOpen(true)} className="gap-2">
+                  <Plus className="w-4 h-4" />
+                  Connect a domain you own
+                </Button>
+              </div>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
@@ -432,6 +485,11 @@ export default function Sites() {
                 // and owns no Cloudflare zone, so every action but verifying
                 // and deleting is a dead end until the deploy completes.
                 const isLive = site.status === 'deployed';
+                const canVerify = site.status === 'link_pending' || site.status === 'requested' || site.status === 'failed';
+                // Email routing needs us to hold the zone, which only nameserver
+                // mode does — without this a CNAME domain offered an Email button
+                // that failed after navigation.
+                const canEmail = site.type === 'external' && site.dns_mode === 'nameserver' && isLive;
                 return (
                 <Card key={site.reference} className="border-none shadow-premium bg-card overflow-hidden group rounded-xl relative">
                   {isDeletingThisSite && (
@@ -499,56 +557,37 @@ export default function Sites() {
                           </div>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-3 pt-2">
-                          {(site.status === 'link_pending' || site.status === 'requested' || site.status === 'failed') ? (
+                      {/* Rendered only when there is something to show: the two
+                          actions are mutually exclusive (one needs a live site,
+                          the other needs a not-yet-linked one), so an always-on
+                          wrapper left a half-width orphan or bare padding. */}
+                      {(canVerify || canEmail) && (
+                        <div className="pt-2">
+                          {canVerify && (
                             <Button 
                                 variant="default" 
                                 size="sm" 
-                                className="gap-2 rounded-lg text-xs"
+                                className="w-full gap-2 rounded-lg text-xs"
                                 onClick={() => openVerifyDialog({ domain: site.domain, dns_mode: site.dns_mode })}
                                 disabled={isLoadingRecords && siteToVerify === site.domain}
                             >
                                 {isLoadingRecords && siteToVerify === site.domain ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ShieldCheck className="w-3.5 h-3.5" />}
                                 Verify Domain
                             </Button>
-                          ) : (
-                            <Button 
-                                variant="outline" 
-                                size="sm" 
-                                className="gap-2 rounded-lg text-xs"
-                                onClick={() => {
-                                    sessionStorage.setItem('editingProfileSlug', profile?.slug || '');
-                                    router.push('/profile-builder');
-                                }}
-                            >
-                                <Edit className="w-3.5 h-3.5" />
-                                Edit Page
-                            </Button>
                           )}
-                          <Button 
-                              variant="outline" 
-                              size="sm" 
-                              className="gap-2 rounded-lg text-xs"
-                              onClick={() => router.push('/business-cards')}
-                          >
-                              <IdCard className="w-3.5 h-3.5" />
-                              Business Card
-                          </Button>
-                          {/* Email routing needs us to hold the zone, which only
-                              nameserver mode does — without this a CNAME domain
-                              offered an Email button that failed after navigation. */}
-                          {site.type === 'external' && site.dns_mode === 'nameserver' && isLive && (
+                          {canEmail && (
                             <Button
                                 variant="outline"
                                 size="sm"
-                                className="gap-2 rounded-lg text-xs"
+                                className="w-full gap-2 rounded-lg text-xs"
                                 onClick={() => router.push(`/sites/${encodeURIComponent(site.domain)}/email`)}
                             >
                                 <Mail className="w-3.5 h-3.5" />
                                 Email
                             </Button>
                           )}
-                      </div>
+                        </div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -556,19 +595,28 @@ export default function Sites() {
               })}
 
               {/* Add New Site Card */}
-              <Card 
-                className="border-2 border-dashed border-border/60 bg-muted/2 shadow-none overflow-hidden group rounded-xl hover:border-primary/30 hover:bg-muted/5 transition-all flex flex-col items-center justify-center p-8 gap-6 min-h-[440px] cursor-pointer"
-                onClick={() => setIsCreateDialogOpen(true)}
-              >
-                <div className="flex flex-col items-center gap-4">
-                    <div className="w-20 h-20 rounded-xl bg-primary/5 flex items-center justify-center group-hover:bg-primary/10 transition-all duration-500 group-hover:scale-110 shadow-sm border border-primary/5">
-                        <Plus className="w-10 h-10 text-primary/30 group-hover:text-primary transition-colors" />
-                    </div>
+              {/* Two genuinely different jobs, so two buttons: buying a name we
+                  register for you, and pointing a name you already own at us. */}
+              <Card className="border-2 border-dashed border-border/60 bg-muted/2 shadow-none overflow-hidden rounded-xl hover:border-primary/30 hover:bg-muted/5 transition-all flex flex-col items-center justify-center p-8 gap-6 min-h-[440px]">
+                <div className="w-20 h-20 rounded-xl bg-primary/5 flex items-center justify-center shadow-sm border border-primary/5">
+                    <Plus className="w-10 h-10 text-primary/30" />
                 </div>
 
-                <div className="text-center space-y-2">
-                    <p className="text-xs text-muted-foreground max-w-[200px] mx-auto leading-relaxed group-hover:text-foreground transition-colors">
-                        Connect a domain you own to your professional site.
+                <div className="flex flex-col gap-3 w-full max-w-[240px]">
+                    <Button className="gap-2 w-full" onClick={() => router.push('/sites/buy')}>
+                        <ShoppingCart className="w-4 h-4" />
+                        Buy a new domain
+                    </Button>
+                    <p className="text-xs text-muted-foreground text-center leading-relaxed">
+                        Search for a name and we register it for you.
+                    </p>
+
+                    <Button variant="outline" className="gap-2 w-full mt-2" onClick={() => setIsCreateDialogOpen(true)}>
+                        <Globe className="w-4 h-4" />
+                        Connect a domain you own
+                    </Button>
+                    <p className="text-xs text-muted-foreground text-center leading-relaxed">
+                        Already have one? Point it at your site.
                     </p>
                 </div>
               </Card>
@@ -669,7 +717,7 @@ export default function Sites() {
               <AlertCircle className="h-4 w-4" />
               <AlertTitle className="text-sm font-semibold">Important Note</AlertTitle>
               <AlertDescription className="text-xs text-muted-foreground">
-                After deleting this subdomain, you'll need to go to the Profile Builder and refill the subdomain field to create a new one.
+                After deleting this subdomain, you&apos;ll need to go to the Profile Builder and refill the subdomain field to create a new one.
               </AlertDescription>
             </Alert>
           )}
