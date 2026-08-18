@@ -691,7 +691,10 @@ function BuyDomainContent() {
                 <StatusStep order={order} onGoToSites={() => router.push('/sites')} />
               )}
 
-              {orderId > 0 && orderQuery.isLoading && (
+              {/* Not `isLoading`: that is false between retry attempts and
+                  while a retry is paused offline, which would leave the card
+                  empty rather than still loading. */}
+              {orderId > 0 && !order && !orderQuery.isError && (
                 <div className="flex items-center gap-3 py-8 text-sm text-muted-foreground">
                   <Loader2 className="h-4 w-4 animate-spin" />
                   Loading your order…
