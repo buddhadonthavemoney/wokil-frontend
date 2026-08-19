@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { LawyerProfile } from '@/types/lawyer';
 import QRCode from "react-qr-code";
 import { Phone, Mail, MapPin, Globe } from 'lucide-react';
@@ -188,7 +188,7 @@ export const BusinessCard = React.forwardRef<HTMLDivElement, BusinessCardProps>(
     const { basicInformation, contactInformation, onlinePresence, practiceDetails } = profile;
     const colors = CARD_COLORS[colorTheme];
 
-    const vCardData = useMemo(() => {
+    const vCardData = (() => {
         const lines = [
             'BEGIN:VCARD',
             'VERSION:3.0',
@@ -204,7 +204,7 @@ export const BusinessCard = React.forwardRef<HTMLDivElement, BusinessCardProps>(
             'END:VCARD',
         ].filter(Boolean);
         return lines.join('\n');
-    }, [profile]);
+    })();
 
     return (
         <div ref={ref} className="flex flex-col md:flex-row gap-4 md:gap-6 print:flex-row print:gap-4 bg-transparent p-0 w-full">

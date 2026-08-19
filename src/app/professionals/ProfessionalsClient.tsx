@@ -231,7 +231,7 @@ export function ProfessionalsClient({ professionals: initialProfessionals }: Pro
                             <div className="space-y-2">
                                 <h3 className="text-lg font-bold">No results found</h3>
                                 <p className="text-sm text-muted-foreground max-w-xs mx-auto text-balance">
-                                    We couldn't find any professionals matching "{searchQuery}".
+                                    We couldn&apos;t find any professionals matching &quot;{searchQuery}&quot;.
                                 </p>
                                 <Button 
                                     variant="outline" 

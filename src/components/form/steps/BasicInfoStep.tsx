@@ -20,7 +20,7 @@ export function BasicInfoStep({ profile, onUpdate, onFillSample }: BasicInfoStep
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-2">
           <h2 className="heading-section text-foreground">Basic Information</h2>
-          <p className="text-muted-foreground">Let's start with your professional details.</p>
+          <p className="text-muted-foreground">Let&apos;s start with your professional details.</p>
         </div>
       </div>
 
