@@ -275,9 +275,22 @@ export type SiteZone = {
 
 export type SiteEmailRequest = {
     /**
-     * The existing inbox mail for this domain should be forwarded to.
+     * An existing inbox to add to this site's forwarding destinations. The first call also switches Email Routing on; later calls append.
+     *
      */
     destination: string;
+};
+
+export type SiteEmailDestination = {
+    /**
+     * The inbox mail can be forwarded to.
+     */
+    address: string;
+    /**
+     * Whether this inbox has followed the verification link Cloudflare emailed it. A forwarding address can only point at verified inboxes.
+     *
+     */
+    verified: boolean;
 };
 
 export type SiteEmail = {
@@ -287,15 +300,10 @@ export type SiteEmail = {
      */
     enabled: boolean;
     /**
-     * The inbox mail is forwarded to. Empty until a destination is registered.
+     * Every inbox this site may forward to, oldest first. Empty until the first destination is registered.
      *
      */
-    destination: string;
-    /**
-     * Whether the destination has followed the verification link Cloudflare emailed it. No forwarding rule can be created until this is true.
-     *
-     */
-    verified: boolean;
+    destinations: Array<SiteEmailDestination>;
 };
 
 export type SiteEmailRoute = {
@@ -309,7 +317,8 @@ export type SiteEmailRoute = {
      */
     address: string;
     /**
-     * The verified inbox this address forwards to.
+     * The verified inbox this address forwards to. Cloudflare's forward action carries a single destination, so an address points at one inbox.
+     *
      */
     destination: string;
     enabled: boolean;
@@ -322,7 +331,7 @@ export type SiteEmailRouteRequest = {
      */
     localPart: string;
     /**
-     * The inbox to forward to. Must already be registered and verified — see the email/enable endpoint.
+     * The inbox to forward to. It must already be registered and verified; see the email/enable endpoint.
      *
      */
     destination: string;
@@ -351,6 +360,172 @@ export type SiteEmailCatchAllRequest = {
 
 export type DomainAvailabilityRequest = {
     subDomain: string;
+};
+
+export type DomainSearchRequest = {
+    /**
+     * What the user typed. A bare label ("sharmalaw"), a domain ("sharmalaw.com") or a pasted URL are all accepted; everything but the registrable label is discarded.
+     *
+     */
+    query: string;
+};
+
+export type DomainSuggestion = {
+    domain: string;
+    /**
+     * Whether this domain can be bought through Wokil right now.
+     */
+    available: boolean;
+    /**
+     * An aftermarket/premium name. Priced far above a standard registration and quoted from a different field upstream — show the badge, or the price is a surprise at checkout.
+     *
+     */
+    premium: boolean;
+    /**
+     * First-year registration price in minor units (e.g. cents) of price_currency. Absent for unavailable domains.
+     *
+     */
+    price_amount?: number;
+    /**
+     * ISO 4217 code, as quoted by the registrar.
+     */
+    price_currency?: string;
+    /**
+     * Why this domain cannot be bought. `registered` — someone already owns it. `on_wokil` — another Wokil site is already using it, which is not the same thing and needs different copy.
+     *
+     */
+    unavailable_reason?: 'registered' | 'on_wokil';
+};
+
+export type DomainSearchResponse = {
+    /**
+     * The queried extension first when it is one we sell, then the rest of the configured TLD set. Extensions Wokil does not sell are omitted rather than quoted and refused later.
+     *
+     */
+    results: Array<DomainSuggestion>;
+};
+
+/**
+ * The person who will legally own the domain and appear in its WHOIS record. That is the customer, never Wokil.
+ *
+ * The address is split into separate fields because registries require it that way; it is never prefilled from the lawyer profile, whose `officeAddress` is a single free-text line that cannot be split reliably.
+ *
+ */
+export type Registrant = {
+    first_name: string;
+    last_name: string;
+    /**
+     * Registers the domain to an organisation rather than a person. Fixed once the registrant is first synced — see the note on the PUT.
+     *
+     */
+    company_name?: string;
+    /**
+     * The ICANN verification email goes here, and the domain is suspended if it is not verified within 15 days. It must be an inbox the customer can actually read.
+     *
+     */
+    email: string;
+    /**
+     * Dialling code, with or without the leading "+".
+     */
+    phone_country_code: string;
+    /**
+     * Digits only, without a leading zero. Optional.
+     */
+    phone_area_code?: string;
+    /**
+     * Digits only.
+     */
+    phone_subscriber_number: string;
+    street: string;
+    /**
+     * Kept separate from the street — registries want it that way.
+     */
+    house_number: string;
+    zipcode: string;
+    city: string;
+    /**
+     * State or province. Optional; required by some registries.
+     */
+    state?: string;
+    /**
+     * ISO 3166-1 alpha-2, validated server-side against the canonical list — "UK" is rejected in favour of "GB".
+     *
+     */
+    country: string;
+};
+
+export type RegistrantResponse = Registrant & {
+    /**
+     * `false` means this is a draft prefilled from the lawyer profile — nothing is stored and no domain can be registered yet. The address fields of a draft are always empty.
+     *
+     */
+    saved: boolean;
+    /**
+     * Whether ICANN email verification has completed. A gTLD registration is suspended if this is still false 15 days after registration, so an unverified registrant needs to be surfaced, not buried.
+     *
+     */
+    email_verified: boolean;
+    /**
+     * The registrar's own wording, for support. Absent when the registrant has not been synced yet or the registrar was unreachable — neither is an error, and neither means "verified".
+     *
+     */
+    email_verification_status?: string;
+    /**
+     * When verification was first observed as complete.
+     */
+    icann_verified_at?: string;
+};
+
+export type DomainOrder = {
+    id: number;
+    domain: string;
+    period_years: number;
+    /**
+     * The amount payable, in minor units of price_currency, as verified against the registrar when the order was created. Unlike a search result, this one is a charge.
+     *
+     */
+    price_amount: number;
+    price_currency: string;
+    /**
+     * `pending_payment` — awaiting an out-of-band payment. `paid` — payment confirmed by an administrator; registration follows. `registering` — in flight at the registrar. `registered` — done. `failed` — registration did not complete; `paid_at` is retained, and the order is retryable.
+     *
+     */
+    status: 'pending_payment' | 'paid' | 'registering' | 'registered' | 'failed';
+    /**
+     * Why registration failed, when it did.
+     */
+    failure_reason?: string;
+    /**
+     * Set once and never cleared, including on failure — a failed registration must not erase the fact that the customer paid.
+     *
+     */
+    paid_at?: string;
+    registered_at?: string;
+    /**
+     * When the registration lapses. Recorded for future renewal work.
+     */
+    expires_at?: string;
+    created_at: string;
+};
+
+export type DomainOrderList = {
+    orders: Array<DomainOrder>;
+};
+
+/**
+ * An intent to buy. Note what is NOT here: a price. The amount charged is re-checked against the registrar when the order is created and frozen onto it, so a quote from the search endpoint — stale, or edited — can never become the amount payable.
+ *
+ */
+export type DomainOrderRequest = {
+    /**
+     * The full domain, including the extension.
+     */
+    domain: string;
+    /**
+     * Registration length. Only 1 is supported: the registrar quotes a one-year creation price, and multiplying it would invent a number.
+     *
+     */
+    period_years?: number;
 };
 
 export type GaPropertyResponse = {
@@ -1364,9 +1539,7 @@ export type GetSiteEmailData = {
     path: {
         domain: string;
     };
-    query?: {
-        destination?: string;
-    };
+    query?: never;
     url: '/api/sites/{domain}/email/status';
 };
 
@@ -1399,6 +1572,49 @@ export type GetSiteEmailResponses = {
 };
 
 export type GetSiteEmailResponse = GetSiteEmailResponses[keyof GetSiteEmailResponses];
+
+export type RemoveSiteEmailDestinationData = {
+    body?: never;
+    path: {
+        domain: string;
+        /**
+         * The inbox to remove.
+         */
+        address: string;
+    };
+    query?: never;
+    url: '/api/sites/{domain}/email/destinations/{address}';
+};
+
+export type RemoveSiteEmailDestinationErrors = {
+    /**
+     * Invalid request
+     */
+    400: string;
+    /**
+     * Missing or invalid bearer token
+     */
+    401: string;
+    /**
+     * Resource not found
+     */
+    404: string;
+    /**
+     * Internal server error
+     */
+    500: string;
+};
+
+export type RemoveSiteEmailDestinationError = RemoveSiteEmailDestinationErrors[keyof RemoveSiteEmailDestinationErrors];
+
+export type RemoveSiteEmailDestinationResponses = {
+    /**
+     * Destination removed
+     */
+    200: MessageResponse;
+};
+
+export type RemoveSiteEmailDestinationResponse = RemoveSiteEmailDestinationResponses[keyof RemoveSiteEmailDestinationResponses];
 
 export type ListSiteEmailRoutesData = {
     body?: never;
@@ -1631,6 +1847,365 @@ export type CheckDomainAvailabilityResponses = {
 };
 
 export type CheckDomainAvailabilityResponse = CheckDomainAvailabilityResponses[keyof CheckDomainAvailabilityResponses];
+
+export type SearchDomainsData = {
+    body: DomainSearchRequest;
+    path?: never;
+    query?: never;
+    url: '/api/domains/search';
+};
+
+export type SearchDomainsErrors = {
+    /**
+     * Invalid request
+     */
+    400: string;
+    /**
+     * Missing or invalid bearer token
+     */
+    401: string;
+    /**
+     * Rate limited; retry after the interval in the Retry-After header
+     */
+    429: string;
+    /**
+     * Internal server error
+     */
+    500: string;
+    /**
+     * An upstream service (wokil-rag, the domain registrar) returned a bad response
+     */
+    502: string;
+    /**
+     * An upstream service is unavailable, or the feature is not configured on this deployment
+     */
+    503: string;
+};
+
+export type SearchDomainsError = SearchDomainsErrors[keyof SearchDomainsErrors];
+
+export type SearchDomainsResponses = {
+    /**
+     * Search results
+     */
+    200: DomainSearchResponse;
+};
+
+export type SearchDomainsResponse = SearchDomainsResponses[keyof SearchDomainsResponses];
+
+export type GetRegistrantData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/domains/registrant';
+};
+
+export type GetRegistrantErrors = {
+    /**
+     * Missing or invalid bearer token
+     */
+    401: string;
+    /**
+     * Internal server error
+     */
+    500: string;
+};
+
+export type GetRegistrantError = GetRegistrantErrors[keyof GetRegistrantErrors];
+
+export type GetRegistrantResponses = {
+    /**
+     * The stored registrant, or a prefilled draft
+     */
+    200: RegistrantResponse;
+};
+
+export type GetRegistrantResponse = GetRegistrantResponses[keyof GetRegistrantResponses];
+
+export type SaveRegistrantData = {
+    body: Registrant;
+    path?: never;
+    query?: never;
+    url: '/api/domains/registrant';
+};
+
+export type SaveRegistrantErrors = {
+    /**
+     * Invalid request
+     */
+    400: string;
+    /**
+     * Missing or invalid bearer token
+     */
+    401: string;
+    /**
+     * Internal server error
+     */
+    500: string;
+    /**
+     * An upstream service (wokil-rag, the domain registrar) returned a bad response
+     */
+    502: string;
+    /**
+     * An upstream service is unavailable, or the feature is not configured on this deployment
+     */
+    503: string;
+};
+
+export type SaveRegistrantError = SaveRegistrantErrors[keyof SaveRegistrantErrors];
+
+export type SaveRegistrantResponses = {
+    /**
+     * The saved registrant
+     */
+    200: RegistrantResponse;
+};
+
+export type SaveRegistrantResponse = SaveRegistrantResponses[keyof SaveRegistrantResponses];
+
+export type ResendRegistrantVerificationData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/domains/registrant/verification/resend';
+};
+
+export type ResendRegistrantVerificationErrors = {
+    /**
+     * Missing or invalid bearer token
+     */
+    401: string;
+    /**
+     * Resource not found
+     */
+    404: string;
+    /**
+     * Rate limited; retry after the interval in the Retry-After header
+     */
+    429: string;
+    /**
+     * Internal server error
+     */
+    500: string;
+    /**
+     * An upstream service (wokil-rag, the domain registrar) returned a bad response
+     */
+    502: string;
+    /**
+     * An upstream service is unavailable, or the feature is not configured on this deployment
+     */
+    503: string;
+};
+
+export type ResendRegistrantVerificationError = ResendRegistrantVerificationErrors[keyof ResendRegistrantVerificationErrors];
+
+export type ResendRegistrantVerificationResponses = {
+    /**
+     * Verification email requested
+     */
+    200: MessageResponse;
+};
+
+export type ResendRegistrantVerificationResponse = ResendRegistrantVerificationResponses[keyof ResendRegistrantVerificationResponses];
+
+export type ListDomainOrdersData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/domains/orders';
+};
+
+export type ListDomainOrdersErrors = {
+    /**
+     * Missing or invalid bearer token
+     */
+    401: string;
+    /**
+     * Internal server error
+     */
+    500: string;
+};
+
+export type ListDomainOrdersError = ListDomainOrdersErrors[keyof ListDomainOrdersErrors];
+
+export type ListDomainOrdersResponses = {
+    /**
+     * Orders, newest first
+     */
+    200: DomainOrderList;
+};
+
+export type ListDomainOrdersResponse = ListDomainOrdersResponses[keyof ListDomainOrdersResponses];
+
+export type CreateDomainOrderData = {
+    body: DomainOrderRequest;
+    path?: never;
+    query?: never;
+    url: '/api/domains/orders';
+};
+
+export type CreateDomainOrderErrors = {
+    /**
+     * Invalid request
+     */
+    400: string;
+    /**
+     * Missing or invalid bearer token
+     */
+    401: string;
+    /**
+     * Resource not found
+     */
+    404: string;
+    /**
+     * Conflicts with existing state
+     */
+    409: string;
+    /**
+     * Internal server error
+     */
+    500: string;
+    /**
+     * An upstream service (wokil-rag, the domain registrar) returned a bad response
+     */
+    502: string;
+    /**
+     * An upstream service is unavailable, or the feature is not configured on this deployment
+     */
+    503: string;
+};
+
+export type CreateDomainOrderError = CreateDomainOrderErrors[keyof CreateDomainOrderErrors];
+
+export type CreateDomainOrderResponses = {
+    /**
+     * Order created, awaiting payment
+     */
+    201: DomainOrder;
+};
+
+export type CreateDomainOrderResponse = CreateDomainOrderResponses[keyof CreateDomainOrderResponses];
+
+export type GetDomainOrderData = {
+    body?: never;
+    path: {
+        orderId: number;
+    };
+    query?: never;
+    url: '/api/domains/orders/{orderId}';
+};
+
+export type GetDomainOrderErrors = {
+    /**
+     * Missing or invalid bearer token
+     */
+    401: string;
+    /**
+     * Resource not found
+     */
+    404: string;
+    /**
+     * Internal server error
+     */
+    500: string;
+};
+
+export type GetDomainOrderError = GetDomainOrderErrors[keyof GetDomainOrderErrors];
+
+export type GetDomainOrderResponses = {
+    /**
+     * The order
+     */
+    200: DomainOrder;
+};
+
+export type GetDomainOrderResponse = GetDomainOrderResponses[keyof GetDomainOrderResponses];
+
+export type MarkDomainOrderPaidData = {
+    body?: never;
+    path: {
+        orderId: number;
+    };
+    query?: never;
+    url: '/api/domains/orders/{orderId}/paid';
+};
+
+export type MarkDomainOrderPaidErrors = {
+    /**
+     * Missing or invalid bearer token
+     */
+    401: string;
+    /**
+     * Authenticated but not allowed
+     */
+    403: string;
+    /**
+     * Resource not found
+     */
+    404: string;
+    /**
+     * Conflicts with existing state
+     */
+    409: string;
+    /**
+     * Internal server error
+     */
+    500: string;
+};
+
+export type MarkDomainOrderPaidError = MarkDomainOrderPaidErrors[keyof MarkDomainOrderPaidErrors];
+
+export type MarkDomainOrderPaidResponses = {
+    /**
+     * The order, now paid
+     */
+    200: DomainOrder;
+};
+
+export type MarkDomainOrderPaidResponse = MarkDomainOrderPaidResponses[keyof MarkDomainOrderPaidResponses];
+
+export type RetryDomainOrderData = {
+    body?: never;
+    path: {
+        orderId: number;
+    };
+    query?: never;
+    url: '/api/domains/orders/{orderId}/retry';
+};
+
+export type RetryDomainOrderErrors = {
+    /**
+     * Missing or invalid bearer token
+     */
+    401: string;
+    /**
+     * Authenticated but not allowed
+     */
+    403: string;
+    /**
+     * Resource not found
+     */
+    404: string;
+    /**
+     * Conflicts with existing state
+     */
+    409: string;
+    /**
+     * Internal server error
+     */
+    500: string;
+};
+
+export type RetryDomainOrderError = RetryDomainOrderErrors[keyof RetryDomainOrderErrors];
+
+export type RetryDomainOrderResponses = {
+    /**
+     * The order, queued for registration again
+     */
+    200: DomainOrder;
+};
+
+export type RetryDomainOrderResponse = RetryDomainOrderResponses[keyof RetryDomainOrderResponses];
 
 export type DeploySiteData = {
     body?: never;
@@ -2013,11 +2588,11 @@ export type ChatLegalResearchErrors = {
      */
     500: string;
     /**
-     * Upstream service (wokil-rag) returned a bad response
+     * An upstream service (wokil-rag, the domain registrar) returned a bad response
      */
     502: string;
     /**
-     * Upstream service (wokil-rag) unavailable
+     * An upstream service is unavailable, or the feature is not configured on this deployment
      */
     503: string;
 };
@@ -2120,11 +2695,11 @@ export type GetLegalResearchDocumentErrors = {
      */
     500: string;
     /**
-     * Upstream service (wokil-rag) returned a bad response
+     * An upstream service (wokil-rag, the domain registrar) returned a bad response
      */
     502: string;
     /**
-     * Upstream service (wokil-rag) unavailable
+     * An upstream service is unavailable, or the feature is not configured on this deployment
      */
     503: string;
 };
