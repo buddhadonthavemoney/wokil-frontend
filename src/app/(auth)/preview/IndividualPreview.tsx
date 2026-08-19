@@ -16,7 +16,7 @@ export function IndividualPreview() {
   const { profile, publishProfile, setProfile, loading: hookLoading } = useProfileForm();
 
   const [isPublishing, setIsPublishing] = useState(false);
-  const { data: themesData } = useQuery(listThemesOptions({ query: { category: 'individual' } }));
+  const { data: themesData } = useQuery({ ...listThemesOptions({ query: { category: 'individual' } }), staleTime: 5 * 60_000 });
   const themes = themesData ?? [];
   const { toast } = useToast();
   const router = useRouter();

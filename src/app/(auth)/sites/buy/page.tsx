@@ -25,6 +25,7 @@ import {
   listSites,
 } from '@/generated/wokil-api';
 import type { DomainOrder, DomainSuggestion, Registrant, RegistrantResponse } from '@/generated/wokil-api';
+import { getProfileQueryKey } from '@/generated/wokil-api/@tanstack/react-query.gen';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { ProgressIndicator } from '@/components/form/ProgressIndicator';
 import { Card, CardContent } from '@/components/ui/card';
@@ -255,7 +256,7 @@ function BuyDomainContent() {
     },
     onDone: () => {
       queryClient.invalidateQueries({ queryKey: ['sites'] });
-      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      queryClient.invalidateQueries({ queryKey: getProfileQueryKey() });
     },
   });
 

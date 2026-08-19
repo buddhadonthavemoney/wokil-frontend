@@ -16,7 +16,7 @@ export function FirmPreviewPage() {
   const { firm, publishFirm, setFirm, loading: hookLoading } = useFirmForm();
 
   const [isPublishing, setIsPublishing] = useState(false);
-  const { data: themesData } = useQuery(listThemesOptions({ query: { category: 'firm' } }));
+  const { data: themesData } = useQuery({ ...listThemesOptions({ query: { category: 'firm' } }), staleTime: 5 * 60_000 });
   const themes = themesData ?? [];
   const { toast } = useToast();
   const router = useRouter();

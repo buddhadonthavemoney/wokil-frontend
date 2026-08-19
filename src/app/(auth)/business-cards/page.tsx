@@ -2,8 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { getProfile } from '@/generated/wokil-api';
-import { getMyFirmOptions } from '@/generated/wokil-api/@tanstack/react-query.gen';
+import { getMyFirmOptions, getProfileOptions } from '@/generated/wokil-api/@tanstack/react-query.gen';
 import { toLawyerProfile } from '@/lib/lawyer-profile-adapter';
 import { FirmProfile, toFirmProfile } from '@/types/firm';
 import { LawyerProfile } from '@/types/lawyer';
@@ -217,10 +216,8 @@ function CardStudio({
 function IndividualBusinessCards() {
   const router = useRouter();
 
-  const { data: profile, isLoading } = useQuery({
-    queryKey: ['profile'],
-    queryFn: async () => toLawyerProfile((await getProfile({ throwOnError: true })).data),
-  });
+  const { data, isLoading } = useQuery(getProfileOptions());
+  const profile = data ? toLawyerProfile(data) : undefined;
 
   if (isLoading) return <PageSpinner />;
 

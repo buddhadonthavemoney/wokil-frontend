@@ -4,7 +4,8 @@ import { Globe, ExternalLink, Edit, Loader2, ShieldCheck, Plus, Trash2, Copy, Al
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getProfile, listSites, createSite, deleteSite, verifyDns, getVerificationRecords, createVerificationRecords, createSiteZone, listDomainOrders } from '@/generated/wokil-api';
+import { listSites, createSite, deleteSite, verifyDns, getVerificationRecords, createVerificationRecords, createSiteZone, listDomainOrders } from '@/generated/wokil-api';
+import { getProfileOptions, getProfileQueryKey } from '@/generated/wokil-api/@tanstack/react-query.gen';
 import type { VerificationRecords } from '@/generated/wokil-api';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card, CardContent } from '@/components/ui/card';
@@ -126,10 +127,7 @@ export default function Sites() {
       ? Math.max(0, Math.ceil((verifyCooldown.until - nowMs) / 1000))
       : 0;
 
-  const { isLoading: profileLoading } = useQuery({
-    queryKey: ['profile'],
-    queryFn: async () => (await getProfile({ throwOnError: true })).data,
-  });
+  const { isLoading: profileLoading } = useQuery(getProfileOptions());
 
   const { data: sites, isLoading: sitesLoading } = useQuery({
     queryKey: ['sites'],
@@ -176,7 +174,7 @@ export default function Sites() {
       // siteUrl/deploymentURL/isPublished are derived from the sites table, so
       // deleting a site changes the profile response too — without this the
       // dashboard keeps showing the deleted site's URL from cache.
-      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      queryClient.invalidateQueries({ queryKey: getProfileQueryKey() });
       setSiteToDelete(null);
       setDeleteConfirmMessage(null);
       toast.success("Site deleted successfully");
@@ -256,7 +254,7 @@ export default function Sites() {
     onDone: () => {
       queryClient.invalidateQueries({ queryKey: ['sites'] });
       // Deploying can change which site the profile derives its URL from.
-      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      queryClient.invalidateQueries({ queryKey: getProfileQueryKey() });
     },
   });
 

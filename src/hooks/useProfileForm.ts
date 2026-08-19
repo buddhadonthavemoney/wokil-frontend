@@ -1,6 +1,8 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { LawyerProfile } from '@/types/lawyer';
-import { getProfile, saveProfile, deploySite } from '@/generated/wokil-api';
+import { saveProfile, deploySite } from '@/generated/wokil-api';
+import { getProfileOptions } from '@/generated/wokil-api/@tanstack/react-query.gen';
 import { useToast } from '@/hooks/use-toast';
 import { createBlankLawyerProfile, toLawyerProfile } from '@/lib/lawyer-profile-adapter';
 import { PROFILE_STEPS } from '@/components/form/steps';
@@ -27,22 +29,36 @@ const initialProfile = createBlankLawyerProfile();
 export function useProfileForm() {
   const totalSteps = PROFILE_STEPS.length;
   const { toast } = useToast();
-  const [loading, setLoading] = useState(false);
 
-  // Check if we're editing an existing profile
   const [profile, setProfile] = useState<LawyerProfile>(() => {
     return { ...initialProfile, id: generateId() };
   });
 
   const [currentStep, setCurrentStep] = useState(1);
   const lastSavedProfile = useRef(JSON.stringify(profile));
+  const seeded = useRef(false);
 
-  // Initialize lastSavedProfile when data is fetched
+  const { data: fetchedProfile, isLoading: loading } = useQuery({
+    ...getProfileOptions(),
+    enabled: typeof window !== 'undefined' && !!localStorage.getItem('token'),
+  });
+
+  /* eslint-disable react-hooks/set-state-in-effect -- seeding local state from query cache once */
   useEffect(() => {
-    if (loading === false) {
+    if (!fetchedProfile || seeded.current) return;
+    seeded.current = true;
+    setProfile(prev => toLawyerProfile(fetchedProfile, prev));
+    if (fetchedProfile.slug) {
+      setCurrentStep(fetchedProfile.professionalProfile?.deploymentURL ? totalSteps - 1 : totalSteps);
+    }
+  }, [fetchedProfile, totalSteps]);
+  /* eslint-enable react-hooks/set-state-in-effect */
+
+  useEffect(() => {
+    if (!loading) {
       lastSavedProfile.current = JSON.stringify(profile);
     }
-  }, [loading]); // Only reset when loading state changes (i.e. after initial fetch)
+  }, [loading]);
 
   // Handle manual saves
   const saveProfileData = useCallback(async () => {
@@ -50,10 +66,9 @@ export function useProfileForm() {
     if (currentProfileJson === lastSavedProfile.current) return;
 
     try {
-      // If already deployed, don't send subdomainSelection as it causes 400 errors
-      const dataToSave = { ...profile };
+      const dataToSave: Partial<LawyerProfile> = { ...profile };
       if (profile.professionalProfile?.deploymentURL) {
-        delete (dataToSave as any).subdomainSelection;
+        delete dataToSave.subdomainSelection;
       }
 
       await saveProfile({ body: dataToSave as LawyerProfile, throwOnError: true });
@@ -62,30 +77,6 @@ export function useProfileForm() {
       console.error("Failed to auto-save profile:", error);
     }
   }, [profile]);
-  useEffect(() => {
-    const fetchProfile = async () => {
-      const token = localStorage.getItem('token');
-      if (!token) return;
-
-      try {
-        setLoading(true);
-        const data = (await getProfile({ throwOnError: true })).data;
-        setProfile(prev => toLawyerProfile(data, prev));
-        if (data.slug) {
-          // Once deployed the subdomain can no longer be changed, so resuming
-          // onto its step would open the wizard on a form the user cannot
-          // edit; land on the last step still theirs to change.
-          setCurrentStep(data.professionalProfile?.deploymentURL ? totalSteps - 1 : totalSteps);
-        }
-      } catch (error) {
-        console.error("Failed to fetch profile", error);
-        // If 404/empty, that's fine, we start fresh
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchProfile();
-  }, []);
 
   const updateProfile = useCallback(<K extends keyof LawyerProfile>(
     field: K,
@@ -142,9 +133,9 @@ export function useProfileForm() {
     setProfile(updatedProfile);
 
     try {
-      const dataToSave = { ...updatedProfile };
+      const dataToSave: Partial<LawyerProfile> = { ...updatedProfile };
       if (profile.professionalProfile?.deploymentURL) {
-        delete (dataToSave as any).subdomainSelection;
+        delete dataToSave.subdomainSelection;
       }
       await saveProfile({ body: dataToSave as LawyerProfile, throwOnError: true });
 

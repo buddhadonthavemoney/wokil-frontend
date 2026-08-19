@@ -1,6 +1,8 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { FirmProfile, createBlankFirmProfile, toFirmProfile } from '@/types/firm';
-import { getMyFirm, createFirm, updateFirm, deploySite } from '@/generated/wokil-api';
+import { createFirm, updateFirm, deploySite } from '@/generated/wokil-api';
+import { getMyFirmOptions } from '@/generated/wokil-api/@tanstack/react-query.gen';
 import { useToast } from '@/hooks/use-toast';
 import { FIRM_STEPS, FirmStepKey } from '@/components/form/firmSteps';
 
@@ -31,61 +33,39 @@ interface UseFirmFormOptions {
 export function useFirmForm({ initialStep }: UseFirmFormOptions = {}) {
   const totalSteps = FIRM_STEPS.length;
   const { toast } = useToast();
-  const [loading, setLoading] = useState(false);
-  /**
-   * Whether the fetch below has run to completion. Distinct from `loading`,
-   * which is false both before the effect fires and after it finishes — a
-   * caller that has to tell "no such lawyer" from "not fetched yet" cannot use
-   * `loading` alone without redirecting on the first render.
-   */
-  const [loaded, setLoaded] = useState(false);
 
   const [firm, setFirm] = useState<FirmProfile>(() => ({ ...initialFirm }));
   const [currentStep, setCurrentStep] = useState(() =>
     initialStep && initialStep >= 1 ? Math.min(initialStep, FIRM_STEPS.length) : 1
   );
 
-  // Whether the firm row exists yet decides create-vs-update on save. The
-  // wizard is entered before any firm exists, so the first save must POST.
   const [firmExists, setFirmExists] = useState(false);
   const lastSavedFirm = useRef(JSON.stringify(initialFirm));
+  const seeded = useRef(false);
+
+  const { data: fetchedFirm, isLoading, isFetched } = useQuery({
+    ...getMyFirmOptions(),
+    enabled: typeof window !== 'undefined' && !!localStorage.getItem('token'),
+  });
+
+  const loading = isLoading;
+  const loaded = isFetched;
 
   useEffect(() => {
-    const fetchFirm = async () => {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        setLoaded(true);
-        return;
+    if (!fetchedFirm || seeded.current) return;
+    const data = fetchedFirm as Partial<FirmProfile>;
+    if (data && data.id) {
+      seeded.current = true;
+      setFirm((prev) => toFirmProfile(data, prev));
+      setFirmExists(true);
+      if (data.slug && !initialStep) {
+        setCurrentStep(data.firmProfile?.deploymentURL ? totalSteps - 1 : totalSteps);
       }
-
-      try {
-        setLoading(true);
-        const data = (await getMyFirm({ throwOnError: true })).data as Partial<FirmProfile>;
-        // The endpoint answers {} when the caller has no firm yet, which is not
-        // an error — it is the ordinary first-visit state.
-        if (data && data.id) {
-          setFirm((prev) => toFirmProfile(data, prev));
-          setFirmExists(true);
-          // Resume where they left off — unless a step was explicitly asked
-          // for. Once deployed the subdomain (the last step) can no longer be
-          // changed, so land one short of it.
-          if (data.slug && !initialStep) {
-            setCurrentStep(data.firmProfile?.deploymentURL ? totalSteps - 1 : totalSteps);
-          }
-        }
-      } catch (error) {
-        console.error('Failed to fetch firm', error);
-      } finally {
-        setLoading(false);
-        setLoaded(true);
-      }
-    };
-    fetchFirm();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    }
+  }, [fetchedFirm, totalSteps, initialStep]);
 
   useEffect(() => {
-    if (loading === false) {
+    if (!loading) {
       lastSavedFirm.current = JSON.stringify(firm);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

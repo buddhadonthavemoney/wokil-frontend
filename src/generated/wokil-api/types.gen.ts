@@ -201,6 +201,10 @@ export type LawyerProfile = {
      */
     readonly siteUrl?: string;
     slug?: string;
+    /**
+     * The user's account type. Included so pages that already fetch the profile don't need a separate /api/user/account-type call. Read from the users row — never stored here and ignored if sent on write.
+     */
+    readonly accountType?: 'individual' | 'firm';
 };
 
 export type ProfileMultipart = {
@@ -324,6 +328,28 @@ export type SiteEmailRoute = {
     enabled: boolean;
 };
 
+export type SiteEmailCatchAll = {
+    /**
+     * Whether mail to any address on the domain that no rule matches is forwarded. Off means such mail is rejected.
+     *
+     */
+    enabled: boolean;
+    /**
+     * The inbox unmatched mail forwards to. Empty when disabled.
+     */
+    destination: string;
+};
+
+/**
+ * The whole email configuration of a site in one read: everything the email page shows, resolved from a single ownership + mirror sync instead of three.
+ *
+ */
+export type SiteEmailOverview = {
+    status: SiteEmail;
+    routes: Array<SiteEmailRoute>;
+    catchAll: SiteEmailCatchAll;
+};
+
 export type SiteEmailRouteRequest = {
     /**
      * The part before the `@`, e.g. `contact`. The domain is the site's own.
@@ -333,18 +359,6 @@ export type SiteEmailRouteRequest = {
     /**
      * The inbox to forward to. It must already be registered and verified; see the email/enable endpoint.
      *
-     */
-    destination: string;
-};
-
-export type SiteEmailCatchAll = {
-    /**
-     * Whether mail to any address on the domain that no rule matches is forwarded. Off means such mail is rejected.
-     *
-     */
-    enabled: boolean;
-    /**
-     * The inbox unmatched mail forwards to. Empty when disabled.
      */
     destination: string;
 };
@@ -630,6 +644,10 @@ export type FirmProfile = {
      * Shared GA4 measurement ID, present only once the firm has opted into analytics. Derived from firms.ga_enabled on read — never stored on the firm and ignored if sent on write.
      */
     readonly googleAnalyticsId?: string;
+    /**
+     * The user's account type. Included so pages that already fetch the firm don't need a separate /api/user/account-type call. Read from the users row — never stored here and ignored if sent on write.
+     */
+    readonly accountType?: 'individual' | 'firm';
 };
 
 export type AccountTypeResponse = {
@@ -1533,6 +1551,45 @@ export type EnableSiteEmailResponses = {
 };
 
 export type EnableSiteEmailResponse = EnableSiteEmailResponses[keyof EnableSiteEmailResponses];
+
+export type GetSiteEmailOverviewData = {
+    body?: never;
+    path: {
+        domain: string;
+    };
+    query?: never;
+    url: '/api/sites/{domain}/email';
+};
+
+export type GetSiteEmailOverviewErrors = {
+    /**
+     * Invalid request
+     */
+    400: string;
+    /**
+     * Missing or invalid bearer token
+     */
+    401: string;
+    /**
+     * Resource not found
+     */
+    404: string;
+    /**
+     * Internal server error
+     */
+    500: string;
+};
+
+export type GetSiteEmailOverviewError = GetSiteEmailOverviewErrors[keyof GetSiteEmailOverviewErrors];
+
+export type GetSiteEmailOverviewResponses = {
+    /**
+     * OK
+     */
+    200: SiteEmailOverview;
+};
+
+export type GetSiteEmailOverviewResponse = GetSiteEmailOverviewResponses[keyof GetSiteEmailOverviewResponses];
 
 export type GetSiteEmailData = {
     body?: never;

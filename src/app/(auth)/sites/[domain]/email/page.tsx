@@ -7,18 +7,16 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 import {
-  getSiteEmail,
+  getSiteEmailOverview,
   enableSiteEmail,
   removeSiteEmailDestination,
   getMyFirm,
-  listSiteEmailRoutes,
   createSiteEmailRoute,
   deleteSiteEmailRoute,
-  getSiteEmailCatchAll,
   setSiteEmailCatchAll,
   getSiteZone,
 } from '@/generated/wokil-api';
-import type { SiteEmail, SiteEmailRoute } from '@/generated/wokil-api';
+import type { SiteEmail, SiteEmailOverview, SiteEmailRoute } from '@/generated/wokil-api';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -36,6 +34,8 @@ import { apiErrorMessage, copyToClipboard } from '@/lib/client-ui';
 // has asked for reduced motion.
 const enterRowClass =
   'motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:duration-300';
+
+const overviewKey = (domain: string) => ['site-email-overview', domain];
 
 const guideLinkClass = 'inline-flex items-center gap-1 text-accent underline underline-offset-2';
 
@@ -156,18 +156,24 @@ export default function SiteEmailPage() {
 
   const zoneActive = zone?.status === 'active';
 
-  const { data: email, isLoading: emailLoading, error: emailError } = useQuery({
-    queryKey: ['site-email', domain],
-    queryFn: async () => (await getSiteEmail({ path: { domain }, throwOnError: true })).data,
+  // Status, forwarding addresses and the catch-all all come out of the same
+  // Cloudflare zone, so they arrive together — three separate calls each made
+  // the backend re-resolve ownership and re-sync the mirror.
+  const { data: overview, isLoading: emailLoading, error: emailError } = useQuery({
+    queryKey: overviewKey(domain),
+    queryFn: async () => (await getSiteEmailOverview({ path: { domain }, throwOnError: true })).data,
     enabled: zoneActive,
     retry: false,
     // Cloudflare only marks a destination verified once its owner clicks the
     // link it emailed them, which happens outside this tab. Poll while any
     // inbox is still waiting, not just the first.
     refetchInterval: (query) =>
-      query.state.data?.destinations?.some((d) => !d.verified) ? 10000 : false,
+      query.state.data?.status?.destinations?.some((d) => !d.verified) ? 10000 : false,
   });
 
+  const email = overview?.status;
+  const routes = overview?.routes;
+  const catchAll = overview?.catchAll;
   const destinations = email?.destinations ?? [];
   const verifiedDestinations = destinations.filter((d) => d.verified).map((d) => d.address);
   // One usable inbox is enough to unlock the rest of the page; the others can
@@ -195,20 +201,6 @@ export default function SiteEmailPage() {
   const routeDestination =
     (verifiedDestinations.includes(routeTarget) ? routeTarget : '') || verifiedDestinations[0] || '';
 
-  const { data: routes } = useQuery({
-    queryKey: ['site-email-routes', domain],
-    queryFn: async () => (await listSiteEmailRoutes({ path: { domain }, throwOnError: true })).data,
-    enabled: verified,
-    retry: false,
-  });
-
-  const { data: catchAll } = useQuery({
-    queryKey: ['site-email-catch-all', domain],
-    queryFn: async () => (await getSiteEmailCatchAll({ path: { domain }, throwOnError: true })).data,
-    enabled: verified,
-    retry: false,
-  });
-
   // What the catch-all Select shows: the user's pick, else whatever Cloudflare
   // already forwards to, else the first usable inbox.
   const catchAllDestination =
@@ -217,7 +209,11 @@ export default function SiteEmailPage() {
     verifiedDestinations[0] ||
     '';
 
-  const invalidate = (key: string) => queryClient.invalidateQueries({ queryKey: [key, domain] });
+  const invalidateOverview = () => queryClient.invalidateQueries({ queryKey: overviewKey(domain) });
+  const patchOverview = (update: (old: SiteEmailOverview) => SiteEmailOverview) =>
+    queryClient.setQueryData(overviewKey(domain), (old: SiteEmailOverview | undefined) =>
+      old ? update(old) : old
+    );
 
   // Cleared once the animation is done so a later re-render does not replay it.
   const flagAdded = (id: string) => {
@@ -228,9 +224,9 @@ export default function SiteEmailPage() {
   // Both create calls return the row they just made, so paint it straight into
   // the cache. Invalidating alone means the UI waits a full round trip to show
   // something we already have in hand.
-  const putEmail = (data: SiteEmail) => queryClient.setQueryData(['site-email', domain], data);
+  const putEmail = (status: SiteEmail) => patchOverview((old) => ({ ...old, status }));
   const putRoutes = (update: (old: SiteEmailRoute[]) => SiteEmailRoute[]) =>
-    queryClient.setQueryData(['site-email-routes', domain], (old: SiteEmailRoute[] = []) => update(old));
+    patchOverview((old) => ({ ...old, routes: update(old.routes) }));
 
   const enableMutation = useMutation({
     mutationFn: async (destination: string) =>
@@ -238,7 +234,7 @@ export default function SiteEmailPage() {
     onSuccess: (data, address) => {
       putEmail(data);
       flagAdded(address.toLowerCase());
-      invalidate('site-email');
+      invalidateOverview();
       setDestinationInput('');
       toast.success('Check that inbox for Cloudflare\'s verification link.');
     },
@@ -249,10 +245,11 @@ export default function SiteEmailPage() {
     mutationFn: (address: string) =>
       removeSiteEmailDestination({ path: { domain, address }, throwOnError: true }),
     onSuccess: (_result, address) => {
-      queryClient.setQueryData(['site-email', domain], (old: SiteEmail | undefined) =>
-        old ? { ...old, destinations: old.destinations.filter((d) => d.address !== address) } : old
-      );
-      invalidate('site-email');
+      patchOverview((old) => ({
+        ...old,
+        status: { ...old.status, destinations: old.status.destinations.filter((d) => d.address !== address) },
+      }));
+      invalidateOverview();
       toast.success('Inbox removed');
     },
     // A 400 here names the addresses still forwarding to it, which is exactly
@@ -270,7 +267,7 @@ export default function SiteEmailPage() {
     onSuccess: (route) => {
       putRoutes((old) => [...old, route]);
       flagAdded(route.tag);
-      invalidate('site-email-routes');
+      invalidateOverview();
       setLocalPart('');
       setRouteTarget('');
       toast.success('Address added');
@@ -282,7 +279,7 @@ export default function SiteEmailPage() {
     mutationFn: (tag: string) => deleteSiteEmailRoute({ path: { domain, tag }, throwOnError: true }),
     onSuccess: (_result, tag) => {
       putRoutes((old) => old.filter((route) => route.tag !== tag));
-      invalidate('site-email-routes');
+      invalidateOverview();
       toast.success('Address removed');
     },
     onError: (error: unknown) => toast.error(apiErrorMessage(error, 'Could not remove that address')),
@@ -297,7 +294,7 @@ export default function SiteEmailPage() {
         body: { enabled, destination },
         throwOnError: true,
       }),
-    onSuccess: () => invalidate('site-email-catch-all'),
+    onSuccess: () => invalidateOverview(),
     onError: (error: unknown) => toast.error(apiErrorMessage(error, 'Could not change the catch-all')),
   });
 

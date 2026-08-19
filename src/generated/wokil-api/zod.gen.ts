@@ -166,7 +166,8 @@ export const zLawyerProfile = z.object({
     isPublished: z.boolean().readonly().optional(),
     showPicture: z.boolean().optional(),
     siteUrl: z.string().readonly().optional(),
-    slug: z.string().optional()
+    slug: z.string().optional(),
+    accountType: z.enum(['individual', 'firm']).readonly().optional()
 });
 
 export const zProfileMultipart = z.object({
@@ -244,14 +245,24 @@ export const zSiteEmailRoute = z.object({
     enabled: z.boolean()
 });
 
-export const zSiteEmailRouteRequest = z.object({
-    localPart: z.string(),
-    destination: z.email()
-});
-
 export const zSiteEmailCatchAll = z.object({
     enabled: z.boolean(),
     destination: z.string()
+});
+
+/**
+ * The whole email configuration of a site in one read: everything the email page shows, resolved from a single ownership + mirror sync instead of three.
+ *
+ */
+export const zSiteEmailOverview = z.object({
+    status: zSiteEmail,
+    routes: z.array(zSiteEmailRoute),
+    catchAll: zSiteEmailCatchAll
+});
+
+export const zSiteEmailRouteRequest = z.object({
+    localPart: z.string(),
+    destination: z.email()
 });
 
 export const zSiteEmailCatchAllRequest = z.object({
@@ -411,7 +422,8 @@ export const zFirmProfile = z.object({
     slug: z.string().optional(),
     isPublished: z.boolean().readonly().optional(),
     siteUrl: z.string().readonly().optional(),
-    googleAnalyticsId: z.string().readonly().optional()
+    googleAnalyticsId: z.string().readonly().optional(),
+    accountType: z.enum(['individual', 'firm']).readonly().optional()
 });
 
 export const zAccountTypeResponse = z.object({
@@ -734,6 +746,15 @@ export const zEnableSiteEmailPath = z.object({
  * Email Routing enabled, destination pending verification
  */
 export const zEnableSiteEmailResponse = zSiteEmail;
+
+export const zGetSiteEmailOverviewPath = z.object({
+    domain: z.string()
+});
+
+/**
+ * OK
+ */
+export const zGetSiteEmailOverviewResponse = zSiteEmailOverview;
 
 export const zGetSiteEmailPath = z.object({
     domain: z.string()
