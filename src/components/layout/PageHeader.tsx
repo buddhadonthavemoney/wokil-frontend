@@ -19,7 +19,7 @@ export function PageHeader({ icon, title, description, actions, className }: Pag
         <div className="p-3 bg-accent/12 border border-accent/25 rounded-xl shrink-0">
           <div className="text-accent">
             {React.isValidElement(icon)
-              ? React.cloneElement(icon as React.ReactElement<any>, { className: 'w-6 h-6' })
+              ? React.cloneElement(icon as React.ReactElement<{ className?: string }>, { className: 'w-6 h-6' })
               : <span className="w-6 h-6">{icon}</span>}
           </div>
         </div>

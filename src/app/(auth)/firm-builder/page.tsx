@@ -94,7 +94,7 @@ function FirmBuilderContent() {
 
   // Scoped to firm themes: the lawyer themes take a LawyerProfile and would
   // throw if a firm ever selected one.
-  const { data: themesData } = useQuery(listThemesOptions({ query: { category: 'firm' } }));
+  const { data: themesData } = useQuery({ ...listThemesOptions({ query: { category: 'firm' } }), staleTime: 5 * 60_000 });
   const themes = themesData ?? [];
 
   const handleFillSample = () => {

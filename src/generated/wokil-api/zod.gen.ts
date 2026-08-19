@@ -166,7 +166,8 @@ export const zLawyerProfile = z.object({
     isPublished: z.boolean().readonly().optional(),
     showPicture: z.boolean().optional(),
     siteUrl: z.string().readonly().optional(),
-    slug: z.string().optional()
+    slug: z.string().optional(),
+    accountType: z.enum(['individual', 'firm']).readonly().optional()
 });
 
 export const zProfileMultipart = z.object({
@@ -227,10 +228,14 @@ export const zSiteEmailRequest = z.object({
     destination: z.email()
 });
 
+export const zSiteEmailDestination = z.object({
+    address: z.string(),
+    verified: z.boolean()
+});
+
 export const zSiteEmail = z.object({
     enabled: z.boolean(),
-    destination: z.string(),
-    verified: z.boolean()
+    destinations: z.array(zSiteEmailDestination)
 });
 
 export const zSiteEmailRoute = z.object({
@@ -240,14 +245,24 @@ export const zSiteEmailRoute = z.object({
     enabled: z.boolean()
 });
 
-export const zSiteEmailRouteRequest = z.object({
-    localPart: z.string(),
-    destination: z.email()
-});
-
 export const zSiteEmailCatchAll = z.object({
     enabled: z.boolean(),
     destination: z.string()
+});
+
+/**
+ * The whole email configuration of a site in one read: everything the email page shows, resolved from a single ownership + mirror sync instead of three.
+ *
+ */
+export const zSiteEmailOverview = z.object({
+    status: zSiteEmail,
+    routes: z.array(zSiteEmailRoute),
+    catchAll: zSiteEmailCatchAll
+});
+
+export const zSiteEmailRouteRequest = z.object({
+    localPart: z.string(),
+    destination: z.email()
 });
 
 export const zSiteEmailCatchAllRequest = z.object({
@@ -257,6 +272,85 @@ export const zSiteEmailCatchAllRequest = z.object({
 
 export const zDomainAvailabilityRequest = z.object({
     subDomain: z.string()
+});
+
+export const zDomainSearchRequest = z.object({
+    query: z.string().min(1).max(253)
+});
+
+export const zDomainSuggestion = z.object({
+    domain: z.string(),
+    available: z.boolean(),
+    premium: z.boolean(),
+    price_amount: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    price_currency: z.string().optional(),
+    unavailable_reason: z.enum(['registered', 'on_wokil']).optional()
+});
+
+export const zDomainSearchResponse = z.object({
+    results: z.array(zDomainSuggestion)
+});
+
+/**
+ * The person who will legally own the domain and appear in its WHOIS record. That is the customer, never Wokil.
+ *
+ * The address is split into separate fields because registries require it that way; it is never prefilled from the lawyer profile, whose `officeAddress` is a single free-text line that cannot be split reliably.
+ *
+ */
+export const zRegistrant = z.object({
+    first_name: z.string(),
+    last_name: z.string(),
+    company_name: z.string().optional(),
+    email: z.email(),
+    phone_country_code: z.string(),
+    phone_area_code: z.string().optional(),
+    phone_subscriber_number: z.string(),
+    street: z.string(),
+    house_number: z.string(),
+    zipcode: z.string(),
+    city: z.string(),
+    state: z.string().optional(),
+    country: z.string().length(2)
+});
+
+export const zRegistrantResponse = zRegistrant.and(z.object({
+    saved: z.boolean(),
+    email_verified: z.boolean(),
+    email_verification_status: z.string().optional(),
+    icann_verified_at: z.iso.datetime().optional()
+}));
+
+export const zDomainOrder = z.object({
+    id: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }),
+    domain: z.string(),
+    period_years: z.int(),
+    price_amount: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }),
+    price_currency: z.string(),
+    status: z.enum([
+        'pending_payment',
+        'paid',
+        'registering',
+        'registered',
+        'failed'
+    ]),
+    failure_reason: z.string().optional(),
+    paid_at: z.iso.datetime().optional(),
+    registered_at: z.iso.datetime().optional(),
+    expires_at: z.iso.datetime().optional(),
+    created_at: z.iso.datetime()
+});
+
+export const zDomainOrderList = z.object({
+    orders: z.array(zDomainOrder)
+});
+
+/**
+ * An intent to buy. Note what is NOT here: a price. The amount charged is re-checked against the registrar when the order is created and frozen onto it, so a quote from the search endpoint — stale, or edited — can never become the amount payable.
+ *
+ */
+export const zDomainOrderRequest = z.object({
+    domain: z.string(),
+    period_years: z.int().optional().default(1)
 });
 
 export const zGaPropertyResponse = z.object({
@@ -328,7 +422,8 @@ export const zFirmProfile = z.object({
     slug: z.string().optional(),
     isPublished: z.boolean().readonly().optional(),
     siteUrl: z.string().readonly().optional(),
-    googleAnalyticsId: z.string().readonly().optional()
+    googleAnalyticsId: z.string().readonly().optional(),
+    accountType: z.enum(['individual', 'firm']).readonly().optional()
 });
 
 export const zAccountTypeResponse = z.object({
@@ -652,18 +747,33 @@ export const zEnableSiteEmailPath = z.object({
  */
 export const zEnableSiteEmailResponse = zSiteEmail;
 
-export const zGetSiteEmailPath = z.object({
+export const zGetSiteEmailOverviewPath = z.object({
     domain: z.string()
 });
 
-export const zGetSiteEmailQuery = z.object({
-    destination: z.email().optional()
+/**
+ * OK
+ */
+export const zGetSiteEmailOverviewResponse = zSiteEmailOverview;
+
+export const zGetSiteEmailPath = z.object({
+    domain: z.string()
 });
 
 /**
  * OK
  */
 export const zGetSiteEmailResponse = zSiteEmail;
+
+export const zRemoveSiteEmailDestinationPath = z.object({
+    domain: z.string(),
+    address: z.email()
+});
+
+/**
+ * Destination removed
+ */
+export const zRemoveSiteEmailDestinationResponse = zMessageResponse;
 
 export const zListSiteEmailRoutesPath = z.object({
     domain: z.string()
@@ -721,6 +831,69 @@ export const zCheckDomainAvailabilityBody = zDomainAvailabilityRequest;
  * Domain is available
  */
 export const zCheckDomainAvailabilityResponse = zMessageResponse;
+
+export const zSearchDomainsBody = zDomainSearchRequest;
+
+/**
+ * Search results
+ */
+export const zSearchDomainsResponse = zDomainSearchResponse;
+
+/**
+ * The stored registrant, or a prefilled draft
+ */
+export const zGetRegistrantResponse = zRegistrantResponse;
+
+export const zSaveRegistrantBody = zRegistrant;
+
+/**
+ * The saved registrant
+ */
+export const zSaveRegistrantResponse = zRegistrantResponse;
+
+/**
+ * Verification email requested
+ */
+export const zResendRegistrantVerificationResponse = zMessageResponse;
+
+/**
+ * Orders, newest first
+ */
+export const zListDomainOrdersResponse = zDomainOrderList;
+
+export const zCreateDomainOrderBody = zDomainOrderRequest;
+
+/**
+ * Order created, awaiting payment
+ */
+export const zCreateDomainOrderResponse = zDomainOrder;
+
+export const zGetDomainOrderPath = z.object({
+    orderId: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' })
+});
+
+/**
+ * The order
+ */
+export const zGetDomainOrderResponse = zDomainOrder;
+
+export const zMarkDomainOrderPaidPath = z.object({
+    orderId: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' })
+});
+
+/**
+ * The order, now paid
+ */
+export const zMarkDomainOrderPaidResponse = zDomainOrder;
+
+export const zRetryDomainOrderPath = z.object({
+    orderId: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' })
+});
+
+/**
+ * The order, queued for registration again
+ */
+export const zRetryDomainOrderResponse = zDomainOrder;
 
 /**
  * Deployment started

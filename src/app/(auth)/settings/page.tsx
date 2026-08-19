@@ -6,13 +6,14 @@ import { Switch } from '@/components/ui/switch';
 import { Card, CardContent } from '@/components/ui/card';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getProfile, createGaProperty, updateProfileVisibility } from '@/generated/wokil-api';
+import { createGaProperty, updateProfileVisibility } from '@/generated/wokil-api';
 import { useToast } from '@/hooks/use-toast';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Label } from '@/components/ui/label';
 import { AccountTypeSetting } from '@/components/settings/AccountTypeSetting';
 import { useAccountType } from '@/hooks/useAccountType';
-import { getMyFirmOptions } from '@/generated/wokil-api/@tanstack/react-query.gen';
+import { getMyFirmOptions, getProfileOptions, getProfileQueryKey } from '@/generated/wokil-api/@tanstack/react-query.gen';
+import { apiErrorMessage } from '@/lib/client-ui';
 
 export default function Settings() {
   const router = useRouter();
@@ -20,10 +21,7 @@ export default function Settings() {
   const queryClient = useQueryClient();
 
   // Fetch Profile to check for Google Analytics ID
-  const { data: profile, isLoading: isProfileLoading } = useQuery({
-    queryKey: ['profile'],
-    queryFn: async () => (await getProfile({ throwOnError: true })).data,
-  });
+  const { data: profile, isLoading: isProfileLoading } = useQuery(getProfileOptions());
 
   // A firm's analytics flag lives on the firm, not the profile — `getProfile`
   // returns an empty object for a firm account, so reading googleAnalyticsId
@@ -43,12 +41,12 @@ export default function Settings() {
         description:
           "Google Analytics has been enabled. Collection starts after your next publish — the measurement ID is baked into the site when it renders.",
       });
-      queryClient.invalidateQueries({ queryKey: isFirm ? firmQuery.queryKey : ['profile'] });
+      queryClient.invalidateQueries({ queryKey: isFirm ? firmQuery.queryKey : getProfileQueryKey() });
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       toast({
         title: "Error",
-        description: error.message || "Failed to enable analytics.",
+        description: apiErrorMessage(error, "Failed to enable analytics."),
         variant: "destructive",
       });
     },
@@ -62,12 +60,12 @@ export default function Settings() {
         title: "Visibility Updated",
         description: "Your profile visibility settings have been updated.",
       });
-      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      queryClient.invalidateQueries({ queryKey: getProfileQueryKey() });
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       toast({
         title: "Error",
-        description: error.response?.data?.message || "Failed to update visibility.",
+        description: apiErrorMessage(error, "Failed to update visibility."),
         variant: "destructive",
       });
     },

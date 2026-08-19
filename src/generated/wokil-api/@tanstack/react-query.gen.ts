@@ -3,8 +3,8 @@
 import { type DefaultError, queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { chatLegalResearch, checkDomainAvailability, createFirm, createForm, createGaProperty, createSite, createSiteEmailRoute, createSiteZone, createVerificationRecords, deleteSite, deleteSiteEmailRoute, deploySite, enableSiteEmail, getAccountType, getLegalResearchDocument, getMyFirm, getProfile, getPublicDirectory, getSiteAnalytics, getSiteEmail, getSiteEmailCatchAll, getSiteZone, getVerificationRecords, googleCallback, googleLogin, listForms, listLegalResearchConversationMessages, listLegalResearchConversations, listSiteEmailRoutes, listSites, listSubmissions, listThemes, listUsers, type Options, saveProfile, searchFirms, setAccountType, setSiteEmailCatchAll, submitForm, updateFirm, updateProfileVisibility, uploadFile, verifyDns } from '../sdk.gen';
-import type { ChatLegalResearchData, ChatLegalResearchError, ChatLegalResearchResponse, CheckDomainAvailabilityData, CheckDomainAvailabilityError, CheckDomainAvailabilityResponse, CreateFirmData, CreateFirmError, CreateFirmResponse, CreateFormData, CreateFormError, CreateFormResponse, CreateGaPropertyData, CreateGaPropertyError, CreateGaPropertyResponse, CreateSiteData, CreateSiteEmailRouteData, CreateSiteEmailRouteError, CreateSiteEmailRouteResponse, CreateSiteError, CreateSiteResponse, CreateSiteZoneData, CreateSiteZoneError, CreateSiteZoneResponse, CreateVerificationRecordsData, CreateVerificationRecordsError, CreateVerificationRecordsResponse, DeleteSiteData, DeleteSiteEmailRouteData, DeleteSiteEmailRouteError, DeleteSiteEmailRouteResponse, DeleteSiteError, DeleteSiteResponse, DeploySiteData, DeploySiteError, DeploySiteResponse, EnableSiteEmailData, EnableSiteEmailError, EnableSiteEmailResponse, GetAccountTypeData, GetAccountTypeError, GetAccountTypeResponse, GetLegalResearchDocumentData, GetLegalResearchDocumentError, GetLegalResearchDocumentResponse, GetMyFirmData, GetMyFirmError, GetMyFirmResponse, GetProfileData, GetProfileError, GetProfileResponse, GetPublicDirectoryData, GetPublicDirectoryError, GetPublicDirectoryResponse, GetSiteAnalyticsData, GetSiteAnalyticsError, GetSiteAnalyticsResponse, GetSiteEmailCatchAllData, GetSiteEmailCatchAllError, GetSiteEmailCatchAllResponse, GetSiteEmailData, GetSiteEmailError, GetSiteEmailResponse, GetSiteZoneData, GetSiteZoneError, GetSiteZoneResponse, GetVerificationRecordsData, GetVerificationRecordsError, GetVerificationRecordsResponse, GoogleCallbackData, GoogleCallbackError, GoogleCallbackResponse, GoogleLoginData, GoogleLoginResponse, ListFormsData, ListFormsError, ListFormsResponse, ListLegalResearchConversationMessagesData, ListLegalResearchConversationMessagesError, ListLegalResearchConversationMessagesResponse, ListLegalResearchConversationsData, ListLegalResearchConversationsError, ListLegalResearchConversationsResponse, ListSiteEmailRoutesData, ListSiteEmailRoutesError, ListSiteEmailRoutesResponse, ListSitesData, ListSitesError, ListSitesResponse, ListSubmissionsData, ListSubmissionsError, ListSubmissionsResponse, ListThemesData, ListThemesError, ListThemesResponse, ListUsersData, ListUsersError, ListUsersResponse, SaveProfileData, SaveProfileError, SaveProfileResponse, SearchFirmsData, SearchFirmsError, SearchFirmsResponse, SetAccountTypeData, SetAccountTypeError, SetAccountTypeResponse, SetSiteEmailCatchAllData, SetSiteEmailCatchAllError, SetSiteEmailCatchAllResponse, SubmitFormData, SubmitFormError, SubmitFormResponse, UpdateFirmData, UpdateFirmError, UpdateFirmResponse, UpdateProfileVisibilityData, UpdateProfileVisibilityError, UpdateProfileVisibilityResponse, UploadFileData, UploadFileError, UploadFileResponse, VerifyDnsData, VerifyDnsError, VerifyDnsResponse } from '../types.gen';
+import { chatLegalResearch, checkDomainAvailability, createDomainOrder, createFirm, createForm, createGaProperty, createSite, createSiteEmailRoute, createSiteZone, createVerificationRecords, deleteSite, deleteSiteEmailRoute, deploySite, enableSiteEmail, getAccountType, getDomainOrder, getLegalResearchDocument, getMyFirm, getProfile, getPublicDirectory, getRegistrant, getSiteAnalytics, getSiteEmail, getSiteEmailCatchAll, getSiteEmailOverview, getSiteZone, getVerificationRecords, googleCallback, googleLogin, listDomainOrders, listForms, listLegalResearchConversationMessages, listLegalResearchConversations, listSiteEmailRoutes, listSites, listSubmissions, listThemes, listUsers, markDomainOrderPaid, type Options, removeSiteEmailDestination, resendRegistrantVerification, retryDomainOrder, saveProfile, saveRegistrant, searchDomains, searchFirms, setAccountType, setSiteEmailCatchAll, submitForm, updateFirm, updateProfileVisibility, uploadFile, verifyDns } from '../sdk.gen';
+import type { ChatLegalResearchData, ChatLegalResearchError, ChatLegalResearchResponse, CheckDomainAvailabilityData, CheckDomainAvailabilityError, CheckDomainAvailabilityResponse, CreateDomainOrderData, CreateDomainOrderError, CreateDomainOrderResponse, CreateFirmData, CreateFirmError, CreateFirmResponse, CreateFormData, CreateFormError, CreateFormResponse, CreateGaPropertyData, CreateGaPropertyError, CreateGaPropertyResponse, CreateSiteData, CreateSiteEmailRouteData, CreateSiteEmailRouteError, CreateSiteEmailRouteResponse, CreateSiteError, CreateSiteResponse, CreateSiteZoneData, CreateSiteZoneError, CreateSiteZoneResponse, CreateVerificationRecordsData, CreateVerificationRecordsError, CreateVerificationRecordsResponse, DeleteSiteData, DeleteSiteEmailRouteData, DeleteSiteEmailRouteError, DeleteSiteEmailRouteResponse, DeleteSiteError, DeleteSiteResponse, DeploySiteData, DeploySiteError, DeploySiteResponse, EnableSiteEmailData, EnableSiteEmailError, EnableSiteEmailResponse, GetAccountTypeData, GetAccountTypeError, GetAccountTypeResponse, GetDomainOrderData, GetDomainOrderError, GetDomainOrderResponse, GetLegalResearchDocumentData, GetLegalResearchDocumentError, GetLegalResearchDocumentResponse, GetMyFirmData, GetMyFirmError, GetMyFirmResponse, GetProfileData, GetProfileError, GetProfileResponse, GetPublicDirectoryData, GetPublicDirectoryError, GetPublicDirectoryResponse, GetRegistrantData, GetRegistrantError, GetRegistrantResponse, GetSiteAnalyticsData, GetSiteAnalyticsError, GetSiteAnalyticsResponse, GetSiteEmailCatchAllData, GetSiteEmailCatchAllError, GetSiteEmailCatchAllResponse, GetSiteEmailData, GetSiteEmailError, GetSiteEmailOverviewData, GetSiteEmailOverviewError, GetSiteEmailOverviewResponse, GetSiteEmailResponse, GetSiteZoneData, GetSiteZoneError, GetSiteZoneResponse, GetVerificationRecordsData, GetVerificationRecordsError, GetVerificationRecordsResponse, GoogleCallbackData, GoogleCallbackError, GoogleCallbackResponse, GoogleLoginData, GoogleLoginResponse, ListDomainOrdersData, ListDomainOrdersError, ListDomainOrdersResponse, ListFormsData, ListFormsError, ListFormsResponse, ListLegalResearchConversationMessagesData, ListLegalResearchConversationMessagesError, ListLegalResearchConversationMessagesResponse, ListLegalResearchConversationsData, ListLegalResearchConversationsError, ListLegalResearchConversationsResponse, ListSiteEmailRoutesData, ListSiteEmailRoutesError, ListSiteEmailRoutesResponse, ListSitesData, ListSitesError, ListSitesResponse, ListSubmissionsData, ListSubmissionsError, ListSubmissionsResponse, ListThemesData, ListThemesError, ListThemesResponse, ListUsersData, ListUsersError, ListUsersResponse, MarkDomainOrderPaidData, MarkDomainOrderPaidError, MarkDomainOrderPaidResponse, RemoveSiteEmailDestinationData, RemoveSiteEmailDestinationError, RemoveSiteEmailDestinationResponse, ResendRegistrantVerificationData, ResendRegistrantVerificationError, ResendRegistrantVerificationResponse, RetryDomainOrderData, RetryDomainOrderError, RetryDomainOrderResponse, SaveProfileData, SaveProfileError, SaveProfileResponse, SaveRegistrantData, SaveRegistrantError, SaveRegistrantResponse, SearchDomainsData, SearchDomainsError, SearchDomainsResponse, SearchFirmsData, SearchFirmsError, SearchFirmsResponse, SetAccountTypeData, SetAccountTypeError, SetAccountTypeResponse, SetSiteEmailCatchAllData, SetSiteEmailCatchAllError, SetSiteEmailCatchAllResponse, SubmitFormData, SubmitFormError, SubmitFormResponse, UpdateFirmData, UpdateFirmError, UpdateFirmResponse, UpdateProfileVisibilityData, UpdateProfileVisibilityError, UpdateProfileVisibilityResponse, UploadFileData, UploadFileError, UploadFileResponse, VerifyDnsData, VerifyDnsError, VerifyDnsResponse } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -411,7 +411,7 @@ export const createSiteZoneMutation = (options?: Partial<Options<CreateSiteZoneD
 /**
  * Enable Email Routing on the site's zone (nameserver mode)
  *
- * Switches on Cloudflare Email Routing for the site's own zone — which adds and locks the MX and SPF records itself, so the customer has nothing to do — and registers `destination` as the inbox to forward to. Cloudflare emails that address a verification link; poll the status endpoint until `verified` is true. Requires an `active` zone. Idempotent: an already-registered destination is adopted.
+ * Switches on Cloudflare Email Routing for the site's own zone — which adds and locks the MX and SPF records itself, so the customer has nothing to do — and adds `destination` to the site's forwarding inboxes. Cloudflare emails that address a verification link; poll the status endpoint until it comes back verified. Requires an `active` zone. Idempotent: an already-registered destination is adopted. Call it again with another address to add a second inbox.
  *
  */
 export const enableSiteEmailMutation = (options?: Partial<Options<EnableSiteEmailData>>): UseMutationOptions<EnableSiteEmailResponse, EnableSiteEmailError, Options<EnableSiteEmailData>> => {
@@ -428,12 +428,33 @@ export const enableSiteEmailMutation = (options?: Partial<Options<EnableSiteEmai
     return mutationOptions;
 };
 
+export const getSiteEmailOverviewQueryKey = (options: Options<GetSiteEmailOverviewData>) => createQueryKey('getSiteEmailOverview', options);
+
+/**
+ * Combined email status, routes, and catch-all for a site
+ *
+ * Everything the email page needs in one call. Resolves ownership and syncs the mirror once, then reads status, routes and the catch-all out of it — the three separate endpoints each repeat that work.
+ *
+ */
+export const getSiteEmailOverviewOptions = (options: Options<GetSiteEmailOverviewData>) => queryOptions<GetSiteEmailOverviewResponse, GetSiteEmailOverviewError, GetSiteEmailOverviewResponse, ReturnType<typeof getSiteEmailOverviewQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getSiteEmailOverview({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getSiteEmailOverviewQueryKey(options)
+});
+
 export const getSiteEmailQueryKey = (options: Options<GetSiteEmailData>) => createQueryKey('getSiteEmail', options);
 
 /**
  * Get Email Routing status for the site's zone
  *
- * Read live from Cloudflare, which is the source of truth for both the routing switch and the destination's verification state. Pass `destination` to learn whether that address has been verified; without it only the routing switch is reported.
+ * The inbox list comes from our mirror; the routing switch and each inbox's verification state are read live from Cloudflare, which owns them. Poll this while the customer goes to click Cloudflare's links.
  *
  */
 export const getSiteEmailOptions = (options: Options<GetSiteEmailData>) => queryOptions<GetSiteEmailResponse, GetSiteEmailError, GetSiteEmailResponse, ReturnType<typeof getSiteEmailQueryKey>>({
@@ -448,6 +469,26 @@ export const getSiteEmailOptions = (options: Options<GetSiteEmailData>) => query
     },
     queryKey: getSiteEmailQueryKey(options)
 });
+
+/**
+ * Remove a forwarding inbox from the site
+ *
+ * Drops the inbox from this site's list. Refused with 400 while any forwarding address (or the catch-all) still points at it — delete those first. The Cloudflare destination address itself is left alone: it is account-scoped and may serve another site.
+ *
+ */
+export const removeSiteEmailDestinationMutation = (options?: Partial<Options<RemoveSiteEmailDestinationData>>): UseMutationOptions<RemoveSiteEmailDestinationResponse, RemoveSiteEmailDestinationError, Options<RemoveSiteEmailDestinationData>> => {
+    const mutationOptions: UseMutationOptions<RemoveSiteEmailDestinationResponse, RemoveSiteEmailDestinationError, Options<RemoveSiteEmailDestinationData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await removeSiteEmailDestination({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
 
 export const listSiteEmailRoutesQueryKey = (options: Options<ListSiteEmailRoutesData>) => createQueryKey('listSiteEmailRoutes', options);
 
@@ -473,7 +514,7 @@ export const listSiteEmailRoutesOptions = (options: Options<ListSiteEmailRoutesD
 /**
  * Forward an address on the site's domain to a verified inbox
  *
- * Creates a Cloudflare routing rule sending `localPart`@domain to `destination`. Rejected unless the destination has been verified, since Cloudflare will not deliver to an unverified address.
+ * Creates a Cloudflare routing rule sending `localPart`@domain to every address in `destinations`. Rejected unless all of them have been verified, since Cloudflare will not deliver to an unverified address.
  *
  */
 export const createSiteEmailRouteMutation = (options?: Partial<Options<CreateSiteEmailRouteData>>): UseMutationOptions<CreateSiteEmailRouteResponse, CreateSiteEmailRouteError, Options<CreateSiteEmailRouteData>> => {
@@ -552,6 +593,200 @@ export const checkDomainAvailabilityMutation = (options?: Partial<Options<CheckD
     const mutationOptions: UseMutationOptions<CheckDomainAvailabilityResponse, CheckDomainAvailabilityError, Options<CheckDomainAvailabilityData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await checkDomainAvailability({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Search buyable domains and their prices
+ *
+ * Availability and price for the queried name across the TLD set this deployment sells.
+ *
+ * **The price is a quote, not a charge.** It is re-checked against the registrar and frozen onto the order when the domain is actually bought, so a client must never present this number as the amount payable or send it back as the price to charge.
+ *
+ * Results are cached briefly and the upstream call is rate-limited per user; a 429 carries Retry-After.
+ *
+ */
+export const searchDomainsMutation = (options?: Partial<Options<SearchDomainsData>>): UseMutationOptions<SearchDomainsResponse, SearchDomainsError, Options<SearchDomainsData>> => {
+    const mutationOptions: UseMutationOptions<SearchDomainsResponse, SearchDomainsError, Options<SearchDomainsData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await searchDomains({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const getRegistrantQueryKey = (options?: Options<GetRegistrantData>) => createQueryKey('getRegistrant', options);
+
+/**
+ * The registrant a purchased domain would be registered to
+ *
+ * Returns the stored registrant, or — when none has been saved — a draft prefilled from the lawyer profile with `saved: false`. A draft's name is a guess split on the last space and its address is always empty, because the profile stores one free-text address line that cannot be split into the fields a registry requires.
+ *
+ */
+export const getRegistrantOptions = (options?: Options<GetRegistrantData>) => queryOptions<GetRegistrantResponse, GetRegistrantError, GetRegistrantResponse, ReturnType<typeof getRegistrantQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getRegistrant({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getRegistrantQueryKey(options)
+});
+
+/**
+ * Save the registrant and sync it to the registrar
+ *
+ * Validates server-side, stores the registrant, then creates the registrar customer the first time and updates it thereafter — the handle does not change on later saves.
+ *
+ * Validation is a trust boundary: a malformed phone number or a wrong country code is rejected by the registry *after* payment and after a registration that cannot be refunded. A 400 names the offending field.
+ *
+ * The name and company name reach the registrar only on the first save. A handle's legal identity is fixed once created; changing the owner of a registered domain is a registry trade, not a field edit.
+ *
+ */
+export const saveRegistrantMutation = (options?: Partial<Options<SaveRegistrantData>>): UseMutationOptions<SaveRegistrantResponse, SaveRegistrantError, Options<SaveRegistrantData>> => {
+    const mutationOptions: UseMutationOptions<SaveRegistrantResponse, SaveRegistrantError, Options<SaveRegistrantData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await saveRegistrant({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Send the ICANN verification email again
+ *
+ * For a customer who lost the original. Rate-limited per user, because this sends mail to an address someone typed.
+ *
+ */
+export const resendRegistrantVerificationMutation = (options?: Partial<Options<ResendRegistrantVerificationData>>): UseMutationOptions<ResendRegistrantVerificationResponse, ResendRegistrantVerificationError, Options<ResendRegistrantVerificationData>> => {
+    const mutationOptions: UseMutationOptions<ResendRegistrantVerificationResponse, ResendRegistrantVerificationError, Options<ResendRegistrantVerificationData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await resendRegistrantVerification({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const listDomainOrdersQueryKey = (options?: Options<ListDomainOrdersData>) => createQueryKey('listDomainOrders', options);
+
+/**
+ * The caller's domain orders
+ */
+export const listDomainOrdersOptions = (options?: Options<ListDomainOrdersData>) => queryOptions<ListDomainOrdersResponse, ListDomainOrdersError, ListDomainOrdersResponse, ReturnType<typeof listDomainOrdersQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await listDomainOrders({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: listDomainOrdersQueryKey(options)
+});
+
+/**
+ * Order a domain
+ *
+ * Records an intent to buy at a price this server verifies against the registrar and freezes onto the order. Nothing about money is taken from the request.
+ *
+ * Payment happens out of band in v1: the order is created as `pending_payment`, the customer is told how to pay, and an administrator confirms it. No path on this API lets a customer mark their own order paid.
+ *
+ * Requires a saved registrant (see `/api/domains/registrant`) — there has to be someone to register the domain to before money is taken.
+ *
+ */
+export const createDomainOrderMutation = (options?: Partial<Options<CreateDomainOrderData>>): UseMutationOptions<CreateDomainOrderResponse, CreateDomainOrderError, Options<CreateDomainOrderData>> => {
+    const mutationOptions: UseMutationOptions<CreateDomainOrderResponse, CreateDomainOrderError, Options<CreateDomainOrderData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await createDomainOrder({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const getDomainOrderQueryKey = (options: Options<GetDomainOrderData>) => createQueryKey('getDomainOrder', options);
+
+/**
+ * One of the caller's domain orders
+ *
+ * Someone else's order reports as not found rather than forbidden — confirming that an order exists is itself a leak.
+ *
+ */
+export const getDomainOrderOptions = (options: Options<GetDomainOrderData>) => queryOptions<GetDomainOrderResponse, GetDomainOrderError, GetDomainOrderResponse, ReturnType<typeof getDomainOrderQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getDomainOrder({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getDomainOrderQueryKey(options)
+});
+
+/**
+ * Confirm an out-of-band payment (administrators only)
+ *
+ * The one transition that authorises registration, and the only way an order leaves `pending_payment`. Restricted to the configured administrator account; this is the click that spends real money on something that cannot be refunded.
+ *
+ * Called by the Django admin, not by any customer UI.
+ *
+ */
+export const markDomainOrderPaidMutation = (options?: Partial<Options<MarkDomainOrderPaidData>>): UseMutationOptions<MarkDomainOrderPaidResponse, MarkDomainOrderPaidError, Options<MarkDomainOrderPaidData>> => {
+    const mutationOptions: UseMutationOptions<MarkDomainOrderPaidResponse, MarkDomainOrderPaidError, Options<MarkDomainOrderPaidData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await markDomainOrderPaid({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Retry a failed registration (administrators only)
+ *
+ * Returns a `failed` order to `paid` so registration runs again. The payment is retained throughout — the money is still ours to honour.
+ *
+ */
+export const retryDomainOrderMutation = (options?: Partial<Options<RetryDomainOrderData>>): UseMutationOptions<RetryDomainOrderResponse, RetryDomainOrderError, Options<RetryDomainOrderData>> => {
+    const mutationOptions: UseMutationOptions<RetryDomainOrderResponse, RetryDomainOrderError, Options<RetryDomainOrderData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await retryDomainOrder({
                 ...options,
                 ...fnOptions,
                 throwOnError: true

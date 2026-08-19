@@ -2,7 +2,7 @@ import { LawyerProfile } from '@/types/lawyer';
 
 interface StructuredDataProps {
   type: 'Organization' | 'WebSite' | 'Person' | 'ProfilePage';
-  data?: any;
+  data?: LawyerProfile;
 }
 
 export function StructuredData({ type, data }: StructuredDataProps) {

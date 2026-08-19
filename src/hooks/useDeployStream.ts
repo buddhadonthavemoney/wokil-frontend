@@ -39,8 +39,12 @@ interface UseDeployStreamOptions {
    * "no ongoing deployment" - ambiguous between "it finished before we
    * subscribed" and "nothing was ever running". Defaults to trusting the
    * ambiguous case as success.
+   *
+   * `'idle'` is the third answer: nothing is running and that is expected
+   * (a domain still waiting on its zone, say). The modal closes instead of
+   * claiming either a success or a failure that never happened.
    */
-  confirmAlreadyDone?: () => Promise<boolean>;
+  confirmAlreadyDone?: () => Promise<boolean | 'idle'>;
 }
 
 export interface DeployStreamState {
@@ -155,6 +159,11 @@ export function useDeployStream({
           const errorText = await response.text();
           if (errorText.toLowerCase().includes('no ongoing deployment') || response.status === 400) {
             const reallyDone = confirmAlreadyDoneRef.current ? await confirmAlreadyDoneRef.current() : true;
+            if (reallyDone === 'idle') {
+              setPhase('idle');
+              onDeactivateRef.current();
+              return;
+            }
             if (reallyDone) {
               await finish('success', 'Deployment complete!');
               return;

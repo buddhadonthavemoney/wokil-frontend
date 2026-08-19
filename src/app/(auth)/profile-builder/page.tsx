@@ -121,7 +121,7 @@ export default function ProfileBuilder() {
     });
   };
 
-  const { data: themesData } = useQuery(listThemesOptions({ query: { category: 'individual' } }));
+  const { data: themesData } = useQuery({ ...listThemesOptions({ query: { category: 'individual' } }), staleTime: 5 * 60_000 });
   const themes = themesData ?? [];
 
   const hasBasicInfo = Boolean(

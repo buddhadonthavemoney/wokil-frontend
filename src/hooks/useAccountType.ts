@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { getAccountTypeOptions } from '@/generated/wokil-api/@tanstack/react-query.gen';
+import { getProfileOptions } from '@/generated/wokil-api/@tanstack/react-query.gen';
 
 export type AccountType = 'individual' | 'firm';
 
@@ -14,10 +14,16 @@ export type AccountType = 'individual' | 'firm';
  * onboarding fork, but the choice matters on every page after that too: an
  * individual's data lives behind `getProfile`, a firm's behind `getMyFirm`,
  * and a page that assumes the wrong one renders an empty shell rather than an
- * error. Cached by react-query, so the extra pages cost no extra requests.
+ * error.
+ *
+ * Read off the profile rather than /api/user/account-type: the profile
+ * response carries it (a firm account gets an otherwise-empty body with the
+ * field set), and four pages plus both builder hooks already run this exact
+ * query — so on those pages the sidebar costs no request at all, and on the
+ * rest it costs the one it used to spend on the dedicated endpoint.
  */
 export function useAccountType() {
-  const { data, isLoading } = useQuery(getAccountTypeOptions());
+  const { data, isLoading } = useQuery(getProfileOptions());
   return {
     accountType: data?.accountType as AccountType | undefined,
     isLoading,

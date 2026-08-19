@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // A worktree's own .next build output, linted only because it sits inside
+    // this checkout.
+    ".claude/worktrees/**",
     // Generated API client (spec 001) — never hand-edited, never linted.
     "src/generated/**",
   ]),

@@ -1,20 +1,25 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useSyncExternalStore } from 'react';
+
+// The token only changes on sign-in/out, both of which navigate away from any
+// guarded page, so nothing has to subscribe.
+const subscribe = () => () => {};
+const readToken = () => localStorage.getItem('token');
+// undefined, not null: on the server (and the hydrating render) the token has
+// not been read yet, which must not be mistaken for "signed out" and bounce a
+// signed-in visitor off their own page.
+const unread = () => undefined;
 
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const [authorized, setAuthorized] = useState(false);
+  const token = useSyncExternalStore(subscribe, readToken, unread);
+  const authorized = !!token;
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      router.push('/');
-    } else {
-      setAuthorized(true);
-    }
-  }, [router]);
+    if (token === null) router.push('/');
+  }, [token, router]);
 
   if (!authorized) {
     return (

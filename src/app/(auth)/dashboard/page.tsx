@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { LawyerProfile } from '@/types/lawyer';
 import { toLawyerProfile } from '@/lib/lawyer-profile-adapter';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -28,8 +27,9 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { InfoModal } from '@/components/InfoModal';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { getProfile } from '@/generated/wokil-api';
+import { getProfileOptions } from '@/generated/wokil-api/@tanstack/react-query.gen';
 import { useDeployHandoff } from '@/hooks/useDeployHandoff';
 import { useRequireAccountType } from '@/hooks/useAccountType';
 import { DeployProgressModal } from '@/components/deploy/DeployProgressModal';
@@ -53,17 +53,19 @@ function DashboardContent() {
   const [highlightViewSite, setHighlightViewSite] = useState(false);
   const [showGuideArrow, setShowGuideArrow] = useState(false);
 
-  const [showInfoModal, setShowInfoModal] = useState(false);
-  const [modalContent, setModalContent] = useState({
-    title: '',
-    description: '',
-    type: 'info' as 'info' | 'success' | 'error',
-  });
-
   const searchParams = useSearchParams();
+
+  // Seeded from the query string the page was opened with — the effect below
+  // then strips those params, so this is read once and never re-derived.
+  const [showInfoModal, setShowInfoModal] = useState(() => !!searchParams?.get('showInfoModal'));
+  const [modalContent] = useState(() => ({
+    title: searchParams?.get('modalTitle') || 'Info',
+    description: searchParams?.get('modalDescription') || '',
+    type: (searchParams?.get('modalType') as 'info' | 'success' | 'error') || 'info',
+  }));
+
   const router = useRouter();
   const { toast } = useToast();
-  const queryClient = useQueryClient();
 
   // Keyed in the query cache rather than local state so other pages can
   // invalidate it — deleting a site on /sites has to be able to tell the
@@ -71,30 +73,18 @@ function DashboardContent() {
   // toLawyerProfile (not a raw cast) because the generated API type has no
   // `id` and marks everything optional; existing cache data fills the gaps
   // the response omits.
-  const {
-    data: profile = null,
-    isLoading: loading,
-    refetch: fetchProfile,
-  } = useQuery({
-    queryKey: ['profile'],
-    queryFn: async () => {
-      const data = (await getProfile({ throwOnError: true })).data;
-      if (!data || !(data.slug || data.basicInformation)) return null;
-      const existing = queryClient.getQueryData<LawyerProfile>(['profile']) ?? undefined;
-      return toLawyerProfile(data, existing);
-    },
-  });
+  const { data, isLoading: loading, refetch: fetchProfile } = useQuery(getProfileOptions());
 
+  // Mapped here rather than in the queryFn so the cache holds the raw API
+  // response: it is the same entry every other page (and useProfileForm) reads,
+  // and accountType rides on it — see useAccountType.
+  const profile =
+    data && (data.slug || data.basicInformation) ? toLawyerProfile(data) : null;
+
+  // The modal's content is already in state; drop the params so a refresh (or
+  // the back button) doesn't reopen it.
   useEffect(() => {
-    if (!searchParams) return;
-    const showInfo = searchParams.get('showInfoModal');
-    if (showInfo) {
-      setShowInfoModal(true);
-      setModalContent({
-        title: searchParams.get('modalTitle') || 'Info',
-        description: searchParams.get('modalDescription') || '',
-        type: (searchParams.get('modalType') as any) || 'info',
-      });
+    if (searchParams?.get('showInfoModal')) {
       const newParams = new URLSearchParams(searchParams.toString());
       newParams.delete('showInfoModal');
       newParams.delete('modalTitle');
