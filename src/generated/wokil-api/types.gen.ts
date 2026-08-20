@@ -860,6 +860,18 @@ export type LegalResearchEntityList = {
     entities: Array<LegalResearchEntity>;
 };
 
+export type LegalResearchEntityRole = {
+    role: string;
+    entity_count: number;
+};
+
+/**
+ * One role, and how many people in the corpus carry it. Ordered commonest first.
+ */
+export type LegalResearchEntityRoles = {
+    roles: Array<LegalResearchEntityRole>;
+};
+
 export type LegalResearchEntityDocument = {
     document_id: number;
     title: string;
@@ -3049,6 +3061,43 @@ export type ListLegalResearchEntitiesResponses = {
 };
 
 export type ListLegalResearchEntitiesResponse = ListLegalResearchEntitiesResponses[keyof ListLegalResearchEntitiesResponses];
+
+export type ListLegalResearchEntityRolesData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/legal-research/entities/roles';
+};
+
+export type ListLegalResearchEntityRolesErrors = {
+    /**
+     * Missing or invalid bearer token
+     */
+    401: string;
+    /**
+     * Internal server error
+     */
+    500: string;
+    /**
+     * An upstream service (wokil-rag, the domain registrar) returned a bad response
+     */
+    502: string;
+    /**
+     * An upstream service is unavailable, or the feature is not configured on this deployment
+     */
+    503: string;
+};
+
+export type ListLegalResearchEntityRolesError = ListLegalResearchEntityRolesErrors[keyof ListLegalResearchEntityRolesErrors];
+
+export type ListLegalResearchEntityRolesResponses = {
+    /**
+     * OK
+     */
+    200: LegalResearchEntityRoles;
+};
+
+export type ListLegalResearchEntityRolesResponse = ListLegalResearchEntityRolesResponses[keyof ListLegalResearchEntityRolesResponses];
 
 export type GetLegalResearchEntityData = {
     body?: never;

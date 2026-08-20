@@ -22,6 +22,7 @@ import { Composer, type ChatMode } from './components/Composer';
 import { DocumentPanel, type DocumentTarget } from './components/DocumentPanel';
 import { MessageList, type Turn } from './components/MessageList';
 import { isWholeCorpus } from './components/ScopePicker';
+import { takeChatPrefill } from './prefill';
 
 /** A cached turn, plus the individual passages a streamed answer carried.
  *  They are not persisted server-side — a turn re-read from the API keeps only
@@ -120,6 +121,16 @@ export default function LegalResearchPage() {
     setScope(last.scope ?? {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeConversationId, messagesLoaded]);
+
+  // Arriving from entity search: the person's name is in the box and their
+  // documents are the scope, so the first question cannot wander outside them.
+  useEffect(() => {
+    const prefill = takeChatPrefill();
+    if (!prefill) return;
+    setQuery(prefill.question);
+    setScope(prefill.scope);
+    setActiveConversationId(null);
+  }, []);
 
   const stream = useChatStream({
     onConversation: (conversationId) => {

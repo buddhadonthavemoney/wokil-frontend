@@ -561,6 +561,18 @@ export const zLegalResearchEntityList = z.object({
     entities: z.array(zLegalResearchEntity)
 });
 
+export const zLegalResearchEntityRole = z.object({
+    role: z.string(),
+    entity_count: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' })
+});
+
+/**
+ * One role, and how many people in the corpus carry it. Ordered commonest first.
+ */
+export const zLegalResearchEntityRoles = z.object({
+    roles: z.array(zLegalResearchEntityRole)
+});
+
 export const zLegalResearchEntityDocument = z.object({
     document_id: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }),
     title: z.string(),
@@ -1129,6 +1141,11 @@ export const zListLegalResearchEntitiesQuery = z.object({
  * OK
  */
 export const zListLegalResearchEntitiesResponse = zLegalResearchEntityList;
+
+/**
+ * OK
+ */
+export const zListLegalResearchEntityRolesResponse = zLegalResearchEntityRoles;
 
 export const zGetLegalResearchEntityPath = z.object({
     entity_id: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' })

@@ -48,9 +48,14 @@ export function ScopePicker({ scope, onChange, disabled }: ScopePickerProps) {
   });
 
   const selectedCount = (scope.collections?.length ?? 0) + (scope.categories?.length ?? 0);
+  // A document set comes from elsewhere (entity search hands one over) and the
+  // picker cannot edit it, so it is named rather than counted as a filter.
+  const documentCount = scope.document_ids?.length ?? 0;
   const label = isWholeCorpus(scope)
     ? 'Whole corpus'
-    : `${selectedCount} filter${selectedCount === 1 ? '' : 's'}`;
+    : documentCount > 0 && selectedCount === 0
+      ? `${documentCount} document${documentCount === 1 ? '' : 's'}`
+      : `${selectedCount} filter${selectedCount === 1 ? '' : 's'}`;
 
   return (
     <div className="relative">

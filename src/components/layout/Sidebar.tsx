@@ -19,6 +19,7 @@ import {
   CalendarDays,
   ChevronDown,
   Mail,
+  Users,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -302,6 +303,9 @@ export default function Sidebar() {
           <NavSection label="Tools">
             <div onClick={handleNavClick}>
               <NavLink icon={<Gavel className="w-5 h-5" />} label="Legal Research" path="/legal-research" isActive={pathname === '/legal-research'} />
+            </div>
+            <div onClick={handleNavClick}>
+              <NavLink icon={<Users className="w-5 h-5" />} label="People in Cases" path="/legal-research/entities" isActive={pathname === '/legal-research/entities'} />
             </div>
             <div onClick={handleNavClick}>
               <ComingSoonLink icon={<CalendarDays className="w-5 h-5" />} label="Court Calendar" path="/court-calendar" isActive={pathname === '/court-calendar'} />
