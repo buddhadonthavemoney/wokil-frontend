@@ -661,25 +661,72 @@ export type AccountTypeRequest = {
     accountType: 'individual' | 'firm';
 };
 
+/**
+ * The corpus filter for a question. An omitted or empty scope means the whole corpus. Bounds mirror RAG's own ScopeIn so an oversized scope fails here rather than as an upstream 422.
+ */
+export type LegalResearchScope = {
+    /**
+     * The working set — e.g. the documents a user ticked off the sources of a previous answer.
+     */
+    document_ids?: Array<number>;
+    collections?: Array<string>;
+    categories?: Array<string>;
+};
+
 export type LegalResearchChatRequest = {
     question: string;
+    /**
+     * Passages to retrieve. Leave unset in research mode — RAG widens the default 5 to 25 only when top_k is exactly the default, so sending an explicit value opts out of that widening.
+     */
     top_k?: number;
     /**
-     * wokil-go's own conversation id (NOT RAG's session_id). Accepted now, persisted from Phase 4.
+     * `ask` is fast and focused; `research` retrieves far more broadly and is materially slower.
+     */
+    mode?: 'ask' | 'research';
+    /**
+     * Omit entirely for the whole corpus.
+     */
+    scope?: LegalResearchScope;
+    /**
+     * Restrict retrieval to a single document (RAG's opaque id).
+     */
+    document_id?: number | null;
+    /**
+     * wokil-go's own conversation id (NOT RAG's session_id). Omit to start a new conversation.
      */
     conversation_id?: number | null;
 };
 
+/**
+ * One retrieved passage behind the answer. Several may share a document_id — see LegalResearchFile for the deduplicated per-document view.
+ */
 export type LegalResearchSource = {
     /**
      * RAG's opaque document id (never joined against wokil_db).
      */
     document_id: number;
+    /**
+     * RAG's id for this specific passage, so a client can anchor a document view to the cited chunk.
+     */
+    chunk_id?: number;
     document_title: string;
     citation: string;
     text: string;
     page_start?: number | null;
+    /**
+     * Final relevance after fusion and reranking — the value to rank on.
+     */
     score: number;
+    /**
+     * Raw vector similarity before reranking. Diagnostic; rank on score.
+     */
+    similarity?: number;
+    /**
+     * Which retrieval channels matched this passage (vector, keyword, exact citation, …).
+     */
+    signals?: Array<string>;
+    collection?: string | null;
+    category?: string | null;
 };
 
 /**
@@ -695,7 +742,7 @@ export type LegalResearchFile = {
 
 export type LegalResearchChatResponse = {
     /**
-     * Echoed/created wokil-go conversation id once persistence lands (Phase 4).
+     * The wokil-go conversation this turn was stored in — echoed when one was supplied, newly created otherwise.
      */
     conversation_id?: number | null;
     answer: string;
@@ -709,6 +756,18 @@ export type LegalResearchChatResponse = {
     from_general_knowledge: boolean;
     sources: Array<LegalResearchSource>;
     files: Array<LegalResearchFile>;
+    /**
+     * A citation in the answer matched no retrieved passage. A detector, not a corrector — the answer is unchanged, this flags it as worth verifying.
+     */
+    citation_warning?: boolean;
+    /**
+     * Grounded and cited, but from passages below the confidence floor.
+     */
+    low_confidence?: boolean;
+    /**
+     * Corpus terms close to what was typed, offered when retrieval underperformed. Never applied automatically.
+     */
+    suggestions?: Array<string>;
 };
 
 /**
@@ -736,7 +795,123 @@ export type LegalResearchMessage = {
      */
     sources: Array<LegalResearchFile>;
     from_general_knowledge: boolean;
+    /**
+     * The mode this turn was asked in.
+     */
+    mode?: 'ask' | 'research';
+    /**
+     * The corpus filter this turn was asked against — empty means the whole corpus. Stored so a reopened conversation is reproducible.
+     */
+    scope?: LegalResearchScope;
+    citation_warning?: boolean;
+    low_confidence?: boolean;
     created_at: string;
+};
+
+export type LegalResearchCategoryScope = {
+    category: string;
+    document_count: number;
+};
+
+export type LegalResearchCollectionScope = {
+    collection: string;
+    document_count: number;
+    /**
+     * The commonest categories in this collection, largest first — a head, not the whole set. See `truncated`.
+     */
+    categories: Array<LegalResearchCategoryScope>;
+    /**
+     * How many distinct categories the collection actually has, so a client can say "40 of 2,559" rather than implying the list is complete.
+     */
+    category_total?: number;
+    truncated?: boolean;
+};
+
+/**
+ * What the scope picker can offer, nested by collection. Categories are nested rather than flat because the collections' categories mean different things — Najir's are case types, NepalLawCommission's are folders like `acts` — and a flat list invites selecting a pair that matches nothing.
+ */
+export type LegalResearchScopeOptions = {
+    collections: Array<LegalResearchCollectionScope>;
+};
+
+/**
+ * A person named in the corpus — advocate, judge or party — extracted by wokil-rag's citation graph.
+ */
+export type LegalResearchEntity = {
+    id: number;
+    name: string;
+    /**
+     * Free-form in the corpus (advocate, judge, party, …); not an enum here so a new role from an ingest doesn't break the client.
+     */
+    role: string;
+    document_count: number;
+};
+
+/**
+ * One page of entity search results. The first paginated response in this API — offset/limit, matching what RAG returns rather than inventing a cursor scheme.
+ */
+export type LegalResearchEntityList = {
+    /**
+     * Matches across the whole corpus, not just this page.
+     */
+    total: number;
+    limit: number;
+    offset: number;
+    entities: Array<LegalResearchEntity>;
+};
+
+export type LegalResearchEntityDocument = {
+    document_id: number;
+    title: string;
+    collection?: string | null;
+    category?: string | null;
+    doc_year?: number | null;
+    /**
+     * Derived by RAG from the category, so a client never has to know the "repealed-*" naming convention.
+     */
+    is_repealed?: boolean;
+    status_label?: string | null;
+};
+
+/**
+ * One person plus the documents they appear in, most recent first.
+ */
+export type LegalResearchEntityDetail = {
+    id: number;
+    name: string;
+    role: string;
+    document_count: number;
+    documents: Array<LegalResearchEntityDocument>;
+};
+
+/**
+ * One citation edge. An unresolved edge names a decision that is cited but not itself in the corpus — it has no document_id and cannot be opened.
+ */
+export type LegalResearchCitation = {
+    decision_number: string;
+    document_id?: number | null;
+    title?: string | null;
+    context?: string | null;
+    resolved: boolean;
+};
+
+/**
+ * One document's place in the corpus: the people named in it, what it cites and what cites it. `is_repealed` and `status_label` are proper fields here, unlike the `⚠ REPEALED — …` prefix RAG bakes into citation strings.
+ */
+export type LegalResearchDocumentGraph = {
+    document_id: number;
+    title: string;
+    collection?: string | null;
+    category?: string | null;
+    doc_year?: number | null;
+    doc_date?: string | null;
+    source_url?: string | null;
+    decision_number?: string | null;
+    is_repealed?: boolean;
+    status_label?: string | null;
+    entities: Array<LegalResearchEntity>;
+    cites: Array<LegalResearchCitation>;
+    cited_by: Array<LegalResearchCitation>;
 };
 
 export type LegalResearchDocumentChunk = {
@@ -1269,7 +1444,7 @@ export type DeleteSiteData = {
     };
     query?: {
         /**
-         * Required for a nameserver-mode site whose delegation is still live: deleting the site deletes the Cloudflare zone with it, and the domain stops resolving anywhere until the registrar is repointed.
+         * Acknowledges what deleting the Cloudflare zone takes with it. Required for a nameserver-mode site whose delegation is still live — the domain stops resolving anywhere until the registrar is repointed — and, separately, for one with email routing set up: the MX records, the forwarding rules and the catch-all all live in that zone, so mail to the domain stops being delivered. Each is refused with its own 400 naming what breaks.
          */
         confirm?: boolean;
     };
@@ -2665,6 +2840,51 @@ export type ChatLegalResearchResponses = {
 
 export type ChatLegalResearchResponse = ChatLegalResearchResponses[keyof ChatLegalResearchResponses];
 
+export type StreamLegalResearchChatData = {
+    body: LegalResearchChatRequest;
+    path?: never;
+    query?: never;
+    url: '/api/legal-research/chat/stream';
+};
+
+export type StreamLegalResearchChatErrors = {
+    /**
+     * Invalid request
+     */
+    400: string;
+    /**
+     * Missing or invalid bearer token
+     */
+    401: string;
+    /**
+     * Resource not found
+     */
+    404: string;
+    /**
+     * Internal server error
+     */
+    500: string;
+    /**
+     * An upstream service (wokil-rag, the domain registrar) returned a bad response
+     */
+    502: string;
+    /**
+     * An upstream service is unavailable, or the feature is not configured on this deployment
+     */
+    503: string;
+};
+
+export type StreamLegalResearchChatError = StreamLegalResearchChatErrors[keyof StreamLegalResearchChatErrors];
+
+export type StreamLegalResearchChatResponses = {
+    /**
+     * text/event-stream of chat frames
+     */
+    200: string;
+};
+
+export type StreamLegalResearchChatResponse = StreamLegalResearchChatResponses[keyof StreamLegalResearchChatResponses];
+
 export type ListLegalResearchConversationsData = {
     body?: never;
     path?: never;
@@ -2728,6 +2948,189 @@ export type ListLegalResearchConversationMessagesResponses = {
 };
 
 export type ListLegalResearchConversationMessagesResponse = ListLegalResearchConversationMessagesResponses[keyof ListLegalResearchConversationMessagesResponses];
+
+export type GetLegalResearchScopeOptionsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/legal-research/scope-options';
+};
+
+export type GetLegalResearchScopeOptionsErrors = {
+    /**
+     * Missing or invalid bearer token
+     */
+    401: string;
+    /**
+     * Resource not found
+     */
+    404: string;
+    /**
+     * Internal server error
+     */
+    500: string;
+    /**
+     * An upstream service (wokil-rag, the domain registrar) returned a bad response
+     */
+    502: string;
+    /**
+     * An upstream service is unavailable, or the feature is not configured on this deployment
+     */
+    503: string;
+};
+
+export type GetLegalResearchScopeOptionsError = GetLegalResearchScopeOptionsErrors[keyof GetLegalResearchScopeOptionsErrors];
+
+export type GetLegalResearchScopeOptionsResponses = {
+    /**
+     * OK
+     */
+    200: LegalResearchScopeOptions;
+};
+
+export type GetLegalResearchScopeOptionsResponse = GetLegalResearchScopeOptionsResponses[keyof GetLegalResearchScopeOptionsResponses];
+
+export type ListLegalResearchEntitiesData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Name substring, case-insensitive. Omit to list everyone, commonest first.
+         */
+        q?: string;
+        /**
+         * Restrict to one role. Free-form — see the `role` on a returned entity.
+         */
+        role?: string;
+        limit?: number;
+        offset?: number;
+    };
+    url: '/api/legal-research/entities';
+};
+
+export type ListLegalResearchEntitiesErrors = {
+    /**
+     * Invalid request
+     */
+    400: string;
+    /**
+     * Missing or invalid bearer token
+     */
+    401: string;
+    /**
+     * Resource not found
+     */
+    404: string;
+    /**
+     * Internal server error
+     */
+    500: string;
+    /**
+     * An upstream service (wokil-rag, the domain registrar) returned a bad response
+     */
+    502: string;
+    /**
+     * An upstream service is unavailable, or the feature is not configured on this deployment
+     */
+    503: string;
+};
+
+export type ListLegalResearchEntitiesError = ListLegalResearchEntitiesErrors[keyof ListLegalResearchEntitiesErrors];
+
+export type ListLegalResearchEntitiesResponses = {
+    /**
+     * OK
+     */
+    200: LegalResearchEntityList;
+};
+
+export type ListLegalResearchEntitiesResponse = ListLegalResearchEntitiesResponses[keyof ListLegalResearchEntitiesResponses];
+
+export type GetLegalResearchEntityData = {
+    body?: never;
+    path: {
+        entity_id: number;
+    };
+    query?: never;
+    url: '/api/legal-research/entities/{entity_id}';
+};
+
+export type GetLegalResearchEntityErrors = {
+    /**
+     * Missing or invalid bearer token
+     */
+    401: string;
+    /**
+     * Resource not found
+     */
+    404: string;
+    /**
+     * Internal server error
+     */
+    500: string;
+    /**
+     * An upstream service (wokil-rag, the domain registrar) returned a bad response
+     */
+    502: string;
+    /**
+     * An upstream service is unavailable, or the feature is not configured on this deployment
+     */
+    503: string;
+};
+
+export type GetLegalResearchEntityError = GetLegalResearchEntityErrors[keyof GetLegalResearchEntityErrors];
+
+export type GetLegalResearchEntityResponses = {
+    /**
+     * OK
+     */
+    200: LegalResearchEntityDetail;
+};
+
+export type GetLegalResearchEntityResponse = GetLegalResearchEntityResponses[keyof GetLegalResearchEntityResponses];
+
+export type GetLegalResearchDocumentGraphData = {
+    body?: never;
+    path: {
+        document_id: number;
+    };
+    query?: never;
+    url: '/api/legal-research/documents/{document_id}/graph';
+};
+
+export type GetLegalResearchDocumentGraphErrors = {
+    /**
+     * Missing or invalid bearer token
+     */
+    401: string;
+    /**
+     * Resource not found
+     */
+    404: string;
+    /**
+     * Internal server error
+     */
+    500: string;
+    /**
+     * An upstream service (wokil-rag, the domain registrar) returned a bad response
+     */
+    502: string;
+    /**
+     * An upstream service is unavailable, or the feature is not configured on this deployment
+     */
+    503: string;
+};
+
+export type GetLegalResearchDocumentGraphError = GetLegalResearchDocumentGraphErrors[keyof GetLegalResearchDocumentGraphErrors];
+
+export type GetLegalResearchDocumentGraphResponses = {
+    /**
+     * OK
+     */
+    200: LegalResearchDocumentGraph;
+};
+
+export type GetLegalResearchDocumentGraphResponse = GetLegalResearchDocumentGraphResponses[keyof GetLegalResearchDocumentGraphResponses];
 
 export type GetLegalResearchDocumentData = {
     body?: never;
