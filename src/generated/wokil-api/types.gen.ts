@@ -915,6 +915,10 @@ export type LegalResearchDocumentGraph = {
 };
 
 export type LegalResearchDocumentChunk = {
+    /**
+     * RAG's id for this passage — the same id a chat source carries, so a client can scroll a document to the passage that was cited.
+     */
+    chunk_id?: number;
     chunk_index: number;
     section_path?: string | null;
     main_clause_number?: string | null;

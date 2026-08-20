@@ -13,13 +13,24 @@ import {
   type LegalResearchFile,
   type LegalResearchMessage,
   type LegalResearchScope,
+  type LegalResearchSource,
 } from '@/generated/wokil-api';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { useChatStream } from '@/hooks/useChatStream';
 
 import { Composer, type ChatMode } from './components/Composer';
+import { DocumentPanel, type DocumentTarget } from './components/DocumentPanel';
 import { MessageList, type Turn } from './components/MessageList';
 import { isWholeCorpus } from './components/ScopePicker';
+
+/** A cached turn, plus the individual passages a streamed answer carried.
+ *  They are not persisted server-side — a turn re-read from the API keeps only
+ *  its per-document snapshot — so they live on the cache entry, not in the
+ *  generated type. */
+type CachedMessage = LegalResearchMessage & {
+  passages?: LegalResearchSource[];
+  suggestions?: string[];
+};
 
 const suggestedChips = ['Fundamental Rights (Part 3)', 'Muluki Civil Code 2074', 'Cyber Crime Precedents'];
 
@@ -40,6 +51,7 @@ export default function LegalResearchPage() {
   const [activeConversationId, setActiveConversationId] = useState<number | null>(null);
   const [mode, setMode] = useState<ChatMode>('ask');
   const [scope, setScope] = useState<LegalResearchScope>({});
+  const [documentTarget, setDocumentTarget] = useState<DocumentTarget | null>(null);
   const threadRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
 
@@ -58,7 +70,7 @@ export default function LegalResearchPage() {
 
   const messagesQuery = useQuery({
     queryKey: ['legal-research', 'messages', activeConversationId],
-    queryFn: async (): Promise<LegalResearchMessage[]> => {
+    queryFn: async (): Promise<CachedMessage[]> => {
       if (activeConversationId == null) return [];
       const { data, error } = await listLegalResearchConversationMessages({
         path: { conversation_id: activeConversationId },
@@ -68,7 +80,7 @@ export default function LegalResearchPage() {
           typeof error === 'string' ? error : 'Failed to load the conversation.',
         );
       }
-      return (data ?? []) as LegalResearchMessage[];
+      return (data ?? []) as CachedMessage[];
     },
     enabled: activeConversationId != null,
   });
@@ -79,7 +91,11 @@ export default function LegalResearchPage() {
         question: m.question,
         answer: m.answer,
         sources: m.sources ?? [],
+        passages: m.passages,
+        suggestions: m.suggestions,
         fromGeneralKnowledge: m.from_general_knowledge,
+        citationWarning: m.citation_warning,
+        lowConfidence: m.low_confidence,
         createdAt: m.created_at,
       })),
     [messagesQuery.data],
@@ -114,21 +130,25 @@ export default function LegalResearchPage() {
     onDone: (question, result: LegalResearchChatResponse) => {
       const conversationId = result.conversation_id ?? activeConversationId;
       if (conversationId != null) {
-        const confirmed: LegalResearchMessage = {
+        const confirmed: CachedMessage = {
           id: 0,
           turn_index: 0,
           question,
           answer: result.answer,
           sources: (result.files ?? []) as LegalResearchFile[],
+          passages: (result.sources ?? []) as LegalResearchSource[],
+          suggestions: result.suggestions,
           from_general_knowledge: result.from_general_knowledge,
           created_at: new Date().toISOString(),
+          citation_warning: result.citation_warning,
+          low_confidence: result.low_confidence,
           mode,
           scope: isWholeCorpus(scope) ? undefined : scope,
         };
         // Append to the cached transcript rather than refetching: the streamed
         // turn and the persisted one are the same turn, and a refetch racing
         // the stream is what would double-render it.
-        queryClient.setQueryData<LegalResearchMessage[]>(
+        queryClient.setQueryData<CachedMessage[]>(
           ['legal-research', 'messages', conversationId],
           (old) => [...(old ?? []), confirmed],
         );
@@ -291,6 +311,8 @@ export default function LegalResearchPage() {
                 turns={transcript}
                 streamingQuestion={stream.question}
                 streamingAnswer={stream.answer}
+                onOpenDocument={setDocumentTarget}
+                onAsk={submit}
               />
             </div>
 
@@ -308,6 +330,14 @@ export default function LegalResearchPage() {
           </div>
         </section>
       </main>
+
+      {documentTarget && (
+        <DocumentPanel
+          target={documentTarget}
+          onOpen={setDocumentTarget}
+          onClose={() => setDocumentTarget(null)}
+        />
+      )}
     </div>
   );
 }

@@ -613,6 +613,7 @@ export const zLegalResearchDocumentGraph = z.object({
 });
 
 export const zLegalResearchDocumentChunk = z.object({
+    chunk_id: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
     chunk_index: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
     section_path: z.string().nullish(),
     main_clause_number: z.string().nullish(),
