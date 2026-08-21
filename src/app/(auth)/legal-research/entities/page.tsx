@@ -1,16 +1,17 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useDeferredValue, useMemo, useState } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { Loader2, Search, Users } from 'lucide-react';
 
 import {
   listLegalResearchEntities,
-  listLegalResearchEntityRoles,
   type LegalResearchEntity,
   type LegalResearchEntityList,
-  type LegalResearchEntityRoles,
 } from '@/generated/wokil-api';
+import {
+  listLegalResearchEntityRolesOptions,
+} from '@/generated/wokil-api/@tanstack/react-query.gen';
 import { PageHeader } from '@/components/layout/PageHeader';
 
 import { DocumentPanel, type DocumentTarget } from '../components/DocumentPanel';
@@ -20,28 +21,21 @@ const PAGE_SIZE = 25;
 
 export default function LegalResearchEntitiesPage() {
   const [search, setSearch] = useState('');
-  const [query, setQuery] = useState('');
+  const query = useDeferredValue(search.trim());
   const [role, setRole] = useState<string | null>(null);
   const [offset, setOffset] = useState(0);
   const [selected, setSelected] = useState<LegalResearchEntity | null>(null);
   const [documentTarget, setDocumentTarget] = useState<DocumentTarget | null>(null);
 
-  // Search-as-you-type, one request per pause rather than per keystroke.
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setQuery(search.trim());
-      setOffset(0);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [search]);
+  // Reset offset when the deferred query changes.
+  const [prevQuery, setPrevQuery] = useState(query);
+  if (query !== prevQuery) {
+    setPrevQuery(query);
+    setOffset(0);
+  }
 
   const rolesQuery = useQuery({
-    queryKey: ['legal-research', 'entity-roles'],
-    queryFn: async (): Promise<LegalResearchEntityRoles> => {
-      const { data, error } = await listLegalResearchEntityRoles();
-      if (error !== undefined) throw new Error('Failed to load roles.');
-      return data as LegalResearchEntityRoles;
-    },
+    ...listLegalResearchEntityRolesOptions(),
     staleTime: 10 * 60 * 1000,
   });
 
@@ -67,6 +61,11 @@ export default function LegalResearchEntitiesPage() {
   const entities = entitiesQuery.data?.entities ?? [];
   const total = entitiesQuery.data?.total ?? 0;
 
+  const roles = useMemo(
+    () => [null, ...(rolesQuery.data?.roles ?? [])],
+    [rolesQuery.data],
+  );
+
   return (
     <div className="min-h-screen bg-background">
       <main className="container mx-auto px-6 py-6 max-w-7xl w-full">
@@ -90,35 +89,23 @@ export default function LegalResearchEntitiesPage() {
           {/* Roles come from the API — a role a new ingest invents shows up
               here without a frontend change. */}
           <div className="flex items-center gap-2 flex-wrap">
-            <button
-              type="button"
-              onClick={() => {
-                setRole(null);
-                setOffset(0);
-              }}
-              className={`px-3 py-1.5 rounded-full border text-xs transition-colors ${
-                role === null
-                  ? 'border-accent bg-accent/10 text-accent-foreground'
-                  : 'border-border bg-card text-foreground hover:border-accent'
-              }`}
-            >
-              All roles
-            </button>
-            {(rolesQuery.data?.roles ?? []).map((r) => (
+            {roles.map((r) => (
               <button
-                key={r.role}
+                key={r?.role ?? '__all'}
                 type="button"
                 onClick={() => {
-                  setRole(r.role);
+                  setRole(r?.role ?? null);
                   setOffset(0);
                 }}
                 className={`px-3 py-1.5 rounded-full border text-xs transition-colors ${
-                  role === r.role
+                  role === (r?.role ?? null)
                     ? 'border-accent bg-accent/10 text-accent-foreground'
                     : 'border-border bg-card text-foreground hover:border-accent'
                 }`}
               >
-                {r.role} ({r.entity_count.toLocaleString()})
+                {r === null
+                  ? 'All roles'
+                  : `${r.role} (${r.entity_count.toLocaleString()})`}
               </button>
             ))}
           </div>

@@ -4,13 +4,11 @@ import { useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { AlertTriangle, ExternalLink, Loader2, X } from 'lucide-react';
 
+import type { LegalResearchCitation } from '@/generated/wokil-api';
 import {
-  getLegalResearchDocument,
-  getLegalResearchDocumentGraph,
-  type LegalResearchCitation,
-  type LegalResearchDocument,
-  type LegalResearchDocumentGraph,
-} from '@/generated/wokil-api';
+  getLegalResearchDocumentOptions,
+  getLegalResearchDocumentGraphOptions,
+} from '@/generated/wokil-api/@tanstack/react-query.gen';
 
 export interface DocumentTarget {
   documentId: number;
@@ -72,28 +70,14 @@ export function DocumentPanel({ target, onOpen, onClose }: DocumentPanelProps) {
   const citedChunkRef = useRef<HTMLDivElement>(null);
 
   const documentQuery = useQuery({
-    queryKey: ['legal-research', 'document', target.documentId],
-    queryFn: async (): Promise<LegalResearchDocument> => {
-      const { data, error } = await getLegalResearchDocument({
-        path: { document_id: target.documentId },
-      });
-      if (error !== undefined) throw new Error('Failed to load the document text.');
-      return data as LegalResearchDocument;
-    },
+    ...getLegalResearchDocumentOptions({ path: { document_id: target.documentId } }),
     // A failure here is the corpus service being down, not a blip — retrying
     // just delays the "text unavailable" notice the reader needs to see.
     retry: false,
   });
 
   const graphQuery = useQuery({
-    queryKey: ['legal-research', 'graph', target.documentId],
-    queryFn: async (): Promise<LegalResearchDocumentGraph> => {
-      const { data, error } = await getLegalResearchDocumentGraph({
-        path: { document_id: target.documentId },
-      });
-      if (error !== undefined) throw new Error('Failed to load the citation graph.');
-      return data as LegalResearchDocumentGraph;
-    },
+    ...getLegalResearchDocumentGraphOptions({ path: { document_id: target.documentId } }),
     retry: false,
   });
 

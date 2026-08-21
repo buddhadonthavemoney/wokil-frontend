@@ -162,12 +162,7 @@ function AssistantMessage({
 }) {
   // Passages grouped under the document they came from: a decision cited
   // three times is one card, not three.
-  const passagesByDocument = new Map<number, LegalResearchSource[]>();
-  for (const passage of turn.passages ?? []) {
-    const list = passagesByDocument.get(passage.document_id) ?? [];
-    list.push(passage);
-    passagesByDocument.set(passage.document_id, list);
-  }
+  const passagesByDocument = Map.groupBy(turn.passages ?? [], (p) => p.document_id);
 
   return (
     <div className="flex items-start gap-3">
@@ -258,7 +253,7 @@ export function MessageList({
   return (
     <>
       {turns.map((turn, i) => (
-        <div key={`${turn.createdAt ?? ''}-${i}`} className="space-y-4">
+        <div key={i} className="space-y-4">
           <UserMessage question={turn.question} />
           <AssistantMessage turn={turn} onOpenDocument={onOpenDocument} onAsk={onAsk} />
         </div>

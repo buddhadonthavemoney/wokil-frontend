@@ -15,6 +15,7 @@ import {
   type LegalResearchScope,
   type LegalResearchSource,
 } from '@/generated/wokil-api';
+import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { useChatStream } from '@/hooks/useChatStream';
 
@@ -34,18 +35,6 @@ type CachedMessage = LegalResearchMessage & {
 };
 
 const suggestedChips = ['Fundamental Rights (Part 3)', 'Muluki Civil Code 2074', 'Cyber Crime Precedents'];
-
-function timeAgo(iso: string): string {
-  const seconds = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
-  if (seconds < 60) return 'just now';
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  if (days < 30) return `${days}d ago`;
-  return new Date(iso).toLocaleDateString();
-}
 
 export default function LegalResearchPage() {
   const [query, setQuery] = useState('');
@@ -136,7 +125,7 @@ export default function LegalResearchPage() {
     onConversation: (conversationId) => {
       // Arrives before the first token, so the thread is selected (and its
       // title shown) while the answer is still being written.
-      setActiveConversationId((current) => (current === conversationId ? current : conversationId));
+      setActiveConversationId(conversationId);
     },
     onDone: (question, result: LegalResearchChatResponse) => {
       const conversationId = result.conversation_id ?? activeConversationId;
@@ -174,7 +163,7 @@ export default function LegalResearchPage() {
   }, [transcript, stream.answer, stream.question]);
 
   const submit = (question: string) => {
-    if (stream.status === 'streaming') return;
+    if (stream.streaming) return;
     setQuery('');
     stream.ask({
       question,
@@ -218,13 +207,9 @@ export default function LegalResearchPage() {
           {/* Sidebar: conversations */}
           <aside className="hidden md:flex flex-col rounded-xl border border-border bg-card overflow-hidden min-h-0">
             <div className="p-3 border-b border-border">
-              <button
-                type="button"
-                onClick={startNewConversation}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium shadow-navy hover:bg-primary/90 transition-colors"
-              >
+              <Button onClick={startNewConversation} className="w-full">
                 <SquarePen className="w-4 h-4" /> New chat
-              </button>
+              </Button>
             </div>
             <div className="flex-1 overflow-y-auto p-2 space-y-1">
               <p className="px-3 pt-2 pb-1 label-caps text-[10px] text-muted-foreground">
@@ -255,7 +240,7 @@ export default function LegalResearchPage() {
                     {conversation.last_question || conversation.title}
                   </p>
                   <p className="text-[11px] text-muted-foreground mt-0.5">
-                    {timeAgo(conversation.updated_at)} · {conversation.message_count} turn
+                    {new Date(conversation.updated_at).toLocaleDateString()} · {conversation.message_count} turn
                     {conversation.message_count === 1 ? '' : 's'}
                   </p>
                 </button>
@@ -277,13 +262,14 @@ export default function LegalResearchPage() {
                   {activeTitle ?? (isEmpty ? 'New research' : 'Conversation')}
                 </p>
               </div>
-              <button
-                type="button"
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={startNewConversation}
-                className="md:hidden flex items-center gap-1.5 label-caps text-accent-foreground"
+                className="md:hidden"
               >
                 <SquarePen className="w-3.5 h-3.5" /> New
-              </button>
+              </Button>
             </div>
 
             {/* Thread */}
@@ -307,7 +293,7 @@ export default function LegalResearchPage() {
                       <button
                         key={chip}
                         type="button"
-                        disabled={stream.status === 'streaming'}
+                        disabled={stream.streaming}
                         onClick={() => submit(chip)}
                         className="px-4 py-2 rounded-full border border-border bg-card text-sm text-foreground shadow-sm transition-colors hover:border-accent hover:bg-surface-low disabled:opacity-50"
                       >
@@ -331,7 +317,7 @@ export default function LegalResearchPage() {
               value={query}
               onChange={setQuery}
               onSubmit={submit}
-              streaming={stream.status === 'streaming'}
+              streaming={stream.streaming}
               onStop={stream.stop}
               mode={mode}
               onModeChange={setMode}

@@ -1,13 +1,18 @@
 'use client';
 
-import { useRef } from 'react';
 import { Send, Square, Zap, Telescope } from 'lucide-react';
 
 import type { LegalResearchScope } from '@/generated/wokil-api';
+import { Button } from '@/components/ui/button';
 
 import { ScopePicker } from './ScopePicker';
 
 export type ChatMode = 'ask' | 'research';
+
+const modes = [
+  { value: 'ask' as const, icon: Zap, label: 'Ask', title: 'Fast and focused' },
+  { value: 'research' as const, icon: Telescope, label: 'Research', title: 'Searches far more of the corpus — materially slower' },
+] as const;
 
 interface ComposerProps {
   value: string;
@@ -32,12 +37,9 @@ export function Composer({
   scope,
   onScopeChange,
 }: ComposerProps) {
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-
   const submit = () => {
     const trimmed = value.trim();
     if (!trimmed || streaming) return;
-    if (textareaRef.current) textareaRef.current.style.height = 'auto';
     onSubmit(trimmed);
   };
 
@@ -47,37 +49,29 @@ export function Composer({
         {/* Mode is a two-state toggle rather than a dropdown: there are two
             options and the slow one needs its cost stated, not hidden. */}
         <div className="flex rounded-lg border border-border overflow-hidden">
-          <button
-            type="button"
-            onClick={() => onModeChange('ask')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs transition-colors ${
-              mode === 'ask'
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-card text-muted-foreground hover:bg-surface-low'
-            }`}
-            title="Fast and focused"
-          >
-            <Zap className="w-3.5 h-3.5" /> Ask
-          </button>
-          <button
-            type="button"
-            onClick={() => onModeChange('research')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs transition-colors ${
-              mode === 'research'
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-card text-muted-foreground hover:bg-surface-low'
-            }`}
-            title="Searches far more of the corpus — materially slower"
-          >
-            <Telescope className="w-3.5 h-3.5" /> Research
-          </button>
+          {modes.map((m) => (
+            <button
+              key={m.value}
+              type="button"
+              disabled={streaming}
+              onClick={() => onModeChange(m.value)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs transition-colors disabled:opacity-50 ${
+                mode === m.value
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-card text-muted-foreground hover:bg-surface-low'
+              }`}
+              title={m.title}
+            >
+              <m.icon className="w-3.5 h-3.5" /> {m.label}
+            </button>
+          ))}
         </div>
 
         <ScopePicker scope={scope} onChange={onScopeChange} disabled={streaming} />
 
         {mode === 'research' && (
           <span className="text-[11px] text-muted-foreground">
-            Searches ~5× more of the corpus; expect a longer wait.
+            Searches ~5x more of the corpus; expect a longer wait.
           </span>
         )}
       </div>
@@ -90,13 +84,8 @@ export function Composer({
         }}
       >
         <textarea
-          ref={textareaRef}
           value={value}
-          onChange={(e) => {
-            onChange(e.target.value);
-            e.target.style.height = 'auto';
-            e.target.style.height = `${Math.min(e.target.scrollHeight, 160)}px`;
-          }}
+          onChange={(e) => onChange(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
               e.preventDefault();
@@ -106,26 +95,16 @@ export function Composer({
           disabled={streaming}
           rows={1}
           placeholder="Ask a question about the corpus…"
-          className="flex-1 resize-none px-4 py-3 rounded-xl border border-border bg-card shadow-sm text-foreground placeholder:text-muted-foreground/70 outline-none transition-shadow focus:border-accent focus:ring-1 focus:ring-accent text-sm max-h-40"
+          className="flex-1 resize-none field-sizing-content px-4 py-3 rounded-xl border border-border bg-card shadow-sm text-foreground placeholder:text-muted-foreground/70 outline-none transition-shadow focus:border-accent focus:ring-1 focus:ring-accent text-sm max-h-40"
         />
         {streaming ? (
-          <button
-            type="button"
-            onClick={onStop}
-            className="shrink-0 w-11 h-11 rounded-xl bg-destructive text-destructive-foreground shadow-sm flex items-center justify-center hover:opacity-90 transition-opacity"
-            title="Stop"
-          >
+          <Button variant="destructive" size="icon" onClick={onStop} title="Stop" className="shrink-0 w-11 h-11">
             <Square className="w-4 h-4" />
-          </button>
+          </Button>
         ) : (
-          <button
-            type="submit"
-            disabled={!value.trim()}
-            className="shrink-0 w-11 h-11 rounded-xl bg-primary text-primary-foreground shadow-navy flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none hover:bg-primary/90 transition-colors"
-            title="Send"
-          >
+          <Button type="submit" size="icon" disabled={!value.trim()} title="Send" className="shrink-0 w-11 h-11">
             <Send className="w-4 h-4" />
-          </button>
+          </Button>
         )}
       </form>
       <p className="mt-2 text-[11px] text-muted-foreground">

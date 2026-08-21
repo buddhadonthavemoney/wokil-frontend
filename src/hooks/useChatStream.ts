@@ -23,8 +23,6 @@ type ChatFrame =
   | ({ type: 'done' } & LegalResearchChatResponse)
   | { type: 'error'; message: string };
 
-export type ChatStreamStatus = 'idle' | 'streaming';
-
 interface UseChatStreamOptions {
   /** The conversation the turn landed in — fires before any token. */
   onConversation: (conversationId: number, isNew: boolean) => void;
@@ -34,7 +32,8 @@ interface UseChatStreamOptions {
 }
 
 export interface ChatStream {
-  status: ChatStreamStatus;
+  /** Whether a question is currently being answered. */
+  streaming: boolean;
   /** The question currently being answered, for optimistic rendering. */
   question: string | null;
   /** Answer text so far. Empty until the first token. */
@@ -53,7 +52,6 @@ export interface ChatStream {
  * being retried is a 15-70s LLM call, and the default is to retry forever.
  */
 export function useChatStream({ onConversation, onDone, onError }: UseChatStreamOptions): ChatStream {
-  const [status, setStatus] = useState<ChatStreamStatus>('idle');
   const [question, setQuestion] = useState<string | null>(null);
   const [answer, setAnswer] = useState('');
   const abortRef = useRef<AbortController | null>(null);
@@ -61,31 +59,20 @@ export function useChatStream({ onConversation, onDone, onError }: UseChatStream
   // Callers pass fresh closures every render; read through refs so `ask`
   // stays stable and can never run a stale closure. Same reasoning as
   // useDeployStream.
-  const onConversationRef = useRef(onConversation);
-  const onDoneRef = useRef(onDone);
-  const onErrorRef = useRef(onError);
-  onConversationRef.current = onConversation;
-  onDoneRef.current = onDone;
-  onErrorRef.current = onError;
-
-  const stop = useCallback(() => {
-    abortRef.current?.abort();
-    abortRef.current = null;
-    setStatus('idle');
-    setQuestion(null);
-    setAnswer('');
-  }, []);
+  const cbs = useRef({ onConversation, onDone, onError });
+  cbs.current = { onConversation, onDone, onError };
 
   // Leaving the page must actually cancel the request, not just stop
   // rendering it — the server cancels its upstream RAG call when we hang up.
   useEffect(() => () => abortRef.current?.abort(), []);
+
+  const stop = useCallback(() => abortRef.current?.abort(), []);
 
   const ask = useCallback((request: LegalResearchChatRequest) => {
     if (abortRef.current) return;
 
     const controller = new AbortController();
     abortRef.current = controller;
-    setStatus('streaming');
     setQuestion(request.question);
     setAnswer('');
 
@@ -95,35 +82,44 @@ export function useChatStream({ onConversation, onDone, onError }: UseChatStream
           body: request,
           signal: controller.signal,
           sseMaxRetryAttempts: 1,
+          // Bug fix #1: SSE transport errors (fetch failures, non-2xx) go to
+          // onSseError, not the catch block — createSseClient swallows them
+          // otherwise and the stream completes silently.
+          onSseError: (error) => {
+            if (!controller.signal.aborted) {
+              cbs.current.onError(
+                error instanceof Error ? error.message : 'The research stream was interrupted.',
+              );
+            }
+          },
         });
 
         for await (const frame of stream as unknown as AsyncIterable<ChatFrame>) {
           if (controller.signal.aborted) return;
           switch (frame.type) {
             case 'conversation':
-              onConversationRef.current(frame.conversation_id, frame.new);
+              cbs.current.onConversation(frame.conversation_id, frame.new);
               break;
             case 'token':
               setAnswer((prev) => prev + frame.text);
               break;
             case 'done':
-              onDoneRef.current(request.question, frame);
+              cbs.current.onDone(request.question, frame);
               break;
             case 'error':
-              onErrorRef.current(frame.message);
+              cbs.current.onError(frame.message);
               break;
           }
         }
       } catch (err) {
         if (!controller.signal.aborted) {
-          onErrorRef.current(
+          cbs.current.onError(
             err instanceof Error ? err.message : 'The research stream was interrupted.',
           );
         }
       } finally {
         if (abortRef.current === controller) {
           abortRef.current = null;
-          setStatus('idle');
           setQuestion(null);
           setAnswer('');
         }
@@ -131,5 +127,5 @@ export function useChatStream({ onConversation, onDone, onError }: UseChatStream
     })();
   }, []);
 
-  return { status, question, answer, ask, stop };
+  return { streaming: question !== null, question, answer, ask, stop };
 }

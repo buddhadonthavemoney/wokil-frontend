@@ -4,11 +4,9 @@ import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { AlertTriangle, Loader2, MessageSquareText, X } from 'lucide-react';
 
-import {
-  getLegalResearchEntity,
-  type LegalResearchEntity,
-  type LegalResearchEntityDetail,
-} from '@/generated/wokil-api';
+import type { LegalResearchEntity } from '@/generated/wokil-api';
+import { getLegalResearchEntityOptions } from '@/generated/wokil-api/@tanstack/react-query.gen';
+import { Button } from '@/components/ui/button';
 
 import type { DocumentTarget } from '../components/DocumentPanel';
 import { setChatPrefill } from '../prefill';
@@ -28,14 +26,9 @@ interface EntityDetailProps {
 export function EntityDetail({ entity, onOpenDocument, onClose }: EntityDetailProps) {
   const router = useRouter();
 
-  const detailQuery = useQuery({
-    queryKey: ['legal-research', 'entity', entity.id],
-    queryFn: async (): Promise<LegalResearchEntityDetail> => {
-      const { data, error } = await getLegalResearchEntity({ path: { entity_id: entity.id } });
-      if (error !== undefined) throw new Error('Failed to load this person.');
-      return data as LegalResearchEntityDetail;
-    },
-  });
+  const detailQuery = useQuery(
+    getLegalResearchEntityOptions({ path: { entity_id: entity.id } }),
+  );
 
   const documents = detailQuery.data?.documents ?? [];
 
@@ -70,14 +63,9 @@ export function EntityDetail({ entity, onOpenDocument, onClose }: EntityDetailPr
       </header>
 
       <div className="px-5 py-3 border-b border-border">
-        <button
-          type="button"
-          onClick={askAboutEntity}
-          disabled={detailQuery.isPending}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium shadow-navy hover:bg-primary/90 transition-colors disabled:opacity-50"
-        >
+        <Button onClick={askAboutEntity} disabled={detailQuery.isPending} className="w-full">
           <MessageSquareText className="w-4 h-4" /> Ask about this person
-        </button>
+        </Button>
       </div>
 
       <div className="flex-1 overflow-y-auto px-5 py-4 space-y-2">
