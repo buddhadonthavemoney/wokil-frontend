@@ -1,129 +1,48 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import ReactMarkdown from 'react-markdown';
-import {
-  Gavel,
-  History,
-  Send,
-  SquarePen,
-  AlertTriangle,
-  Loader2,
-  Scale,
-} from 'lucide-react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Gavel, History, SquarePen, Loader2, Scale } from 'lucide-react';
 import { toast } from 'sonner';
 
 import {
-  chatLegalResearch,
   listLegalResearchConversations,
   listLegalResearchConversationMessages,
   type LegalResearchChatResponse,
   type LegalResearchConversation,
   type LegalResearchFile,
   type LegalResearchMessage,
+  type LegalResearchScope,
+  type LegalResearchSource,
 } from '@/generated/wokil-api';
+import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { useChatStream } from '@/hooks/useChatStream';
 
-const suggestedChips = ['Fundamental Rights (Part 3)', 'Muluki Civil Code 2074', 'Cyber Crime Precedents'];
+import { Composer, type ChatMode } from './components/Composer';
+import { DocumentPanel, type DocumentTarget } from './components/DocumentPanel';
+import { MessageList, type Turn } from './components/MessageList';
+import { isWholeCorpus } from './components/ScopePicker';
+import { takeChatPrefill } from './prefill';
 
-type Turn = {
-  question: string;
-  answer: string;
-  sources: LegalResearchFile[];
-  fromGeneralKnowledge: boolean;
-  createdAt?: string;
+/** A cached turn, plus the individual passages a streamed answer carried.
+ *  They are not persisted server-side — a turn re-read from the API keeps only
+ *  its per-document snapshot — so they live on the cache entry, not in the
+ *  generated type. */
+type CachedMessage = LegalResearchMessage & {
+  passages?: LegalResearchSource[];
+  suggestions?: string[];
 };
 
-function timeAgo(iso: string): string {
-  const seconds = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
-  if (seconds < 60) return 'just now';
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  if (days < 30) return `${days}d ago`;
-  return new Date(iso).toLocaleDateString();
-}
-
-function SourceCard({ file }: { file: LegalResearchFile }) {
-  return (
-    <div className="p-4 rounded-xl border border-border bg-card shadow-sm transition-shadow hover:shadow-md">
-      <div className="flex items-start justify-between gap-3">
-        <h4 className="text-sm font-medium text-foreground">{file.document_title}</h4>
-        <span className="shrink-0 label-caps text-[10px] px-2 py-0.5 rounded-md bg-accent/10 border border-accent/30 text-accent-foreground">
-          {Math.round(file.score * 100)}%
-        </span>
-      </div>
-      {(file.collection || file.category) && (
-        <p className="mt-1.5 text-xs text-muted-foreground">
-          {[file.collection, file.category].filter(Boolean).join(' · ')}
-        </p>
-      )}
-    </div>
-  );
-}
-
-function AssistantMessage({ turn }: { turn: Turn }) {
-  return (
-    <div className="flex items-start gap-3">
-      {/* Gold marks the assistant, navy the user — same pairing as the
-          sidebar's active marker, so the two speakers read apart at a glance. */}
-      <div className="w-8 h-8 rounded-lg bg-accent text-accent-foreground flex items-center justify-center shrink-0">
-        <Gavel className="w-4 h-4" />
-      </div>
-      <div className="flex-1 min-w-0 space-y-3">
-        {turn.fromGeneralKnowledge && (
-          <div className="flex items-start gap-3 p-4 rounded-xl border border-accent/40 bg-accent/10">
-            <AlertTriangle className="w-5 h-5 text-accent shrink-0 mt-0.5" />
-            <div>
-              <p className="text-sm font-semibold text-foreground">
-                Answered from general knowledge — not the corpus
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Nothing in the Najir decisions or Nepal Law Commission acts
-                matched this query. Verify this answer before relying on it.
-              </p>
-            </div>
-          </div>
-        )}
-        <div className="prose prose-sm max-w-none prose-p:my-2 prose-pre:bg-secondary prose-pre:text-foreground prose-headings:font-heading prose-a:text-accent">
-          <ReactMarkdown>{turn.answer}</ReactMarkdown>
-        </div>
-        {turn.sources.length > 0 && (
-          <div>
-            <p className="text-xs label-caps text-muted-foreground mb-2">
-              Sources ({turn.sources.length})
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {turn.sources.map((file) => (
-                <SourceCard key={file.document_id} file={file} />
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function UserMessage({ question }: { question: string }) {
-  return (
-    <div className="flex justify-end">
-      <div className="max-w-[85%] md:max-w-[70%] px-4 py-2.5 rounded-2xl rounded-br-sm bg-primary text-primary-foreground text-sm leading-relaxed whitespace-pre-wrap">
-        {question}
-      </div>
-    </div>
-  );
-}
+const suggestedChips = ['Fundamental Rights (Part 3)', 'Muluki Civil Code 2074', 'Cyber Crime Precedents'];
 
 export default function LegalResearchPage() {
   const [query, setQuery] = useState('');
   const [activeConversationId, setActiveConversationId] = useState<number | null>(null);
-  const [pendingQuestion, setPendingQuestion] = useState<string | null>(null);
+  const [mode, setMode] = useState<ChatMode>('ask');
+  const [scope, setScope] = useState<LegalResearchScope>({});
+  const [documentTarget, setDocumentTarget] = useState<DocumentTarget | null>(null);
   const threadRef = useRef<HTMLDivElement>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const queryClient = useQueryClient();
 
   const conversationsQuery = useQuery({
@@ -141,7 +60,7 @@ export default function LegalResearchPage() {
 
   const messagesQuery = useQuery({
     queryKey: ['legal-research', 'messages', activeConversationId],
-    queryFn: async (): Promise<LegalResearchMessage[]> => {
+    queryFn: async (): Promise<CachedMessage[]> => {
       if (activeConversationId == null) return [];
       const { data, error } = await listLegalResearchConversationMessages({
         path: { conversation_id: activeConversationId },
@@ -151,7 +70,7 @@ export default function LegalResearchPage() {
           typeof error === 'string' ? error : 'Failed to load the conversation.',
         );
       }
-      return (data ?? []) as LegalResearchMessage[];
+      return (data ?? []) as CachedMessage[];
     },
     enabled: activeConversationId != null,
   });
@@ -162,117 +81,118 @@ export default function LegalResearchPage() {
         question: m.question,
         answer: m.answer,
         sources: m.sources ?? [],
+        passages: m.passages,
+        suggestions: m.suggestions,
         fromGeneralKnowledge: m.from_general_knowledge,
+        citationWarning: m.citation_warning,
+        lowConfidence: m.low_confidence,
         createdAt: m.created_at,
       })),
     [messagesQuery.data],
   );
 
-  const allTurns: Turn[] = useMemo(
-    () => [
-      ...transcript,
-      ...(pendingQuestion != null
-        ? [
-            {
-              question: pendingQuestion,
-              answer: '',
-              sources: [] as LegalResearchFile[],
-              fromGeneralKnowledge: false,
-            },
-          ]
-        : []),
-    ],
-    [transcript, pendingQuestion],
-  );
+  // Reopening a thread restores how it was last asked. The backend stores mode
+  // and scope per turn, so the transcript is the source of truth — no separate
+  // client-side memory to drift out of sync with it.
+  //
+  // Deliberately keyed on the conversation, not on the message list: the list
+  // also grows when a turn this page just streamed is appended, and re-running
+  // then would reset the controls the user is still holding.
+  const messagesLoaded = messagesQuery.isSuccess;
+  useEffect(() => {
+    const last = queryClient.getQueryData<LegalResearchMessage[]>([
+      'legal-research',
+      'messages',
+      activeConversationId,
+    ])?.at(-1);
+    if (!last) return;
+    setMode((last.mode as ChatMode) ?? 'ask');
+    setScope(last.scope ?? {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeConversationId, messagesLoaded]);
 
-  const researchMutation = useMutation({
-    mutationFn: async (question: string): Promise<LegalResearchChatResponse> => {
-      // Chat queries routinely take 5–10s (retrieval + synthesis); give the
-      // UI a hard deadline so a hung server can't leave the button spinning
-      // forever. The SDK's fetch client can't abort mid-flight, so this
-      // races the request rather than cancelling it.
-      const timedOut = new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new Error('timed-out')), 120_000);
-      });
-      const { data, error } = await Promise.race([
-        chatLegalResearch({
-          body: {
-            question,
-            conversation_id: activeConversationId ?? undefined,
-          },
-        }),
-        timedOut,
-      ]);
-      if (error !== undefined) {
-        throw new Error(
-          typeof error === 'string' ? error : 'Failed to run the research query.',
-        );
-      }
-      return data as LegalResearchChatResponse;
+  // Arriving from entity search: the person's name is in the box and their
+  // documents are the scope, so the first question cannot wander outside them.
+  useEffect(() => {
+    const prefill = takeChatPrefill();
+    if (!prefill) return;
+    setQuery(prefill.question);
+    setScope(prefill.scope);
+    setActiveConversationId(null);
+  }, []);
+
+  const stream = useChatStream({
+    onConversation: (conversationId) => {
+      // Arrives before the first token, so the thread is selected (and its
+      // title shown) while the answer is still being written.
+      setActiveConversationId(conversationId);
     },
-    onMutate: (question) => {
-      setPendingQuestion(question);
-    },
-    onSuccess: (data) => {
-      const confirmed: LegalResearchMessage = {
-        id: 0,
-        turn_index: 0,
-        question: researchMutation.variables as string,
-        answer: data.answer,
-        sources: (data.files ?? []) as LegalResearchFile[],
-        from_general_knowledge: data.from_general_knowledge,
-        created_at: new Date().toISOString(),
-      };
-      const conversationId = data.conversation_id ?? activeConversationId;
+    onDone: (question, result: LegalResearchChatResponse) => {
+      const conversationId = result.conversation_id ?? activeConversationId;
       if (conversationId != null) {
-        queryClient.setQueryData<LegalResearchMessage[]>(
+        const confirmed: CachedMessage = {
+          id: 0,
+          turn_index: 0,
+          question,
+          answer: result.answer,
+          sources: (result.files ?? []) as LegalResearchFile[],
+          passages: (result.sources ?? []) as LegalResearchSource[],
+          suggestions: result.suggestions,
+          from_general_knowledge: result.from_general_knowledge,
+          created_at: new Date().toISOString(),
+          citation_warning: result.citation_warning,
+          low_confidence: result.low_confidence,
+          mode,
+          scope: isWholeCorpus(scope) ? undefined : scope,
+        };
+        // Append to the cached transcript rather than refetching: the streamed
+        // turn and the persisted one are the same turn, and a refetch racing
+        // the stream is what would double-render it.
+        queryClient.setQueryData<CachedMessage[]>(
           ['legal-research', 'messages', conversationId],
           (old) => [...(old ?? []), confirmed],
         );
-        if (activeConversationId !== conversationId) {
-          setActiveConversationId(conversationId);
-        }
       }
-      setPendingQuestion(null);
       void conversationsQuery.refetch();
     },
-    onError: (error: Error) => {
-      setPendingQuestion(null);
-      toast.error(
-        error?.message === 'timed-out'
-          ? 'Request timed out. Try a shorter or more specific question.'
-          : error?.message || 'Failed to run the research query.',
-      );
-    },
+    onError: (message) => toast.error(message || 'Failed to run the research query.'),
   });
 
   useEffect(() => {
     threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight, behavior: 'smooth' });
-  }, [allTurns, researchMutation.isPending]);
+  }, [transcript, stream.answer, stream.question]);
 
   const submit = (question: string) => {
-    const trimmed = question.trim();
-    if (!trimmed || researchMutation.isPending) return;
+    if (stream.streaming) return;
     setQuery('');
-    if (textareaRef.current) textareaRef.current.style.height = 'auto';
-    researchMutation.mutate(trimmed);
+    stream.ask({
+      question,
+      conversation_id: activeConversationId ?? undefined,
+      mode,
+      // An empty scope object would read as a filter matching nothing; the
+      // whole corpus is expressed by omitting it.
+      scope: isWholeCorpus(scope) ? undefined : scope,
+    });
   };
 
   const startNewConversation = () => {
+    stream.stop();
     setActiveConversationId(null);
-    setPendingQuestion(null);
     setQuery('');
+    setMode('ask');
+    setScope({});
   };
 
   const openConversation = (conversation: LegalResearchConversation) => {
     if (activeConversationId === conversation.id) return;
+    stream.stop();
     setActiveConversationId(conversation.id);
-    setPendingQuestion(null);
     setQuery('');
   };
 
   const activeTitle =
     conversationsQuery.data?.find((c) => c.id === activeConversationId)?.title ?? null;
+  const isEmpty = transcript.length === 0 && stream.question == null;
 
   return (
     <div className="h-screen bg-background flex flex-col overflow-hidden">
@@ -287,13 +207,9 @@ export default function LegalResearchPage() {
           {/* Sidebar: conversations */}
           <aside className="hidden md:flex flex-col rounded-xl border border-border bg-card overflow-hidden min-h-0">
             <div className="p-3 border-b border-border">
-              <button
-                type="button"
-                onClick={startNewConversation}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium shadow-navy hover:bg-primary/90 transition-colors"
-              >
+              <Button onClick={startNewConversation} className="w-full">
                 <SquarePen className="w-4 h-4" /> New chat
-              </button>
+              </Button>
             </div>
             <div className="flex-1 overflow-y-auto p-2 space-y-1">
               <p className="px-3 pt-2 pb-1 label-caps text-[10px] text-muted-foreground">
@@ -324,7 +240,7 @@ export default function LegalResearchPage() {
                     {conversation.last_question || conversation.title}
                   </p>
                   <p className="text-[11px] text-muted-foreground mt-0.5">
-                    {timeAgo(conversation.updated_at)} · {conversation.message_count} turn
+                    {new Date(conversation.updated_at).toLocaleDateString()} · {conversation.message_count} turn
                     {conversation.message_count === 1 ? '' : 's'}
                   </p>
                 </button>
@@ -343,21 +259,22 @@ export default function LegalResearchPage() {
               <div className="flex items-center gap-2 min-w-0">
                 <History className="w-4 h-4 text-muted-foreground shrink-0" />
                 <p className="text-sm font-semibold text-foreground truncate">
-                  {activeTitle ?? (allTurns.length > 0 ? 'Conversation' : 'New research')}
+                  {activeTitle ?? (isEmpty ? 'New research' : 'Conversation')}
                 </p>
               </div>
-              <button
-                type="button"
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={startNewConversation}
-                className="md:hidden flex items-center gap-1.5 label-caps text-accent-foreground"
+                className="md:hidden"
               >
                 <SquarePen className="w-3.5 h-3.5" /> New
-              </button>
+              </Button>
             </div>
 
             {/* Thread */}
             <div ref={threadRef} className="flex-1 overflow-y-auto px-5 py-6 space-y-6">
-              {allTurns.length === 0 && (
+              {isEmpty && (
                 <div className="h-full flex flex-col items-center justify-center text-center gap-6 py-16">
                   <div className="w-14 h-14 rounded-xl bg-accent/12 border border-accent/30 text-accent flex items-center justify-center">
                     <Scale className="w-7 h-7" />
@@ -376,7 +293,7 @@ export default function LegalResearchPage() {
                       <button
                         key={chip}
                         type="button"
-                        disabled={researchMutation.isPending}
+                        disabled={stream.streaming}
                         onClick={() => submit(chip)}
                         className="px-4 py-2 rounded-full border border-border bg-card text-sm text-foreground shadow-sm transition-colors hover:border-accent hover:bg-surface-low disabled:opacity-50"
                       >
@@ -387,75 +304,37 @@ export default function LegalResearchPage() {
                 </div>
               )}
 
-              {allTurns.map((turn, i) => (
-                <div key={`${turn.createdAt ?? ''}-${i}`} className="space-y-4">
-                  <UserMessage question={turn.question} />
-                  {researchMutation.isPending && turn.answer === '' ? (
-                    <div className="flex items-start gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center shrink-0">
-                        <Gavel className="w-4 h-4" />
-                      </div>
-                      <div className="flex items-center gap-2 text-muted-foreground text-sm pt-2">
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        <span>Searching the corpus and synthesizing…</span>
-                      </div>
-                    </div>
-                  ) : (
-                    <AssistantMessage turn={turn} />
-                  )}
-                </div>
-              ))}
+              <MessageList
+                turns={transcript}
+                streamingQuestion={stream.question}
+                streamingAnswer={stream.answer}
+                onOpenDocument={setDocumentTarget}
+                onAsk={submit}
+              />
             </div>
 
-            {/* Composer */}
-            <div className="px-5 py-4 border-t border-border">
-              <form
-                className="flex items-end gap-3"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  submit(query);
-                }}
-              >
-                <textarea
-                  ref={textareaRef}
-                  value={query}
-                  onChange={(e) => {
-                    setQuery(e.target.value);
-                    e.target.style.height = 'auto';
-                    e.target.style.height = `${Math.min(e.target.scrollHeight, 160)}px`;
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      submit(query);
-                    }
-                  }}
-                  disabled={researchMutation.isPending}
-                  rows={1}
-                  placeholder="Ask a question about the corpus…"
-                  className="flex-1 resize-none px-4 py-3 rounded-xl border border-border bg-card shadow-sm text-foreground placeholder:text-muted-foreground/70 outline-none transition-shadow focus:border-accent focus:ring-1 focus:ring-accent text-sm max-h-40"
-                />
-                <button
-                  type="submit"
-                  disabled={researchMutation.isPending || !query.trim()}
-                  className="shrink-0 w-11 h-11 rounded-xl bg-primary text-primary-foreground shadow-navy flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none hover:bg-primary/90 transition-colors"
-                  title="Send"
-                >
-                  {researchMutation.isPending ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Send className="w-4 h-4" />
-                  )}
-                </button>
-              </form>
-              <p className="mt-2 text-[11px] text-muted-foreground">
-                Answers cite their sources from the corpus. Always verify legal
-                answers before relying on them.
-              </p>
-            </div>
+            <Composer
+              value={query}
+              onChange={setQuery}
+              onSubmit={submit}
+              streaming={stream.streaming}
+              onStop={stream.stop}
+              mode={mode}
+              onModeChange={setMode}
+              scope={scope}
+              onScopeChange={setScope}
+            />
           </div>
         </section>
       </main>
+
+      {documentTarget && (
+        <DocumentPanel
+          target={documentTarget}
+          onOpen={setDocumentTarget}
+          onClose={() => setDocumentTarget(null)}
+        />
+      )}
     </div>
   );
 }

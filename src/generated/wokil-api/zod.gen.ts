@@ -434,19 +434,39 @@ export const zAccountTypeRequest = z.object({
     accountType: z.enum(['individual', 'firm'])
 });
 
+/**
+ * The corpus filter for a question. An omitted or empty scope means the whole corpus. Bounds mirror RAG's own ScopeIn so an oversized scope fails here rather than as an upstream 422.
+ */
+export const zLegalResearchScope = z.object({
+    document_ids: z.array(z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' })).max(200).optional(),
+    collections: z.array(z.string()).max(50).optional(),
+    categories: z.array(z.string()).max(50).optional()
+});
+
 export const zLegalResearchChatRequest = z.object({
     question: z.string(),
     top_k: z.int().gte(1).lte(25).optional().default(5),
+    mode: z.enum(['ask', 'research']).optional().default('ask'),
+    scope: zLegalResearchScope.optional(),
+    document_id: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).nullish(),
     conversation_id: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).nullish()
 });
 
+/**
+ * One retrieved passage behind the answer. Several may share a document_id — see LegalResearchFile for the deduplicated per-document view.
+ */
 export const zLegalResearchSource = z.object({
     document_id: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }),
+    chunk_id: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
     document_title: z.string(),
     citation: z.string(),
     text: z.string(),
     page_start: z.int().nullish(),
-    score: z.number()
+    score: z.number(),
+    similarity: z.number().optional(),
+    signals: z.array(z.string()).optional(),
+    collection: z.string().nullish(),
+    category: z.string().nullish()
 });
 
 /**
@@ -466,7 +486,10 @@ export const zLegalResearchChatResponse = z.object({
     used_llm: z.boolean(),
     from_general_knowledge: z.boolean(),
     sources: z.array(zLegalResearchSource),
-    files: z.array(zLegalResearchFile)
+    files: z.array(zLegalResearchFile),
+    citation_warning: z.boolean().optional(),
+    low_confidence: z.boolean().optional(),
+    suggestions: z.array(z.string()).optional()
 });
 
 /**
@@ -491,10 +514,118 @@ export const zLegalResearchMessage = z.object({
     answer: z.string(),
     sources: z.array(zLegalResearchFile),
     from_general_knowledge: z.boolean(),
+    mode: z.enum(['ask', 'research']).optional(),
+    scope: zLegalResearchScope.optional(),
+    citation_warning: z.boolean().optional(),
+    low_confidence: z.boolean().optional(),
     created_at: z.iso.datetime()
 });
 
+export const zLegalResearchCategoryScope = z.object({
+    category: z.string(),
+    document_count: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' })
+});
+
+export const zLegalResearchCollectionScope = z.object({
+    collection: z.string(),
+    document_count: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }),
+    categories: z.array(zLegalResearchCategoryScope),
+    category_total: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    truncated: z.boolean().optional()
+});
+
+/**
+ * What the scope picker can offer, nested by collection. Categories are nested rather than flat because the collections' categories mean different things — Najir's are case types, NepalLawCommission's are folders like `acts` — and a flat list invites selecting a pair that matches nothing.
+ */
+export const zLegalResearchScopeOptions = z.object({
+    collections: z.array(zLegalResearchCollectionScope)
+});
+
+/**
+ * A person named in the corpus — advocate, judge or party — extracted by wokil-rag's citation graph.
+ */
+export const zLegalResearchEntity = z.object({
+    id: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }),
+    name: z.string(),
+    role: z.string(),
+    document_count: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' })
+});
+
+/**
+ * One page of entity search results. The first paginated response in this API — offset/limit, matching what RAG returns rather than inventing a cursor scheme.
+ */
+export const zLegalResearchEntityList = z.object({
+    total: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }),
+    limit: z.int(),
+    offset: z.int(),
+    entities: z.array(zLegalResearchEntity)
+});
+
+export const zLegalResearchEntityRole = z.object({
+    role: z.string(),
+    entity_count: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' })
+});
+
+/**
+ * One role, and how many people in the corpus carry it. Ordered commonest first.
+ */
+export const zLegalResearchEntityRoles = z.object({
+    roles: z.array(zLegalResearchEntityRole)
+});
+
+export const zLegalResearchEntityDocument = z.object({
+    document_id: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }),
+    title: z.string(),
+    collection: z.string().nullish(),
+    category: z.string().nullish(),
+    doc_year: z.int().nullish(),
+    is_repealed: z.boolean().optional(),
+    status_label: z.string().nullish()
+});
+
+/**
+ * One person plus the documents they appear in, most recent first.
+ */
+export const zLegalResearchEntityDetail = z.object({
+    id: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }),
+    name: z.string(),
+    role: z.string(),
+    document_count: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }),
+    documents: z.array(zLegalResearchEntityDocument)
+});
+
+/**
+ * One citation edge. An unresolved edge names a decision that is cited but not itself in the corpus — it has no document_id and cannot be opened.
+ */
+export const zLegalResearchCitation = z.object({
+    decision_number: z.string(),
+    document_id: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).nullish(),
+    title: z.string().nullish(),
+    context: z.string().nullish(),
+    resolved: z.boolean()
+});
+
+/**
+ * One document's place in the corpus: the people named in it, what it cites and what cites it. `is_repealed` and `status_label` are proper fields here, unlike the `⚠ REPEALED — …` prefix RAG bakes into citation strings.
+ */
+export const zLegalResearchDocumentGraph = z.object({
+    document_id: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }),
+    title: z.string(),
+    collection: z.string().nullish(),
+    category: z.string().nullish(),
+    doc_year: z.int().nullish(),
+    doc_date: z.string().nullish(),
+    source_url: z.string().nullish(),
+    decision_number: z.string().nullish(),
+    is_repealed: z.boolean().optional(),
+    status_label: z.string().nullish(),
+    entities: z.array(zLegalResearchEntity),
+    cites: z.array(zLegalResearchCitation),
+    cited_by: z.array(zLegalResearchCitation)
+});
+
 export const zLegalResearchDocumentChunk = z.object({
+    chunk_id: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
     chunk_index: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
     section_path: z.string().nullish(),
     main_clause_number: z.string().nullish(),
@@ -973,6 +1104,13 @@ export const zChatLegalResearchBody = zLegalResearchChatRequest;
  */
 export const zChatLegalResearchResponse = zLegalResearchChatResponse;
 
+export const zStreamLegalResearchChatBody = zLegalResearchChatRequest;
+
+/**
+ * text/event-stream of chat frames
+ */
+export const zStreamLegalResearchChatResponse = z.string();
+
 /**
  * OK
  */
@@ -986,6 +1124,46 @@ export const zListLegalResearchConversationMessagesPath = z.object({
  * OK
  */
 export const zListLegalResearchConversationMessagesResponse = z.array(zLegalResearchMessage);
+
+/**
+ * OK
+ */
+export const zGetLegalResearchScopeOptionsResponse = zLegalResearchScopeOptions;
+
+export const zListLegalResearchEntitiesQuery = z.object({
+    q: z.string().optional(),
+    role: z.string().optional(),
+    limit: z.int().gte(1).lte(200).optional().default(50),
+    offset: z.int().gte(0).optional().default(0)
+});
+
+/**
+ * OK
+ */
+export const zListLegalResearchEntitiesResponse = zLegalResearchEntityList;
+
+/**
+ * OK
+ */
+export const zListLegalResearchEntityRolesResponse = zLegalResearchEntityRoles;
+
+export const zGetLegalResearchEntityPath = z.object({
+    entity_id: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' })
+});
+
+/**
+ * OK
+ */
+export const zGetLegalResearchEntityResponse = zLegalResearchEntityDetail;
+
+export const zGetLegalResearchDocumentGraphPath = z.object({
+    document_id: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' })
+});
+
+/**
+ * OK
+ */
+export const zGetLegalResearchDocumentGraphResponse = zLegalResearchDocumentGraph;
 
 export const zGetLegalResearchDocumentPath = z.object({
     document_id: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' })
