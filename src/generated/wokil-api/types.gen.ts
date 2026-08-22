@@ -897,6 +897,77 @@ export type LegalResearchEntityDetail = {
 };
 
 /**
+ * One node in the citation subgraph — a document or a named entity.
+ */
+export type LegalResearchSubgraphNode = {
+    /**
+     * Namespaced: `document:412` or `entity:97`. The two id spaces overlap, so bare integers are ambiguous.
+     */
+    id: string;
+    /**
+     * `document`, `missing`, or the entity's role (advocate, judge, …). Free-form — not an enum.
+     */
+    kind: string;
+    label: string;
+    /**
+     * Relative size for rendering (citation in-degree or document count).
+     */
+    value: number;
+    detail?: string | null;
+    is_repealed?: boolean;
+};
+
+/**
+ * One edge in the citation subgraph. A dangling edge points at a decision cited but not in the corpus.
+ */
+export type LegalResearchSubgraphEdge = {
+    source: string;
+    target: string;
+    /**
+     * `cites` or `appears_in`.
+     */
+    kind: string;
+    label?: string | null;
+    /**
+     * The target is not in the corpus — render but do not allow expansion.
+     */
+    dangling: boolean;
+};
+
+/**
+ * An entity removed from the layout for connecting to too many nodes. Surface rather than silently drop.
+ */
+export type LegalResearchSubgraphHub = {
+    id: string;
+    name: string;
+    role: string;
+    document_count: number;
+};
+
+/**
+ * The one-hop neighbourhood around a seed node, budgeted for rendering.
+ */
+export type LegalResearchSubgraph = {
+    /**
+     * The node this neighbourhood is centred on, e.g. `document:412`.
+     */
+    seed: string;
+    seed_label: string;
+    nodes: Array<LegalResearchSubgraphNode>;
+    edges: Array<LegalResearchSubgraphEdge>;
+    /**
+     * How many neighbours by kind were dropped by the budget, e.g. `{"judge": 5, "cites": 12}`. Empty when none were dropped.
+     */
+    truncated: {
+        [key: string]: number;
+    };
+    /**
+     * Entities removed for connecting to too many nodes. List them; do not silently drop.
+     */
+    suppressed_hubs: Array<LegalResearchSubgraphHub>;
+};
+
+/**
  * One citation edge. An unresolved edge names a decision that is cited but not itself in the corpus — it has no document_id and cannot be opened.
  */
 export type LegalResearchCitation = {
@@ -3141,6 +3212,52 @@ export type GetLegalResearchEntityResponses = {
 };
 
 export type GetLegalResearchEntityResponse = GetLegalResearchEntityResponses[keyof GetLegalResearchEntityResponses];
+
+export type GetLegalResearchSubgraphData = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Seed node, e.g. `document:412` or `entity:97`.
+         */
+        node: string;
+    };
+    url: '/api/legal-research/graph/subgraph';
+};
+
+export type GetLegalResearchSubgraphErrors = {
+    /**
+     * Invalid request
+     */
+    400: string;
+    /**
+     * Missing or invalid bearer token
+     */
+    401: string;
+    /**
+     * Internal server error
+     */
+    500: string;
+    /**
+     * An upstream service (wokil-rag, the domain registrar) returned a bad response
+     */
+    502: string;
+    /**
+     * An upstream service is unavailable, or the feature is not configured on this deployment
+     */
+    503: string;
+};
+
+export type GetLegalResearchSubgraphError = GetLegalResearchSubgraphErrors[keyof GetLegalResearchSubgraphErrors];
+
+export type GetLegalResearchSubgraphResponses = {
+    /**
+     * OK
+     */
+    200: LegalResearchSubgraph;
+};
+
+export type GetLegalResearchSubgraphResponse = GetLegalResearchSubgraphResponses[keyof GetLegalResearchSubgraphResponses];
 
 export type GetLegalResearchDocumentGraphData = {
     body?: never;
