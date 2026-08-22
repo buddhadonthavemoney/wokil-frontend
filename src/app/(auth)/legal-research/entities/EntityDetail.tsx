@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { AlertTriangle, Loader2, MessageSquareText, X } from 'lucide-react';
+import { AlertTriangle, Loader2, MessageSquareText, Network, X } from 'lucide-react';
 
 import type { LegalResearchEntity } from '@/generated/wokil-api';
 import { getLegalResearchEntityOptions } from '@/generated/wokil-api/@tanstack/react-query.gen';
@@ -15,6 +15,7 @@ interface EntityDetailProps {
   entity: LegalResearchEntity;
   onOpenDocument: (target: DocumentTarget) => void;
   onClose: () => void;
+  onShowGraph?: (seed: string) => void;
 }
 
 /**
@@ -23,7 +24,7 @@ interface EntityDetailProps {
  * scope, which is the only way to ask "what has this judge held?" and get an
  * answer that cannot wander outside their cases.
  */
-export function EntityDetail({ entity, onOpenDocument, onClose }: EntityDetailProps) {
+export function EntityDetail({ entity, onOpenDocument, onClose, onShowGraph }: EntityDetailProps) {
   const router = useRouter();
 
   const detailQuery = useQuery(
@@ -62,10 +63,19 @@ export function EntityDetail({ entity, onOpenDocument, onClose }: EntityDetailPr
         </button>
       </header>
 
-      <div className="px-5 py-3 border-b border-border">
-        <Button onClick={askAboutEntity} disabled={detailQuery.isPending} className="w-full">
+      <div className="px-5 py-3 border-b border-border flex gap-2">
+        <Button onClick={askAboutEntity} disabled={detailQuery.isPending} className="flex-1">
           <MessageSquareText className="w-4 h-4" /> Ask about this person
         </Button>
+        {onShowGraph && (
+          <Button
+            variant="outline"
+            onClick={() => onShowGraph(`entity:${entity.id}`)}
+            title="Show citation graph"
+          >
+            <Network className="w-4 h-4" />
+          </Button>
+        )}
       </div>
 
       <div className="flex-1 overflow-y-auto px-5 py-4 space-y-2">

@@ -595,6 +595,51 @@ export const zLegalResearchEntityDetail = z.object({
 });
 
 /**
+ * One node in the citation subgraph — a document or a named entity.
+ */
+export const zLegalResearchSubgraphNode = z.object({
+    id: z.string(),
+    kind: z.string(),
+    label: z.string(),
+    value: z.int(),
+    detail: z.string().nullish(),
+    is_repealed: z.boolean().optional()
+});
+
+/**
+ * One edge in the citation subgraph. A dangling edge points at a decision cited but not in the corpus.
+ */
+export const zLegalResearchSubgraphEdge = z.object({
+    source: z.string(),
+    target: z.string(),
+    kind: z.string(),
+    label: z.string().nullish(),
+    dangling: z.boolean()
+});
+
+/**
+ * An entity removed from the layout for connecting to too many nodes. Surface rather than silently drop.
+ */
+export const zLegalResearchSubgraphHub = z.object({
+    id: z.string(),
+    name: z.string(),
+    role: z.string(),
+    document_count: z.int()
+});
+
+/**
+ * The one-hop neighbourhood around a seed node, budgeted for rendering.
+ */
+export const zLegalResearchSubgraph = z.object({
+    seed: z.string(),
+    seed_label: z.string(),
+    nodes: z.array(zLegalResearchSubgraphNode),
+    edges: z.array(zLegalResearchSubgraphEdge),
+    truncated: z.record(z.string(), z.int()),
+    suppressed_hubs: z.array(zLegalResearchSubgraphHub)
+});
+
+/**
  * One citation edge. An unresolved edge names a decision that is cited but not itself in the corpus — it has no document_id and cannot be opened.
  */
 export const zLegalResearchCitation = z.object({
@@ -1155,6 +1200,15 @@ export const zGetLegalResearchEntityPath = z.object({
  * OK
  */
 export const zGetLegalResearchEntityResponse = zLegalResearchEntityDetail;
+
+export const zGetLegalResearchSubgraphQuery = z.object({
+    node: z.string().regex(/^(document|entity):[0-9]+$/)
+});
+
+/**
+ * OK
+ */
+export const zGetLegalResearchSubgraphResponse = zLegalResearchSubgraph;
 
 export const zGetLegalResearchDocumentGraphPath = z.object({
     document_id: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' })

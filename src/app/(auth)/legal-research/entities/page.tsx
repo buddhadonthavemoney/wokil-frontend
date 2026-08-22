@@ -14,6 +14,7 @@ import {
 } from '@/generated/wokil-api/@tanstack/react-query.gen';
 import { PageHeader } from '@/components/layout/PageHeader';
 
+import { CitationGraph } from '../components/CitationGraph';
 import { DocumentPanel, type DocumentTarget } from '../components/DocumentPanel';
 import { EntityDetail } from './EntityDetail';
 
@@ -26,6 +27,12 @@ export default function LegalResearchEntitiesPage() {
   const [offset, setOffset] = useState(0);
   const [selected, setSelected] = useState<LegalResearchEntity | null>(null);
   const [documentTarget, setDocumentTarget] = useState<DocumentTarget | null>(null);
+  const [graphSeed, setGraphSeed] = useState<string | null>(null);
+
+  const selectEntity = (entity: LegalResearchEntity) => {
+    setSelected(entity);
+    if (graphSeed) setGraphSeed(`entity:${entity.id}`);
+  };
 
   // Reset offset when the deferred query changes.
   const [prevQuery, setPrevQuery] = useState(query);
@@ -138,7 +145,7 @@ export default function LegalResearchEntitiesPage() {
                   <button
                     key={entity.id}
                     type="button"
-                    onClick={() => setSelected(entity)}
+                    onClick={() => selectEntity(entity)}
                     className={`w-full text-left px-5 py-3 flex items-center justify-between gap-3 transition-colors hover:bg-surface-low ${
                       selected?.id === entity.id ? 'bg-surface-low' : ''
                     }`}
@@ -185,6 +192,7 @@ export default function LegalResearchEntitiesPage() {
                 entity={selected}
                 onOpenDocument={setDocumentTarget}
                 onClose={() => setSelected(null)}
+                onShowGraph={setGraphSeed}
               />
             ) : (
               <div className="rounded-xl border border-dashed border-border p-6 text-center">
@@ -202,6 +210,18 @@ export default function LegalResearchEntitiesPage() {
           target={documentTarget}
           onOpen={setDocumentTarget}
           onClose={() => setDocumentTarget(null)}
+          onShowGraph={setGraphSeed}
+        />
+      )}
+
+      {graphSeed && (
+        <CitationGraph
+          seed={graphSeed}
+          onOpenDocument={(t) => {
+            setGraphSeed(null);
+            setDocumentTarget(t);
+          }}
+          onClose={() => setGraphSeed(null)}
         />
       )}
     </div>

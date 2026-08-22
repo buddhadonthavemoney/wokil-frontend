@@ -2,7 +2,8 @@
 
 import { useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { AlertTriangle, ExternalLink, Loader2, X } from 'lucide-react';
+import { AlertTriangle, ExternalLink, Loader2, Network, X } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 
 import type { LegalResearchCitation } from '@/generated/wokil-api';
 import {
@@ -59,6 +60,7 @@ interface DocumentPanelProps {
   target: DocumentTarget;
   onOpen: (target: DocumentTarget) => void;
   onClose: () => void;
+  onShowGraph?: (seed: string) => void;
 }
 
 /**
@@ -66,7 +68,7 @@ interface DocumentPanelProps {
  * are two independent queries with their own error states — either upstream
  * can be down without blanking the whole panel.
  */
-export function DocumentPanel({ target, onOpen, onClose }: DocumentPanelProps) {
+export function DocumentPanel({ target, onOpen, onClose, onShowGraph }: DocumentPanelProps) {
   const citedChunkRef = useRef<HTMLDivElement>(null);
 
   const documentQuery = useQuery({
@@ -105,6 +107,16 @@ export function DocumentPanel({ target, onOpen, onClose }: DocumentPanelProps) {
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
+          {onShowGraph && (
+            <button
+              type="button"
+              onClick={() => onShowGraph(`document:${target.documentId}`)}
+              className="p-2 rounded-lg hover:bg-surface-low text-muted-foreground"
+              title="Show citation graph"
+            >
+              <Network className="w-4 h-4" />
+            </button>
+          )}
           {sourceUrl && (
             <a
               href={sourceUrl}
@@ -157,10 +169,10 @@ export function DocumentPanel({ target, onOpen, onClose }: DocumentPanelProps) {
             <div
               key={chunk.chunk_index}
               ref={isCited ? citedChunkRef : undefined}
-              className={`text-sm leading-relaxed whitespace-pre-wrap rounded-lg ${
+              className={`rounded-lg ${
                 isCited
                   ? 'bg-accent/10 border border-accent/40 p-3 -mx-1'
-                  : 'text-foreground'
+                  : ''
               }`}
             >
               {chunk.section_path && (
@@ -169,7 +181,9 @@ export function DocumentPanel({ target, onOpen, onClose }: DocumentPanelProps) {
                   {chunk.page_start != null && ` · p.${chunk.page_start}`}
                 </p>
               )}
-              {chunk.text}
+              <div className="prose prose-sm max-w-none text-foreground prose-headings:font-heading prose-headings:text-foreground prose-p:my-2 prose-a:text-accent">
+                <ReactMarkdown>{chunk.text}</ReactMarkdown>
+              </div>
             </div>
           );
         })}

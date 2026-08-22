@@ -20,6 +20,7 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { useChatStream } from '@/hooks/useChatStream';
 
 import { Composer, type ChatMode } from './components/Composer';
+import { CitationGraph } from './components/CitationGraph';
 import { DocumentPanel, type DocumentTarget } from './components/DocumentPanel';
 import { MessageList, type Turn } from './components/MessageList';
 import { isWholeCorpus } from './components/ScopePicker';
@@ -42,6 +43,7 @@ export default function LegalResearchPage() {
   const [mode, setMode] = useState<ChatMode>('ask');
   const [scope, setScope] = useState<LegalResearchScope>({});
   const [documentTarget, setDocumentTarget] = useState<DocumentTarget | null>(null);
+  const [graphSeed, setGraphSeed] = useState<string | null>(null);
   const threadRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
 
@@ -333,6 +335,18 @@ export default function LegalResearchPage() {
           target={documentTarget}
           onOpen={setDocumentTarget}
           onClose={() => setDocumentTarget(null)}
+          onShowGraph={setGraphSeed}
+        />
+      )}
+
+      {graphSeed && (
+        <CitationGraph
+          seed={graphSeed}
+          onOpenDocument={(t) => {
+            setGraphSeed(null);
+            setDocumentTarget(t);
+          }}
+          onClose={() => setGraphSeed(null)}
         />
       )}
     </div>
