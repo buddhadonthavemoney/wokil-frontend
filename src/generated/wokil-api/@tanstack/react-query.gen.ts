@@ -3,8 +3,8 @@
 import { type DefaultError, type InfiniteData, infiniteQueryOptions, queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { chatLegalResearch, checkDomainAvailability, createDomainOrder, createFirm, createForm, createGaProperty, createSite, createSiteEmailRoute, createSiteZone, createVerificationRecords, deleteSite, deleteSiteEmailRoute, deploySite, enableSiteEmail, getAccountType, getDomainOrder, getLegalResearchDocument, getLegalResearchDocumentGraph, getLegalResearchEntity, getLegalResearchScopeOptions, getLegalResearchSubgraph, getMyFirm, getProfile, getPublicDirectory, getRegistrant, getSiteAnalytics, getSiteEmail, getSiteEmailCatchAll, getSiteEmailOverview, getSiteZone, getVerificationRecords, googleCallback, googleLogin, listDomainOrders, listForms, listLegalResearchConversationMessages, listLegalResearchConversations, listLegalResearchEntities, listLegalResearchEntityRoles, listSiteEmailRoutes, listSites, listSubmissions, listThemes, listUsers, markDomainOrderPaid, type Options, removeSiteEmailDestination, resendRegistrantVerification, retryDomainOrder, saveProfile, saveRegistrant, searchDomains, searchFirms, setAccountType, setSiteEmailCatchAll, submitForm, updateFirm, updateProfileVisibility, uploadFile, verifyDns } from '../sdk.gen';
-import type { ChatLegalResearchData, ChatLegalResearchError, ChatLegalResearchResponse, CheckDomainAvailabilityData, CheckDomainAvailabilityError, CheckDomainAvailabilityResponse, CreateDomainOrderData, CreateDomainOrderError, CreateDomainOrderResponse, CreateFirmData, CreateFirmError, CreateFirmResponse, CreateFormData, CreateFormError, CreateFormResponse, CreateGaPropertyData, CreateGaPropertyError, CreateGaPropertyResponse, CreateSiteData, CreateSiteEmailRouteData, CreateSiteEmailRouteError, CreateSiteEmailRouteResponse, CreateSiteError, CreateSiteResponse, CreateSiteZoneData, CreateSiteZoneError, CreateSiteZoneResponse, CreateVerificationRecordsData, CreateVerificationRecordsError, CreateVerificationRecordsResponse, DeleteSiteData, DeleteSiteEmailRouteData, DeleteSiteEmailRouteError, DeleteSiteEmailRouteResponse, DeleteSiteError, DeleteSiteResponse, DeploySiteData, DeploySiteError, DeploySiteResponse, EnableSiteEmailData, EnableSiteEmailError, EnableSiteEmailResponse, GetAccountTypeData, GetAccountTypeError, GetAccountTypeResponse, GetDomainOrderData, GetDomainOrderError, GetDomainOrderResponse, GetLegalResearchDocumentData, GetLegalResearchDocumentError, GetLegalResearchDocumentGraphData, GetLegalResearchDocumentGraphError, GetLegalResearchDocumentGraphResponse, GetLegalResearchDocumentResponse, GetLegalResearchEntityData, GetLegalResearchEntityError, GetLegalResearchEntityResponse, GetLegalResearchScopeOptionsData, GetLegalResearchScopeOptionsError, GetLegalResearchScopeOptionsResponse, GetLegalResearchSubgraphData, GetLegalResearchSubgraphError, GetLegalResearchSubgraphResponse, GetMyFirmData, GetMyFirmError, GetMyFirmResponse, GetProfileData, GetProfileError, GetProfileResponse, GetPublicDirectoryData, GetPublicDirectoryError, GetPublicDirectoryResponse, GetRegistrantData, GetRegistrantError, GetRegistrantResponse, GetSiteAnalyticsData, GetSiteAnalyticsError, GetSiteAnalyticsResponse, GetSiteEmailCatchAllData, GetSiteEmailCatchAllError, GetSiteEmailCatchAllResponse, GetSiteEmailData, GetSiteEmailError, GetSiteEmailOverviewData, GetSiteEmailOverviewError, GetSiteEmailOverviewResponse, GetSiteEmailResponse, GetSiteZoneData, GetSiteZoneError, GetSiteZoneResponse, GetVerificationRecordsData, GetVerificationRecordsError, GetVerificationRecordsResponse, GoogleCallbackData, GoogleCallbackError, GoogleCallbackResponse, GoogleLoginData, GoogleLoginResponse, ListDomainOrdersData, ListDomainOrdersError, ListDomainOrdersResponse, ListFormsData, ListFormsError, ListFormsResponse, ListLegalResearchConversationMessagesData, ListLegalResearchConversationMessagesError, ListLegalResearchConversationMessagesResponse, ListLegalResearchConversationsData, ListLegalResearchConversationsError, ListLegalResearchConversationsResponse, ListLegalResearchEntitiesData, ListLegalResearchEntitiesError, ListLegalResearchEntitiesResponse, ListLegalResearchEntityRolesData, ListLegalResearchEntityRolesError, ListLegalResearchEntityRolesResponse, ListSiteEmailRoutesData, ListSiteEmailRoutesError, ListSiteEmailRoutesResponse, ListSitesData, ListSitesError, ListSitesResponse, ListSubmissionsData, ListSubmissionsError, ListSubmissionsResponse, ListThemesData, ListThemesError, ListThemesResponse, ListUsersData, ListUsersError, ListUsersResponse, MarkDomainOrderPaidData, MarkDomainOrderPaidError, MarkDomainOrderPaidResponse, RemoveSiteEmailDestinationData, RemoveSiteEmailDestinationError, RemoveSiteEmailDestinationResponse, ResendRegistrantVerificationData, ResendRegistrantVerificationError, ResendRegistrantVerificationResponse, RetryDomainOrderData, RetryDomainOrderError, RetryDomainOrderResponse, SaveProfileData, SaveProfileError, SaveProfileResponse, SaveRegistrantData, SaveRegistrantError, SaveRegistrantResponse, SearchDomainsData, SearchDomainsError, SearchDomainsResponse, SearchFirmsData, SearchFirmsError, SearchFirmsResponse, SetAccountTypeData, SetAccountTypeError, SetAccountTypeResponse, SetSiteEmailCatchAllData, SetSiteEmailCatchAllError, SetSiteEmailCatchAllResponse, SubmitFormData, SubmitFormError, SubmitFormResponse, UpdateFirmData, UpdateFirmError, UpdateFirmResponse, UpdateProfileVisibilityData, UpdateProfileVisibilityError, UpdateProfileVisibilityResponse, UploadFileData, UploadFileError, UploadFileResponse, VerifyDnsData, VerifyDnsError, VerifyDnsResponse } from '../types.gen';
+import { chatLegalResearch, checkDomainAvailability, createDomainOrder, createFirm, createForm, createGaProperty, createSite, createSiteEmailRoute, createSiteZone, createVerificationRecords, deleteLegalResearchConversation, deleteSite, deleteSiteEmailRoute, deploySite, enableSiteEmail, getAccountType, getDomainOrder, getLegalResearchDocument, getLegalResearchDocumentFacets, getLegalResearchDocumentGraph, getLegalResearchDocumentStats, getLegalResearchEntity, getLegalResearchEntityProfile, getLegalResearchGraphStats, getLegalResearchRepealedRegister, getLegalResearchScopeOptions, getLegalResearchSubgraph, getMyFirm, getProfile, getPublicDirectory, getRegistrant, getSiteAnalytics, getSiteEmail, getSiteEmailCatchAll, getSiteEmailOverview, getSiteZone, getVerificationRecords, googleCallback, googleLogin, listDomainOrders, listForms, listLegalResearchConversationMessages, listLegalResearchConversations, listLegalResearchDocuments, listLegalResearchEntities, listLegalResearchEntityRoles, listLegalResearchMostCited, listSiteEmailRoutes, listSites, listSubmissions, listThemes, listUsers, markDomainOrderPaid, type Options, removeSiteEmailDestination, renameLegalResearchConversation, resendRegistrantVerification, retryDomainOrder, saveProfile, saveRegistrant, searchDomains, searchFirms, searchLegalResearch, searchLegalResearchGraph, setAccountType, setSiteEmailCatchAll, submitForm, updateFirm, updateProfileVisibility, uploadFile, verifyDns } from '../sdk.gen';
+import type { ChatLegalResearchData, ChatLegalResearchError, ChatLegalResearchResponse, CheckDomainAvailabilityData, CheckDomainAvailabilityError, CheckDomainAvailabilityResponse, CreateDomainOrderData, CreateDomainOrderError, CreateDomainOrderResponse, CreateFirmData, CreateFirmError, CreateFirmResponse, CreateFormData, CreateFormError, CreateFormResponse, CreateGaPropertyData, CreateGaPropertyError, CreateGaPropertyResponse, CreateSiteData, CreateSiteEmailRouteData, CreateSiteEmailRouteError, CreateSiteEmailRouteResponse, CreateSiteError, CreateSiteResponse, CreateSiteZoneData, CreateSiteZoneError, CreateSiteZoneResponse, CreateVerificationRecordsData, CreateVerificationRecordsError, CreateVerificationRecordsResponse, DeleteLegalResearchConversationData, DeleteLegalResearchConversationError, DeleteLegalResearchConversationResponse, DeleteSiteData, DeleteSiteEmailRouteData, DeleteSiteEmailRouteError, DeleteSiteEmailRouteResponse, DeleteSiteError, DeleteSiteResponse, DeploySiteData, DeploySiteError, DeploySiteResponse, EnableSiteEmailData, EnableSiteEmailError, EnableSiteEmailResponse, GetAccountTypeData, GetAccountTypeError, GetAccountTypeResponse, GetDomainOrderData, GetDomainOrderError, GetDomainOrderResponse, GetLegalResearchDocumentData, GetLegalResearchDocumentError, GetLegalResearchDocumentFacetsData, GetLegalResearchDocumentFacetsError, GetLegalResearchDocumentFacetsResponse, GetLegalResearchDocumentGraphData, GetLegalResearchDocumentGraphError, GetLegalResearchDocumentGraphResponse, GetLegalResearchDocumentResponse, GetLegalResearchDocumentStatsData, GetLegalResearchDocumentStatsError, GetLegalResearchDocumentStatsResponse, GetLegalResearchEntityData, GetLegalResearchEntityError, GetLegalResearchEntityProfileData, GetLegalResearchEntityProfileError, GetLegalResearchEntityProfileResponse, GetLegalResearchEntityResponse, GetLegalResearchGraphStatsData, GetLegalResearchGraphStatsError, GetLegalResearchGraphStatsResponse, GetLegalResearchRepealedRegisterData, GetLegalResearchRepealedRegisterError, GetLegalResearchRepealedRegisterResponse, GetLegalResearchScopeOptionsData, GetLegalResearchScopeOptionsError, GetLegalResearchScopeOptionsResponse, GetLegalResearchSubgraphData, GetLegalResearchSubgraphError, GetLegalResearchSubgraphResponse, GetMyFirmData, GetMyFirmError, GetMyFirmResponse, GetProfileData, GetProfileError, GetProfileResponse, GetPublicDirectoryData, GetPublicDirectoryError, GetPublicDirectoryResponse, GetRegistrantData, GetRegistrantError, GetRegistrantResponse, GetSiteAnalyticsData, GetSiteAnalyticsError, GetSiteAnalyticsResponse, GetSiteEmailCatchAllData, GetSiteEmailCatchAllError, GetSiteEmailCatchAllResponse, GetSiteEmailData, GetSiteEmailError, GetSiteEmailOverviewData, GetSiteEmailOverviewError, GetSiteEmailOverviewResponse, GetSiteEmailResponse, GetSiteZoneData, GetSiteZoneError, GetSiteZoneResponse, GetVerificationRecordsData, GetVerificationRecordsError, GetVerificationRecordsResponse, GoogleCallbackData, GoogleCallbackError, GoogleCallbackResponse, GoogleLoginData, GoogleLoginResponse, ListDomainOrdersData, ListDomainOrdersError, ListDomainOrdersResponse, ListFormsData, ListFormsError, ListFormsResponse, ListLegalResearchConversationMessagesData, ListLegalResearchConversationMessagesError, ListLegalResearchConversationMessagesResponse, ListLegalResearchConversationsData, ListLegalResearchConversationsError, ListLegalResearchConversationsResponse, ListLegalResearchDocumentsData, ListLegalResearchDocumentsError, ListLegalResearchDocumentsResponse, ListLegalResearchEntitiesData, ListLegalResearchEntitiesError, ListLegalResearchEntitiesResponse, ListLegalResearchEntityRolesData, ListLegalResearchEntityRolesError, ListLegalResearchEntityRolesResponse, ListLegalResearchMostCitedData, ListLegalResearchMostCitedError, ListLegalResearchMostCitedResponse, ListSiteEmailRoutesData, ListSiteEmailRoutesError, ListSiteEmailRoutesResponse, ListSitesData, ListSitesError, ListSitesResponse, ListSubmissionsData, ListSubmissionsError, ListSubmissionsResponse, ListThemesData, ListThemesError, ListThemesResponse, ListUsersData, ListUsersError, ListUsersResponse, MarkDomainOrderPaidData, MarkDomainOrderPaidError, MarkDomainOrderPaidResponse, RemoveSiteEmailDestinationData, RemoveSiteEmailDestinationError, RemoveSiteEmailDestinationResponse, RenameLegalResearchConversationData, RenameLegalResearchConversationError, RenameLegalResearchConversationResponse, ResendRegistrantVerificationData, ResendRegistrantVerificationError, ResendRegistrantVerificationResponse, RetryDomainOrderData, RetryDomainOrderError, RetryDomainOrderResponse, SaveProfileData, SaveProfileError, SaveProfileResponse, SaveRegistrantData, SaveRegistrantError, SaveRegistrantResponse, SearchDomainsData, SearchDomainsError, SearchDomainsResponse, SearchFirmsData, SearchFirmsError, SearchFirmsResponse, SearchLegalResearchData, SearchLegalResearchError, SearchLegalResearchGraphData, SearchLegalResearchGraphError, SearchLegalResearchGraphResponse, SearchLegalResearchResponse, SetAccountTypeData, SetAccountTypeError, SetAccountTypeResponse, SetSiteEmailCatchAllData, SetSiteEmailCatchAllError, SetSiteEmailCatchAllResponse, SubmitFormData, SubmitFormError, SubmitFormResponse, UpdateFirmData, UpdateFirmError, UpdateFirmResponse, UpdateProfileVisibilityData, UpdateProfileVisibilityError, UpdateProfileVisibilityResponse, UploadFileData, UploadFileError, UploadFileResponse, VerifyDnsData, VerifyDnsError, VerifyDnsResponse } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -984,6 +984,25 @@ export const uploadFileMutation = (options?: Partial<Options<UploadFileData>>): 
 };
 
 /**
+ * Raw passage search without LLM synthesis
+ *
+ * Retrieves ranked passages matching the query. Unlike `/chat`, no LLM answer is generated — the caller gets the raw retrieval results. Useful for "find me the exact text" workflows.
+ */
+export const searchLegalResearchMutation = (options?: Partial<Options<SearchLegalResearchData>>): UseMutationOptions<SearchLegalResearchResponse, SearchLegalResearchError, Options<SearchLegalResearchData>> => {
+    const mutationOptions: UseMutationOptions<SearchLegalResearchResponse, SearchLegalResearchError, Options<SearchLegalResearchData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await searchLegalResearch({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
  * Ask the legal corpus a question
  *
  * Thin proxy to the wokil-rag service. The corpus (Najir decisions, Nepal Law Commission acts) is owned by wokil-rag; this endpoint owns the conversation and forwards history once persistence lands.
@@ -1041,6 +1060,40 @@ export const listLegalResearchConversationMessagesOptions = (options: Options<Li
     },
     queryKey: listLegalResearchConversationMessagesQueryKey(options)
 });
+
+/**
+ * Delete a conversation and all its messages
+ */
+export const deleteLegalResearchConversationMutation = (options?: Partial<Options<DeleteLegalResearchConversationData>>): UseMutationOptions<DeleteLegalResearchConversationResponse, DeleteLegalResearchConversationError, Options<DeleteLegalResearchConversationData>> => {
+    const mutationOptions: UseMutationOptions<DeleteLegalResearchConversationResponse, DeleteLegalResearchConversationError, Options<DeleteLegalResearchConversationData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await deleteLegalResearchConversation({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Rename a conversation
+ */
+export const renameLegalResearchConversationMutation = (options?: Partial<Options<RenameLegalResearchConversationData>>): UseMutationOptions<RenameLegalResearchConversationResponse, RenameLegalResearchConversationError, Options<RenameLegalResearchConversationData>> => {
+    const mutationOptions: UseMutationOptions<RenameLegalResearchConversationResponse, RenameLegalResearchConversationError, Options<RenameLegalResearchConversationData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await renameLegalResearchConversation({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
 
 export const getLegalResearchScopeOptionsQueryKey = (options?: Options<GetLegalResearchScopeOptionsData>) => createQueryKey('getLegalResearchScopeOptions', options);
 
@@ -1181,6 +1234,26 @@ export const getLegalResearchEntityOptions = (options: Options<GetLegalResearchE
     queryKey: getLegalResearchEntityQueryKey(options)
 });
 
+export const getLegalResearchEntityProfileQueryKey = (options: Options<GetLegalResearchEntityProfileData>) => createQueryKey('getLegalResearchEntityProfile', options);
+
+/**
+ * Working profile for one person
+ *
+ * Practice areas, years active, co-appearing people grouped by role, and recent documents. Built for advocates but role-agnostic.
+ */
+export const getLegalResearchEntityProfileOptions = (options: Options<GetLegalResearchEntityProfileData>) => queryOptions<GetLegalResearchEntityProfileResponse, GetLegalResearchEntityProfileError, GetLegalResearchEntityProfileResponse, ReturnType<typeof getLegalResearchEntityProfileQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getLegalResearchEntityProfile({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getLegalResearchEntityProfileQueryKey(options)
+});
+
 export const getLegalResearchSubgraphQueryKey = (options: Options<GetLegalResearchSubgraphData>) => createQueryKey('getLegalResearchSubgraph', options);
 
 /**
@@ -1200,6 +1273,206 @@ export const getLegalResearchSubgraphOptions = (options: Options<GetLegalResearc
     },
     queryKey: getLegalResearchSubgraphQueryKey(options)
 });
+
+export const searchLegalResearchGraphQueryKey = (options: Options<SearchLegalResearchGraphData>) => createQueryKey('searchLegalResearchGraph', options);
+
+/**
+ * Search for seed nodes in the citation graph
+ *
+ * Typeahead for the graph view — finds people and decisions whose label matches the query. Select a hit to re-seed the subgraph.
+ */
+export const searchLegalResearchGraphOptions = (options: Options<SearchLegalResearchGraphData>) => queryOptions<SearchLegalResearchGraphResponse, SearchLegalResearchGraphError, SearchLegalResearchGraphResponse, ReturnType<typeof searchLegalResearchGraphQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await searchLegalResearchGraph({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: searchLegalResearchGraphQueryKey(options)
+});
+
+export const listLegalResearchMostCitedQueryKey = (options?: Options<ListLegalResearchMostCitedData>) => createQueryKey('listLegalResearchMostCited', options);
+
+/**
+ * Decisions most cited across the corpus
+ *
+ * Ranked list of decisions by citation count. Useful for discovering landmark rulings. `document_id` is present only when the decision itself is in the corpus.
+ */
+export const listLegalResearchMostCitedOptions = (options?: Options<ListLegalResearchMostCitedData>) => queryOptions<ListLegalResearchMostCitedResponse, ListLegalResearchMostCitedError, ListLegalResearchMostCitedResponse, ReturnType<typeof listLegalResearchMostCitedQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await listLegalResearchMostCited({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: listLegalResearchMostCitedQueryKey(options)
+});
+
+export const getLegalResearchGraphStatsQueryKey = (options?: Options<GetLegalResearchGraphStatsData>) => createQueryKey('getLegalResearchGraphStats', options);
+
+/**
+ * Citation graph statistics
+ */
+export const getLegalResearchGraphStatsOptions = (options?: Options<GetLegalResearchGraphStatsData>) => queryOptions<GetLegalResearchGraphStatsResponse, GetLegalResearchGraphStatsError, GetLegalResearchGraphStatsResponse, ReturnType<typeof getLegalResearchGraphStatsQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getLegalResearchGraphStats({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getLegalResearchGraphStatsQueryKey(options)
+});
+
+export const getLegalResearchDocumentStatsQueryKey = (options?: Options<GetLegalResearchDocumentStatsData>) => createQueryKey('getLegalResearchDocumentStats', options);
+
+/**
+ * Corpus document statistics
+ */
+export const getLegalResearchDocumentStatsOptions = (options?: Options<GetLegalResearchDocumentStatsData>) => queryOptions<GetLegalResearchDocumentStatsResponse, GetLegalResearchDocumentStatsError, GetLegalResearchDocumentStatsResponse, ReturnType<typeof getLegalResearchDocumentStatsQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getLegalResearchDocumentStats({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getLegalResearchDocumentStatsQueryKey(options)
+});
+
+export const getLegalResearchDocumentFacetsQueryKey = (options?: Options<GetLegalResearchDocumentFacetsData>) => createQueryKey('getLegalResearchDocumentFacets', options);
+
+/**
+ * Filterable values with counts
+ *
+ * Collections, categories, and years the corpus actually has, with document counts. Drives the filter sidebar on the documents page.
+ */
+export const getLegalResearchDocumentFacetsOptions = (options?: Options<GetLegalResearchDocumentFacetsData>) => queryOptions<GetLegalResearchDocumentFacetsResponse, GetLegalResearchDocumentFacetsError, GetLegalResearchDocumentFacetsResponse, ReturnType<typeof getLegalResearchDocumentFacetsQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getLegalResearchDocumentFacets({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getLegalResearchDocumentFacetsQueryKey(options)
+});
+
+export const getLegalResearchRepealedRegisterQueryKey = (options?: Options<GetLegalResearchRepealedRegisterData>) => createQueryKey('getLegalResearchRepealedRegister', options);
+
+/**
+ * Repealed laws in the corpus
+ *
+ * Every no-longer-in-force act, regulation, or ordinance. The `by_category` counts span the whole register, not just this page.
+ */
+export const getLegalResearchRepealedRegisterOptions = (options?: Options<GetLegalResearchRepealedRegisterData>) => queryOptions<GetLegalResearchRepealedRegisterResponse, GetLegalResearchRepealedRegisterError, GetLegalResearchRepealedRegisterResponse, ReturnType<typeof getLegalResearchRepealedRegisterQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getLegalResearchRepealedRegister({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getLegalResearchRepealedRegisterQueryKey(options)
+});
+
+export const getLegalResearchRepealedRegisterInfiniteQueryKey = (options?: Options<GetLegalResearchRepealedRegisterData>): QueryKey<Options<GetLegalResearchRepealedRegisterData>> => createQueryKey('getLegalResearchRepealedRegister', options, true);
+
+/**
+ * Repealed laws in the corpus
+ *
+ * Every no-longer-in-force act, regulation, or ordinance. The `by_category` counts span the whole register, not just this page.
+ */
+export const getLegalResearchRepealedRegisterInfiniteOptions = (options?: Options<GetLegalResearchRepealedRegisterData>) => {
+    const opts = infiniteQueryOptions<GetLegalResearchRepealedRegisterResponse, GetLegalResearchRepealedRegisterError, InfiniteData<GetLegalResearchRepealedRegisterResponse>, QueryKey<Options<GetLegalResearchRepealedRegisterData>>, number | Pick<QueryKey<Options<GetLegalResearchRepealedRegisterData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
+    // @ts-ignore
+    {
+        queryFn: async ({ pageParam, queryKey, signal }) => {
+            // @ts-ignore
+            const page: Pick<QueryKey<Options<GetLegalResearchRepealedRegisterData>>[0], 'body' | 'headers' | 'path' | 'query'> = typeof pageParam === 'object' ? pageParam : {
+                query: {
+                    offset: pageParam
+                }
+            };
+            const params = createInfiniteParams(queryKey, page);
+            const { data } = await getLegalResearchRepealedRegister({
+                ...options,
+                ...params,
+                signal,
+                throwOnError: true
+            });
+            return data;
+        },
+        queryKey: getLegalResearchRepealedRegisterInfiniteQueryKey(options)
+    });
+    return opts as Omit<typeof opts, 'initialData'>;
+};
+
+export const listLegalResearchDocumentsQueryKey = (options?: Options<ListLegalResearchDocumentsData>) => createQueryKey('listLegalResearchDocuments', options);
+
+/**
+ * Browse and search corpus documents
+ *
+ * Substring search on title/filename and metadata filters. Returns a paginated list of document summaries.
+ */
+export const listLegalResearchDocumentsOptions = (options?: Options<ListLegalResearchDocumentsData>) => queryOptions<ListLegalResearchDocumentsResponse, ListLegalResearchDocumentsError, ListLegalResearchDocumentsResponse, ReturnType<typeof listLegalResearchDocumentsQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await listLegalResearchDocuments({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: listLegalResearchDocumentsQueryKey(options)
+});
+
+export const listLegalResearchDocumentsInfiniteQueryKey = (options?: Options<ListLegalResearchDocumentsData>): QueryKey<Options<ListLegalResearchDocumentsData>> => createQueryKey('listLegalResearchDocuments', options, true);
+
+/**
+ * Browse and search corpus documents
+ *
+ * Substring search on title/filename and metadata filters. Returns a paginated list of document summaries.
+ */
+export const listLegalResearchDocumentsInfiniteOptions = (options?: Options<ListLegalResearchDocumentsData>) => {
+    const opts = infiniteQueryOptions<ListLegalResearchDocumentsResponse, ListLegalResearchDocumentsError, InfiniteData<ListLegalResearchDocumentsResponse>, QueryKey<Options<ListLegalResearchDocumentsData>>, number | Pick<QueryKey<Options<ListLegalResearchDocumentsData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
+    // @ts-ignore
+    {
+        queryFn: async ({ pageParam, queryKey, signal }) => {
+            // @ts-ignore
+            const page: Pick<QueryKey<Options<ListLegalResearchDocumentsData>>[0], 'body' | 'headers' | 'path' | 'query'> = typeof pageParam === 'object' ? pageParam : {
+                query: {
+                    offset: pageParam
+                }
+            };
+            const params = createInfiniteParams(queryKey, page);
+            const { data } = await listLegalResearchDocuments({
+                ...options,
+                ...params,
+                signal,
+                throwOnError: true
+            });
+            return data;
+        },
+        queryKey: listLegalResearchDocumentsInfiniteQueryKey(options)
+    });
+    return opts as Omit<typeof opts, 'initialData'>;
+};
 
 export const getLegalResearchDocumentGraphQueryKey = (options: Options<GetLegalResearchDocumentGraphData>) => createQueryKey('getLegalResearchDocumentGraph', options);
 

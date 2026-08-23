@@ -14,14 +14,19 @@ import {
   type SimulationNodeDatum,
   type SimulationLinkDatum,
 } from 'd3-force';
-import { AlertTriangle, Loader2, Maximize2, RotateCcw, X, ZoomIn, ZoomOut } from 'lucide-react';
+import { AlertTriangle, Loader2, Maximize2, RotateCcw, Search, X, ZoomIn, ZoomOut } from 'lucide-react';
+
+import { useNepaliIME } from '../lib/useNepaliIME';
 
 import type {
   LegalResearchSubgraphNode,
   LegalResearchSubgraphEdge,
   LegalResearchSubgraphHub,
 } from '@/generated/wokil-api';
-import { getLegalResearchSubgraphOptions } from '@/generated/wokil-api/@tanstack/react-query.gen';
+import {
+  getLegalResearchSubgraphOptions,
+  searchLegalResearchGraphOptions,
+} from '@/generated/wokil-api/@tanstack/react-query.gen';
 
 import type { DocumentTarget } from './DocumentPanel';
 
@@ -687,6 +692,107 @@ function GraphCanvas({
   );
 }
 
+// --- Graph search bar ------------------------------------------------------
+
+function GraphSearchBar({ onSelect }: { onSelect: (nodeId: string) => void }) {
+  const [query, setQuery] = useState('');
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const ime = useNepaliIME(query, setQuery);
+
+  const { data: hits } = useQuery({
+    ...searchLegalResearchGraphOptions({ query: { q: query, limit: 12 } }),
+    enabled: query.length >= 2,
+    placeholderData: (prev) => prev,
+  });
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const showIME = ime.suggestions.length > 0 && ime.composing;
+  const showHits = !showIME && open && hits && hits.length > 0;
+
+  return (
+    <div ref={ref} className="relative">
+      <div className="flex items-center gap-1.5 rounded-md border border-border bg-background px-2 py-1">
+        <Search className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+        <input
+          type="text"
+          value={query}
+          onChange={(e: any) => { ime.onChange(e); setOpen(true); }}
+          onKeyDown={ime.onKeyDown as any}
+          onFocus={() => { if (query.length >= 2) setOpen(true); }}
+          placeholder={ime.enabled ? 'नेपालीमा खोज्नुहोस्…' : 'Search graph…'}
+          className="bg-transparent text-xs text-foreground placeholder:text-muted-foreground outline-none w-32"
+        />
+        <button
+          type="button"
+          onClick={ime.toggle}
+          className={`px-1 py-0.5 rounded text-[9px] font-bold transition-colors ${
+            ime.enabled
+              ? 'bg-accent text-accent-foreground'
+              : 'text-muted-foreground hover:text-foreground hover:bg-surface-low'
+          }`}
+          title={ime.enabled ? 'Switch to English' : 'Switch to Nepali'}
+        >
+          ने
+        </button>
+        {query && (
+          <button type="button" onClick={() => { setQuery(''); setOpen(false); }} className="text-muted-foreground">
+            <X className="w-3 h-3" />
+          </button>
+        )}
+      </div>
+
+      {showIME && (
+        <div className="absolute top-full left-0 mt-1 min-w-[200px] max-w-[320px] rounded-lg border border-border bg-popover shadow-lg z-30 overflow-hidden">
+          {ime.suggestions.map((s, i) => (
+            <button
+              key={s}
+              type="button"
+              onMouseDown={(e) => { e.preventDefault(); ime.select(i); }}
+              className={`w-full text-left px-3 py-1.5 text-sm flex items-center gap-2 transition-colors ${
+                i === ime.activeIndex ? 'bg-accent/10 text-foreground' : 'text-foreground hover:bg-surface-low'
+              }`}
+            >
+              <span className="text-muted-foreground text-xs w-4 text-right shrink-0">{i + 1}</span>
+              <span>{s}</span>
+            </button>
+          ))}
+          <div className="px-3 py-1 text-[10px] text-muted-foreground border-t border-border bg-surface-low">
+            {ime.composing} · ↑↓ navigate · 1-9 select · Space commit
+          </div>
+        </div>
+      )}
+
+      {showHits && (
+        <div className="absolute top-full left-0 mt-1 w-64 max-h-64 overflow-y-auto rounded-lg border border-border bg-popover shadow-lg z-20">
+          {hits.map((h) => (
+            <button
+              key={h.id}
+              type="button"
+              onClick={() => { onSelect(h.id); setQuery(''); setOpen(false); }}
+              className="w-full text-left px-3 py-2 hover:bg-surface-low flex items-center gap-2 text-xs"
+            >
+              <span
+                className="inline-block w-2 h-2 rounded-full shrink-0"
+                style={{ backgroundColor: kindColor(h.kind) }}
+              />
+              <span className="truncate flex-1 text-foreground">{h.label}</span>
+              {h.detail && <span className="text-muted-foreground truncate max-w-[80px]">{h.detail}</span>}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- Main export -----------------------------------------------------------
 
 interface CitationGraphProps {
@@ -780,14 +886,17 @@ export function CitationGraph({ seed, onOpenDocument, onClose }: CitationGraphPr
             </p>
           </div>
         </div>
-        <button
-          type="button"
-          onClick={onClose}
-          className="p-2 rounded-lg hover:bg-surface-low text-muted-foreground"
-          title="Close"
-        >
-          <X className="w-4 h-4" />
-        </button>
+        <div className="flex items-center gap-2 shrink-0">
+          <GraphSearchBar onSelect={navigateToSeed} />
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-2 rounded-lg hover:bg-surface-low text-muted-foreground"
+            title="Close"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
       </header>
 
       <div className="flex-1 min-h-0">

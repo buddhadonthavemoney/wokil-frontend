@@ -2,7 +2,7 @@
 
 import { type Client, type ClientMeta, formDataBodySerializer, type Options as Options2, type RequestResult, type ServerSentEventsResult, type TDataShape } from './client';
 import { client } from './client.gen';
-import type { ChatLegalResearchData, ChatLegalResearchErrors, ChatLegalResearchResponses, CheckDomainAvailabilityData, CheckDomainAvailabilityErrors, CheckDomainAvailabilityResponses, CreateDomainOrderData, CreateDomainOrderErrors, CreateDomainOrderResponses, CreateFirmData, CreateFirmErrors, CreateFirmResponses, CreateFormData, CreateFormErrors, CreateFormResponses, CreateGaPropertyData, CreateGaPropertyErrors, CreateGaPropertyResponses, CreateSiteData, CreateSiteEmailRouteData, CreateSiteEmailRouteErrors, CreateSiteEmailRouteResponses, CreateSiteErrors, CreateSiteResponses, CreateSiteZoneData, CreateSiteZoneErrors, CreateSiteZoneResponses, CreateVerificationRecordsData, CreateVerificationRecordsErrors, CreateVerificationRecordsResponses, DeleteSiteData, DeleteSiteEmailRouteData, DeleteSiteEmailRouteErrors, DeleteSiteEmailRouteResponses, DeleteSiteErrors, DeleteSiteResponses, DeploySiteData, DeploySiteErrors, DeploySiteResponses, EnableSiteEmailData, EnableSiteEmailErrors, EnableSiteEmailResponses, GetAccountTypeData, GetAccountTypeErrors, GetAccountTypeResponses, GetDomainOrderData, GetDomainOrderErrors, GetDomainOrderResponses, GetLegalResearchDocumentData, GetLegalResearchDocumentErrors, GetLegalResearchDocumentGraphData, GetLegalResearchDocumentGraphErrors, GetLegalResearchDocumentGraphResponses, GetLegalResearchDocumentResponses, GetLegalResearchEntityData, GetLegalResearchEntityErrors, GetLegalResearchEntityResponses, GetLegalResearchScopeOptionsData, GetLegalResearchScopeOptionsErrors, GetLegalResearchScopeOptionsResponses, GetLegalResearchSubgraphData, GetLegalResearchSubgraphErrors, GetLegalResearchSubgraphResponses, GetMyFirmData, GetMyFirmErrors, GetMyFirmResponses, GetProfileData, GetProfileErrors, GetProfileResponses, GetPublicDirectoryData, GetPublicDirectoryErrors, GetPublicDirectoryResponses, GetRegistrantData, GetRegistrantErrors, GetRegistrantResponses, GetSiteAnalyticsData, GetSiteAnalyticsErrors, GetSiteAnalyticsResponses, GetSiteEmailCatchAllData, GetSiteEmailCatchAllErrors, GetSiteEmailCatchAllResponses, GetSiteEmailData, GetSiteEmailErrors, GetSiteEmailOverviewData, GetSiteEmailOverviewErrors, GetSiteEmailOverviewResponses, GetSiteEmailResponses, GetSiteZoneData, GetSiteZoneErrors, GetSiteZoneResponses, GetVerificationRecordsData, GetVerificationRecordsErrors, GetVerificationRecordsResponses, GoogleCallbackData, GoogleCallbackErrors, GoogleCallbackResponses, GoogleLoginData, GoogleLoginResponses, ListDomainOrdersData, ListDomainOrdersErrors, ListDomainOrdersResponses, ListFormsData, ListFormsErrors, ListFormsResponses, ListLegalResearchConversationMessagesData, ListLegalResearchConversationMessagesErrors, ListLegalResearchConversationMessagesResponses, ListLegalResearchConversationsData, ListLegalResearchConversationsErrors, ListLegalResearchConversationsResponses, ListLegalResearchEntitiesData, ListLegalResearchEntitiesErrors, ListLegalResearchEntitiesResponses, ListLegalResearchEntityRolesData, ListLegalResearchEntityRolesErrors, ListLegalResearchEntityRolesResponses, ListSiteEmailRoutesData, ListSiteEmailRoutesErrors, ListSiteEmailRoutesResponses, ListSitesData, ListSitesErrors, ListSitesResponses, ListSubmissionsData, ListSubmissionsErrors, ListSubmissionsResponses, ListThemesData, ListThemesErrors, ListThemesResponses, ListUsersData, ListUsersErrors, ListUsersResponses, MarkDomainOrderPaidData, MarkDomainOrderPaidErrors, MarkDomainOrderPaidResponses, RemoveSiteEmailDestinationData, RemoveSiteEmailDestinationErrors, RemoveSiteEmailDestinationResponses, ResendRegistrantVerificationData, ResendRegistrantVerificationErrors, ResendRegistrantVerificationResponses, RetryDomainOrderData, RetryDomainOrderErrors, RetryDomainOrderResponses, SaveProfileData, SaveProfileErrors, SaveProfileResponses, SaveRegistrantData, SaveRegistrantErrors, SaveRegistrantResponses, SearchDomainsData, SearchDomainsErrors, SearchDomainsResponses, SearchFirmsData, SearchFirmsErrors, SearchFirmsResponses, SetAccountTypeData, SetAccountTypeErrors, SetAccountTypeResponses, SetSiteEmailCatchAllData, SetSiteEmailCatchAllErrors, SetSiteEmailCatchAllResponses, StreamDeployStatusData, StreamDeployStatusErrors, StreamDeployStatusResponse, StreamDeployStatusResponses, StreamLegalResearchChatData, StreamLegalResearchChatErrors, StreamLegalResearchChatResponse, StreamLegalResearchChatResponses, SubmitFormData, SubmitFormErrors, SubmitFormResponses, UpdateFirmData, UpdateFirmErrors, UpdateFirmResponses, UpdateProfileVisibilityData, UpdateProfileVisibilityErrors, UpdateProfileVisibilityResponses, UploadFileData, UploadFileErrors, UploadFileResponses, VerifyDnsData, VerifyDnsErrors, VerifyDnsResponses } from './types.gen';
+import type { ChatLegalResearchData, ChatLegalResearchErrors, ChatLegalResearchResponses, CheckDomainAvailabilityData, CheckDomainAvailabilityErrors, CheckDomainAvailabilityResponses, CreateDomainOrderData, CreateDomainOrderErrors, CreateDomainOrderResponses, CreateFirmData, CreateFirmErrors, CreateFirmResponses, CreateFormData, CreateFormErrors, CreateFormResponses, CreateGaPropertyData, CreateGaPropertyErrors, CreateGaPropertyResponses, CreateSiteData, CreateSiteEmailRouteData, CreateSiteEmailRouteErrors, CreateSiteEmailRouteResponses, CreateSiteErrors, CreateSiteResponses, CreateSiteZoneData, CreateSiteZoneErrors, CreateSiteZoneResponses, CreateVerificationRecordsData, CreateVerificationRecordsErrors, CreateVerificationRecordsResponses, DeleteLegalResearchConversationData, DeleteLegalResearchConversationErrors, DeleteLegalResearchConversationResponses, DeleteSiteData, DeleteSiteEmailRouteData, DeleteSiteEmailRouteErrors, DeleteSiteEmailRouteResponses, DeleteSiteErrors, DeleteSiteResponses, DeploySiteData, DeploySiteErrors, DeploySiteResponses, EnableSiteEmailData, EnableSiteEmailErrors, EnableSiteEmailResponses, GetAccountTypeData, GetAccountTypeErrors, GetAccountTypeResponses, GetDomainOrderData, GetDomainOrderErrors, GetDomainOrderResponses, GetLegalResearchDocumentData, GetLegalResearchDocumentErrors, GetLegalResearchDocumentFacetsData, GetLegalResearchDocumentFacetsErrors, GetLegalResearchDocumentFacetsResponses, GetLegalResearchDocumentGraphData, GetLegalResearchDocumentGraphErrors, GetLegalResearchDocumentGraphResponses, GetLegalResearchDocumentResponses, GetLegalResearchDocumentStatsData, GetLegalResearchDocumentStatsErrors, GetLegalResearchDocumentStatsResponses, GetLegalResearchEntityData, GetLegalResearchEntityErrors, GetLegalResearchEntityProfileData, GetLegalResearchEntityProfileErrors, GetLegalResearchEntityProfileResponses, GetLegalResearchEntityResponses, GetLegalResearchGraphStatsData, GetLegalResearchGraphStatsErrors, GetLegalResearchGraphStatsResponses, GetLegalResearchRepealedRegisterData, GetLegalResearchRepealedRegisterErrors, GetLegalResearchRepealedRegisterResponses, GetLegalResearchScopeOptionsData, GetLegalResearchScopeOptionsErrors, GetLegalResearchScopeOptionsResponses, GetLegalResearchSubgraphData, GetLegalResearchSubgraphErrors, GetLegalResearchSubgraphResponses, GetMyFirmData, GetMyFirmErrors, GetMyFirmResponses, GetProfileData, GetProfileErrors, GetProfileResponses, GetPublicDirectoryData, GetPublicDirectoryErrors, GetPublicDirectoryResponses, GetRegistrantData, GetRegistrantErrors, GetRegistrantResponses, GetSiteAnalyticsData, GetSiteAnalyticsErrors, GetSiteAnalyticsResponses, GetSiteEmailCatchAllData, GetSiteEmailCatchAllErrors, GetSiteEmailCatchAllResponses, GetSiteEmailData, GetSiteEmailErrors, GetSiteEmailOverviewData, GetSiteEmailOverviewErrors, GetSiteEmailOverviewResponses, GetSiteEmailResponses, GetSiteZoneData, GetSiteZoneErrors, GetSiteZoneResponses, GetVerificationRecordsData, GetVerificationRecordsErrors, GetVerificationRecordsResponses, GoogleCallbackData, GoogleCallbackErrors, GoogleCallbackResponses, GoogleLoginData, GoogleLoginResponses, ListDomainOrdersData, ListDomainOrdersErrors, ListDomainOrdersResponses, ListFormsData, ListFormsErrors, ListFormsResponses, ListLegalResearchConversationMessagesData, ListLegalResearchConversationMessagesErrors, ListLegalResearchConversationMessagesResponses, ListLegalResearchConversationsData, ListLegalResearchConversationsErrors, ListLegalResearchConversationsResponses, ListLegalResearchDocumentsData, ListLegalResearchDocumentsErrors, ListLegalResearchDocumentsResponses, ListLegalResearchEntitiesData, ListLegalResearchEntitiesErrors, ListLegalResearchEntitiesResponses, ListLegalResearchEntityRolesData, ListLegalResearchEntityRolesErrors, ListLegalResearchEntityRolesResponses, ListLegalResearchMostCitedData, ListLegalResearchMostCitedErrors, ListLegalResearchMostCitedResponses, ListSiteEmailRoutesData, ListSiteEmailRoutesErrors, ListSiteEmailRoutesResponses, ListSitesData, ListSitesErrors, ListSitesResponses, ListSubmissionsData, ListSubmissionsErrors, ListSubmissionsResponses, ListThemesData, ListThemesErrors, ListThemesResponses, ListUsersData, ListUsersErrors, ListUsersResponses, MarkDomainOrderPaidData, MarkDomainOrderPaidErrors, MarkDomainOrderPaidResponses, RemoveSiteEmailDestinationData, RemoveSiteEmailDestinationErrors, RemoveSiteEmailDestinationResponses, RenameLegalResearchConversationData, RenameLegalResearchConversationErrors, RenameLegalResearchConversationResponses, ResendRegistrantVerificationData, ResendRegistrantVerificationErrors, ResendRegistrantVerificationResponses, RetryDomainOrderData, RetryDomainOrderErrors, RetryDomainOrderResponses, SaveProfileData, SaveProfileErrors, SaveProfileResponses, SaveRegistrantData, SaveRegistrantErrors, SaveRegistrantResponses, SearchDomainsData, SearchDomainsErrors, SearchDomainsResponses, SearchFirmsData, SearchFirmsErrors, SearchFirmsResponses, SearchLegalResearchData, SearchLegalResearchErrors, SearchLegalResearchGraphData, SearchLegalResearchGraphErrors, SearchLegalResearchGraphResponses, SearchLegalResearchResponses, SetAccountTypeData, SetAccountTypeErrors, SetAccountTypeResponses, SetSiteEmailCatchAllData, SetSiteEmailCatchAllErrors, SetSiteEmailCatchAllResponses, StreamDeployStatusData, StreamDeployStatusErrors, StreamDeployStatusResponse, StreamDeployStatusResponses, StreamLegalResearchChatData, StreamLegalResearchChatErrors, StreamLegalResearchChatResponse, StreamLegalResearchChatResponses, SubmitFormData, SubmitFormErrors, SubmitFormResponses, UpdateFirmData, UpdateFirmErrors, UpdateFirmResponses, UpdateProfileVisibilityData, UpdateProfileVisibilityErrors, UpdateProfileVisibilityResponses, UploadFileData, UploadFileErrors, UploadFileResponses, VerifyDnsData, VerifyDnsErrors, VerifyDnsResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -600,6 +600,21 @@ export const uploadFile = <ThrowOnError extends boolean = false>(options: Option
 });
 
 /**
+ * Raw passage search without LLM synthesis
+ *
+ * Retrieves ranked passages matching the query. Unlike `/chat`, no LLM answer is generated — the caller gets the raw retrieval results. Useful for "find me the exact text" workflows.
+ */
+export const searchLegalResearch = <ThrowOnError extends boolean = false>(options: Options<SearchLegalResearchData, ThrowOnError>): RequestResult<SearchLegalResearchResponses, SearchLegalResearchErrors, ThrowOnError> => (options.client ?? client).post<SearchLegalResearchResponses, SearchLegalResearchErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/legal-research/search',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
  * Ask the legal corpus a question
  *
  * Thin proxy to the wokil-rag service. The corpus (Najir decisions, Nepal Law Commission acts) is owned by wokil-rag; this endpoint owns the conversation and forwards history once persistence lands.
@@ -659,6 +674,28 @@ export const listLegalResearchConversationMessages = <ThrowOnError extends boole
 });
 
 /**
+ * Delete a conversation and all its messages
+ */
+export const deleteLegalResearchConversation = <ThrowOnError extends boolean = false>(options: Options<DeleteLegalResearchConversationData, ThrowOnError>): RequestResult<DeleteLegalResearchConversationResponses, DeleteLegalResearchConversationErrors, ThrowOnError> => (options.client ?? client).delete<DeleteLegalResearchConversationResponses, DeleteLegalResearchConversationErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/legal-research/conversations/{conversation_id}',
+    ...options
+});
+
+/**
+ * Rename a conversation
+ */
+export const renameLegalResearchConversation = <ThrowOnError extends boolean = false>(options: Options<RenameLegalResearchConversationData, ThrowOnError>): RequestResult<RenameLegalResearchConversationResponses, RenameLegalResearchConversationErrors, ThrowOnError> => (options.client ?? client).patch<RenameLegalResearchConversationResponses, RenameLegalResearchConversationErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/legal-research/conversations/{conversation_id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
  * Collections and categories available to scope a question
  *
  * The corpus taxonomy behind the scope picker, proxied from wokil-rag. Corpus-level and identical for every user, so it is cached — it changes only on ingestion, and the chat screen asks for it on every load.
@@ -701,6 +738,17 @@ export const getLegalResearchEntity = <ThrowOnError extends boolean = false>(opt
 });
 
 /**
+ * Working profile for one person
+ *
+ * Practice areas, years active, co-appearing people grouped by role, and recent documents. Built for advocates but role-agnostic.
+ */
+export const getLegalResearchEntityProfile = <ThrowOnError extends boolean = false>(options: Options<GetLegalResearchEntityProfileData, ThrowOnError>): RequestResult<GetLegalResearchEntityProfileResponses, GetLegalResearchEntityProfileErrors, ThrowOnError> => (options.client ?? client).get<GetLegalResearchEntityProfileResponses, GetLegalResearchEntityProfileErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/legal-research/entities/{entity_id}/profile',
+    ...options
+});
+
+/**
  * One-hop neighbourhood of a document or entity
  *
  * The force-directed citation graph view. Returns the seed's immediate neighbours, budgeted for rendering. Click a neighbour to re-seed — never fetch the whole graph.
@@ -708,6 +756,79 @@ export const getLegalResearchEntity = <ThrowOnError extends boolean = false>(opt
 export const getLegalResearchSubgraph = <ThrowOnError extends boolean = false>(options: Options<GetLegalResearchSubgraphData, ThrowOnError>): RequestResult<GetLegalResearchSubgraphResponses, GetLegalResearchSubgraphErrors, ThrowOnError> => (options.client ?? client).get<GetLegalResearchSubgraphResponses, GetLegalResearchSubgraphErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/legal-research/graph/subgraph',
+    ...options
+});
+
+/**
+ * Search for seed nodes in the citation graph
+ *
+ * Typeahead for the graph view — finds people and decisions whose label matches the query. Select a hit to re-seed the subgraph.
+ */
+export const searchLegalResearchGraph = <ThrowOnError extends boolean = false>(options: Options<SearchLegalResearchGraphData, ThrowOnError>): RequestResult<SearchLegalResearchGraphResponses, SearchLegalResearchGraphErrors, ThrowOnError> => (options.client ?? client).get<SearchLegalResearchGraphResponses, SearchLegalResearchGraphErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/legal-research/graph/search',
+    ...options
+});
+
+/**
+ * Decisions most cited across the corpus
+ *
+ * Ranked list of decisions by citation count. Useful for discovering landmark rulings. `document_id` is present only when the decision itself is in the corpus.
+ */
+export const listLegalResearchMostCited = <ThrowOnError extends boolean = false>(options?: Options<ListLegalResearchMostCitedData, ThrowOnError>): RequestResult<ListLegalResearchMostCitedResponses, ListLegalResearchMostCitedErrors, ThrowOnError> => (options?.client ?? client).get<ListLegalResearchMostCitedResponses, ListLegalResearchMostCitedErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/legal-research/graph/most-cited',
+    ...options
+});
+
+/**
+ * Citation graph statistics
+ */
+export const getLegalResearchGraphStats = <ThrowOnError extends boolean = false>(options?: Options<GetLegalResearchGraphStatsData, ThrowOnError>): RequestResult<GetLegalResearchGraphStatsResponses, GetLegalResearchGraphStatsErrors, ThrowOnError> => (options?.client ?? client).get<GetLegalResearchGraphStatsResponses, GetLegalResearchGraphStatsErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/legal-research/graph/stats',
+    ...options
+});
+
+/**
+ * Corpus document statistics
+ */
+export const getLegalResearchDocumentStats = <ThrowOnError extends boolean = false>(options?: Options<GetLegalResearchDocumentStatsData, ThrowOnError>): RequestResult<GetLegalResearchDocumentStatsResponses, GetLegalResearchDocumentStatsErrors, ThrowOnError> => (options?.client ?? client).get<GetLegalResearchDocumentStatsResponses, GetLegalResearchDocumentStatsErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/legal-research/documents/stats',
+    ...options
+});
+
+/**
+ * Filterable values with counts
+ *
+ * Collections, categories, and years the corpus actually has, with document counts. Drives the filter sidebar on the documents page.
+ */
+export const getLegalResearchDocumentFacets = <ThrowOnError extends boolean = false>(options?: Options<GetLegalResearchDocumentFacetsData, ThrowOnError>): RequestResult<GetLegalResearchDocumentFacetsResponses, GetLegalResearchDocumentFacetsErrors, ThrowOnError> => (options?.client ?? client).get<GetLegalResearchDocumentFacetsResponses, GetLegalResearchDocumentFacetsErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/legal-research/documents/facets',
+    ...options
+});
+
+/**
+ * Repealed laws in the corpus
+ *
+ * Every no-longer-in-force act, regulation, or ordinance. The `by_category` counts span the whole register, not just this page.
+ */
+export const getLegalResearchRepealedRegister = <ThrowOnError extends boolean = false>(options?: Options<GetLegalResearchRepealedRegisterData, ThrowOnError>): RequestResult<GetLegalResearchRepealedRegisterResponses, GetLegalResearchRepealedRegisterErrors, ThrowOnError> => (options?.client ?? client).get<GetLegalResearchRepealedRegisterResponses, GetLegalResearchRepealedRegisterErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/legal-research/documents/repealed',
+    ...options
+});
+
+/**
+ * Browse and search corpus documents
+ *
+ * Substring search on title/filename and metadata filters. Returns a paginated list of document summaries.
+ */
+export const listLegalResearchDocuments = <ThrowOnError extends boolean = false>(options?: Options<ListLegalResearchDocumentsData, ThrowOnError>): RequestResult<ListLegalResearchDocumentsResponses, ListLegalResearchDocumentsErrors, ThrowOnError> => (options?.client ?? client).get<ListLegalResearchDocumentsResponses, ListLegalResearchDocumentsErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/legal-research/documents',
     ...options
 });
 
