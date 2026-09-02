@@ -16,6 +16,7 @@ import { PageHeader } from '@/components/layout/PageHeader';
 
 import { CitationGraph } from '../components/CitationGraph';
 import { DocumentPanel, type DocumentTarget } from '../components/DocumentPanel';
+import { NepaliSearchInput } from '../components/NepaliSearchInput';
 import { EntityDetail } from './EntityDetail';
 
 const PAGE_SIZE = 25;
@@ -83,13 +84,13 @@ export default function LegalResearchEntitiesPage() {
         />
 
         <div className="mt-2 space-y-4">
-          <div className="relative">
-            <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <input
+          <div className="relative flex items-center rounded-xl border border-border bg-card focus-within:border-accent">
+            <Search className="w-4 h-4 ml-4 text-muted-foreground shrink-0" />
+            <NepaliSearchInput
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={setSearch}
               placeholder="Search by name…"
-              className="w-full pl-11 pr-4 py-3 rounded-xl border border-border bg-card text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-accent"
+              className="w-full pl-3 pr-10 py-3 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
             />
           </div>
 

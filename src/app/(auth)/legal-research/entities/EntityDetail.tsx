@@ -5,7 +5,10 @@ import { useQuery } from '@tanstack/react-query';
 import { AlertTriangle, Loader2, MessageSquareText, Network, X } from 'lucide-react';
 
 import type { LegalResearchEntity } from '@/generated/wokil-api';
-import { getLegalResearchEntityOptions } from '@/generated/wokil-api/@tanstack/react-query.gen';
+import {
+  getLegalResearchEntityOptions,
+  getLegalResearchEntityProfileOptions,
+} from '@/generated/wokil-api/@tanstack/react-query.gen';
 import { Button } from '@/components/ui/button';
 
 import type { DocumentTarget } from '../components/DocumentPanel';
@@ -30,6 +33,10 @@ export function EntityDetail({ entity, onOpenDocument, onClose, onShowGraph }: E
   const detailQuery = useQuery(
     getLegalResearchEntityOptions({ path: { entity_id: entity.id } }),
   );
+
+  const profileQuery = useQuery({
+    ...getLegalResearchEntityProfileOptions({ path: { entity_id: entity.id } }),
+  });
 
   const documents = detailQuery.data?.documents ?? [];
 
@@ -78,7 +85,62 @@ export function EntityDetail({ entity, onOpenDocument, onClose, onShowGraph }: E
         )}
       </div>
 
-      <div className="flex-1 overflow-y-auto px-5 py-4 space-y-2">
+      <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+        {profileQuery.data && (
+          <div className="space-y-3">
+            {profileQuery.data.case_types && Object.keys(profileQuery.data.case_types).length > 0 && (
+              <div>
+                <p className="text-[11px] label-caps text-muted-foreground mb-1.5">Case types</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {Object.entries(profileQuery.data.case_types)
+                    .sort(([, a], [, b]) => b - a)
+                    .slice(0, 10)
+                    .map(([type, count]) => (
+                      <span key={type} className="px-2 py-0.5 text-xs rounded-md border border-border bg-surface-low text-foreground">
+                        {type} <span className="text-muted-foreground">({count})</span>
+                      </span>
+                    ))}
+                </div>
+              </div>
+            )}
+            {profileQuery.data.years && Object.keys(profileQuery.data.years).length > 0 && (
+              <div>
+                <p className="text-[11px] label-caps text-muted-foreground mb-1.5">Years active</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {Object.entries(profileQuery.data.years)
+                    .sort(([a], [b]) => parseInt(b) - parseInt(a))
+                    .slice(0, 12)
+                    .map(([year, count]) => (
+                      <span key={year} className="px-2 py-0.5 text-xs rounded-md border border-border bg-surface-low text-foreground tabular-nums">
+                        {year} <span className="text-muted-foreground">({count})</span>
+                      </span>
+                    ))}
+                </div>
+              </div>
+            )}
+            {profileQuery.data.co_appearing && Object.keys(profileQuery.data.co_appearing).length > 0 && (
+              <div>
+                <p className="text-[11px] label-caps text-muted-foreground mb-1.5">Works with</p>
+                <div className="space-y-2">
+                  {Object.entries(profileQuery.data.co_appearing).map(([role, people]) => (
+                    <div key={role}>
+                      <p className="text-[10px] text-muted-foreground mb-1">{role}s</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {people.slice(0, 8).map((p) => (
+                          <span key={p.id} className="px-2 py-0.5 text-xs rounded-md border border-border bg-surface-low text-foreground">
+                            {p.name} <span className="text-muted-foreground">({p.shared_documents})</span>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="space-y-2">
         {detailQuery.isPending && (
           <p className="text-xs text-muted-foreground flex items-center gap-2">
             <Loader2 className="w-3 h-3 animate-spin" /> Loading their documents…
@@ -115,6 +177,7 @@ export function EntityDetail({ entity, onOpenDocument, onClose, onShowGraph }: E
             </p>
           </button>
         ))}
+        </div>
       </div>
     </div>
   );

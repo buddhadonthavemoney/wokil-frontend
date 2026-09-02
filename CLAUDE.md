@@ -14,4 +14,17 @@ Dashboard for Wokil (website builder for lawyers/professionals). Next.js 16 App 
 - `task dev` (:3000; needs `NEXT_PUBLIC_API_BASE_URL=http://localhost:8090/api` in `.env.local`)
 - Before finishing: `task verify` (lint + build; build needs the backend stack up — the home page fetches `/public/people` at build time)
 
+## PR title convention
+
+PR titles **must** match the format enforced by `pr-title-check.yml`:
+
+```
+[TYPE | SCRUM-<num> | SCRUM-<num> ...] Description
+```
+
+TYPE is one of: `FEAT`, `FIX`, `CHORE`, `REFACTOR`, `DOCS`. Each ticket key is pipe-separated.
+Example: `[FEAT | SCRUM-43 | SCRUM-44] Add deploy rollback compensation`.
+
+CI also extracts keys and auto-transitions them on Jira (opened → "In Review", merged → "Ready for testing"). A range like `SCRUM-124–133` won't match — list every key.
+
 Procedures live in skills (`/run-app`, `/api-integration`, `/ui-component`, `/feature-spec`).

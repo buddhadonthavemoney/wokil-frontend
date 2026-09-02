@@ -1,13 +1,16 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Gavel, History, SquarePen, Loader2, Scale } from 'lucide-react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Check, FileText, Gavel, History, Pencil, SquarePen, Loader2, Scale, Trash2, Users, X } from 'lucide-react';
 import { toast } from 'sonner';
 
 import {
+  deleteLegalResearchConversation,
   listLegalResearchConversations,
   listLegalResearchConversationMessages,
+  renameLegalResearchConversation,
+  searchLegalResearch,
   type LegalResearchChatResponse,
   type LegalResearchConversation,
   type LegalResearchFile,
@@ -15,6 +18,10 @@ import {
   type LegalResearchScope,
   type LegalResearchSource,
 } from '@/generated/wokil-api';
+import {
+  getLegalResearchDocumentStatsOptions,
+  getLegalResearchGraphStatsOptions,
+} from '@/generated/wokil-api/@tanstack/react-query.gen';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { useChatStream } from '@/hooks/useChatStream';
@@ -36,6 +43,32 @@ type CachedMessage = LegalResearchMessage & {
 };
 
 const suggestedChips = ['Fundamental Rights (Part 3)', 'Muluki Civil Code 2074', 'Cyber Crime Precedents'];
+
+function CorpusStats() {
+  const { data: docStats } = useQuery({ ...getLegalResearchDocumentStatsOptions(), staleTime: 10 * 60 * 1000 });
+  const { data: graphStats } = useQuery({ ...getLegalResearchGraphStatsOptions(), staleTime: 10 * 60 * 1000 });
+
+  if (!docStats && !graphStats) return null;
+
+  const cards = [
+    docStats && { icon: <FileText className="w-4 h-4" />, label: 'Documents', value: docStats.total_documents },
+    docStats && { icon: <Gavel className="w-4 h-4" />, label: 'Chunks', value: docStats.total_chunks },
+    graphStats && { icon: <Users className="w-4 h-4" />, label: 'People', value: graphStats.entities },
+    graphStats && { icon: <Scale className="w-4 h-4" />, label: 'Citations', value: graphStats.citations },
+  ].filter(Boolean) as { icon: React.ReactNode; label: string; value: number }[];
+
+  return (
+    <div className="flex flex-wrap items-center justify-center gap-4 mt-2">
+      {cards.map((c) => (
+        <div key={c.label} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-low text-xs text-muted-foreground">
+          {c.icon}
+          <span className="tabular-nums font-medium text-foreground">{c.value.toLocaleString()}</span>
+          <span>{c.label}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default function LegalResearchPage() {
   const [query, setQuery] = useState('');
@@ -144,7 +177,7 @@ export default function LegalResearchPage() {
           created_at: new Date().toISOString(),
           citation_warning: result.citation_warning,
           low_confidence: result.low_confidence,
-          mode,
+          mode: mode === 'search' ? 'ask' : mode,
           scope: isWholeCorpus(scope) ? undefined : scope,
         };
         // Append to the cached transcript rather than refetching: the streamed
@@ -160,19 +193,49 @@ export default function LegalResearchPage() {
     onError: (message) => toast.error(message || 'Failed to run the research query.'),
   });
 
+  const [searchTurns, setSearchTurns] = useState<Turn[]>([]);
+
   useEffect(() => {
     threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight, behavior: 'smooth' });
-  }, [transcript, stream.answer, stream.question]);
+  }, [transcript, searchTurns, stream.answer, stream.question]);
+
+  const searchMutation = useMutation({
+    mutationFn: async (question: string) => {
+      const { data, error } = await searchLegalResearch({
+        body: {
+          query: question,
+          scope: isWholeCorpus(scope) ? undefined : scope,
+        },
+      });
+      if (error !== undefined) throw new Error(typeof error === 'string' ? error : 'Search failed.');
+      return { question, data: data! };
+    },
+    onSuccess: ({ question, data }) => {
+      setSearchTurns((prev) => [
+        ...prev,
+        {
+          question,
+          answer: '',
+          sources: (data.files ?? []) as LegalResearchFile[],
+          passages: (data.results ?? []) as LegalResearchSource[],
+          fromGeneralKnowledge: false,
+        },
+      ]);
+    },
+    onError: () => toast.error('Search failed.'),
+  });
 
   const submit = (question: string) => {
-    if (stream.streaming) return;
+    if (stream.streaming || searchMutation.isPending) return;
     setQuery('');
+    if (mode === 'search') {
+      searchMutation.mutate(question);
+      return;
+    }
     stream.ask({
       question,
       conversation_id: activeConversationId ?? undefined,
       mode,
-      // An empty scope object would read as a filter matching nothing; the
-      // whole corpus is expressed by omitting it.
       scope: isWholeCorpus(scope) ? undefined : scope,
     });
   };
@@ -180,6 +243,7 @@ export default function LegalResearchPage() {
   const startNewConversation = () => {
     stream.stop();
     setActiveConversationId(null);
+    setSearchTurns([]);
     setQuery('');
     setMode('ask');
     setScope({});
@@ -192,9 +256,48 @@ export default function LegalResearchPage() {
     setQuery('');
   };
 
+  const [renamingId, setRenamingId] = useState<number | null>(null);
+  const [renameValue, setRenameValue] = useState('');
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+
+  const renameMutation = useMutation({
+    mutationFn: async ({ id, title }: { id: number; title: string }) => {
+      const { error } = await renameLegalResearchConversation({
+        path: { conversation_id: id },
+        body: { title },
+      });
+      if (error !== undefined) throw new Error(typeof error === 'string' ? error : 'Rename failed.');
+    },
+    onSuccess: () => {
+      setRenamingId(null);
+      void conversationsQuery.refetch();
+    },
+    onError: () => toast.error('Failed to rename conversation.'),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const { error } = await deleteLegalResearchConversation({
+        path: { conversation_id: id },
+      });
+      if (error !== undefined) throw new Error(typeof error === 'string' ? error : 'Delete failed.');
+    },
+    onSuccess: (_data, id) => {
+      setConfirmDeleteId(null);
+      if (activeConversationId === id) {
+        setActiveConversationId(null);
+      }
+      void conversationsQuery.refetch();
+    },
+    onError: () => toast.error('Failed to delete conversation.'),
+  });
+
   const activeTitle =
     conversationsQuery.data?.find((c) => c.id === activeConversationId)?.title ?? null;
-  const isEmpty = transcript.length === 0 && stream.question == null;
+  const isSearchMode = mode === 'search';
+  const activeTurns = isSearchMode ? searchTurns : transcript;
+  const isBusy = stream.streaming || searchMutation.isPending;
+  const isEmpty = activeTurns.length === 0 && stream.question == null && !searchMutation.isPending;
 
   return (
     <div className="h-screen bg-background flex flex-col overflow-hidden">
@@ -228,24 +331,101 @@ export default function LegalResearchPage() {
                 </p>
               )}
               {(conversationsQuery.data ?? []).map((conversation) => (
-                <button
+                <div
                   key={conversation.id}
-                  type="button"
-                  onClick={() => openConversation(conversation)}
-                  className={`w-full p-3 rounded-lg text-left border-r-4 transition-colors ${
+                  className={`group relative rounded-lg border-r-4 transition-colors ${
                     activeConversationId === conversation.id
                       ? 'bg-surface-low border-accent'
                       : 'border-transparent hover:bg-surface-low'
                   }`}
                 >
-                  <p className="text-sm font-medium text-foreground truncate">
-                    {conversation.last_question || conversation.title}
-                  </p>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">
-                    {new Date(conversation.updated_at).toLocaleDateString()} · {conversation.message_count} turn
-                    {conversation.message_count === 1 ? '' : 's'}
-                  </p>
-                </button>
+                  {renamingId === conversation.id ? (
+                    <form
+                      className="p-2 flex items-center gap-1"
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        const trimmed = renameValue.trim();
+                        if (trimmed) renameMutation.mutate({ id: conversation.id, title: trimmed });
+                      }}
+                    >
+                      <input
+                        autoFocus
+                        value={renameValue}
+                        onChange={(e) => setRenameValue(e.target.value)}
+                        className="flex-1 min-w-0 text-sm px-2 py-1 rounded border border-border bg-card text-foreground outline-none focus:border-accent"
+                        onKeyDown={(e) => { if (e.key === 'Escape') setRenamingId(null); }}
+                      />
+                      <button type="submit" className="p-1 text-accent hover:text-accent/80" title="Save">
+                        <Check className="w-3.5 h-3.5" />
+                      </button>
+                      <button type="button" onClick={() => setRenamingId(null)} className="p-1 text-muted-foreground hover:text-foreground" title="Cancel">
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </form>
+                  ) : confirmDeleteId === conversation.id ? (
+                    <div className="p-3 space-y-2">
+                      <p className="text-xs text-foreground">Delete this conversation?</p>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => deleteMutation.mutate(conversation.id)}
+                          disabled={deleteMutation.isPending}
+                          className="px-2 py-1 text-xs rounded bg-destructive text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
+                        >
+                          Delete
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setConfirmDeleteId(null)}
+                          className="px-2 py-1 text-xs rounded border border-border text-muted-foreground hover:text-foreground"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => openConversation(conversation)}
+                      className="w-full p-3 text-left"
+                    >
+                      <p className="text-sm font-medium text-foreground truncate pr-12">
+                        {conversation.last_question || conversation.title}
+                      </p>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">
+                        {new Date(conversation.updated_at).toLocaleDateString()} · {conversation.message_count} turn
+                        {conversation.message_count === 1 ? '' : 's'}
+                      </p>
+                    </button>
+                  )}
+                  {renamingId !== conversation.id && confirmDeleteId !== conversation.id && (
+                    <div className="absolute top-2 right-2 hidden group-hover:flex items-center gap-0.5">
+                      <button
+                        type="button"
+                        title="Rename"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setRenameValue(conversation.title);
+                          setRenamingId(conversation.id);
+                        }}
+                        className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-surface-low"
+                      >
+                        <Pencil className="w-3 h-3" />
+                      </button>
+                      <button
+                        type="button"
+                        title="Delete"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setConfirmDeleteId(conversation.id);
+                        }}
+                        className="p-1 rounded text-muted-foreground hover:text-destructive hover:bg-surface-low"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                  )}
+                </div>
               ))}
               {(conversationsQuery.data ?? []).length === 0 && !conversationsQuery.isPending && (
                 <p className="px-3 py-2 text-xs text-muted-foreground">
@@ -295,7 +475,7 @@ export default function LegalResearchPage() {
                       <button
                         key={chip}
                         type="button"
-                        disabled={stream.streaming}
+                        disabled={isBusy}
                         onClick={() => submit(chip)}
                         className="px-4 py-2 rounded-full border border-border bg-card text-sm text-foreground shadow-sm transition-colors hover:border-accent hover:bg-surface-low disabled:opacity-50"
                       >
@@ -303,13 +483,14 @@ export default function LegalResearchPage() {
                       </button>
                     ))}
                   </div>
+                  <CorpusStats />
                 </div>
               )}
 
               <MessageList
-                turns={transcript}
-                streamingQuestion={stream.question}
-                streamingAnswer={stream.answer}
+                turns={activeTurns}
+                streamingQuestion={isSearchMode ? (searchMutation.isPending ? (searchMutation.variables ?? null) : null) : stream.question}
+                streamingAnswer={isSearchMode ? '' : stream.answer}
                 onOpenDocument={setDocumentTarget}
                 onAsk={submit}
               />
@@ -319,7 +500,7 @@ export default function LegalResearchPage() {
               value={query}
               onChange={setQuery}
               onSubmit={submit}
-              streaming={stream.streaming}
+              streaming={isBusy}
               onStop={stream.stop}
               mode={mode}
               onModeChange={setMode}
