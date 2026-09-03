@@ -1,5 +1,8 @@
+'use client';
+
 import { ComingSoonOverlay } from '@/components/layout/ComingSoonOverlay';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { useFeatureEnabled } from '@/hooks/useFeatures';
 import {
   CalendarDays,
   RefreshCw,
@@ -75,15 +78,13 @@ const statusStyles: Record<string, string> = {
 };
 
 export default function CourtCalendarPage() {
-  return (
-    <ComingSoonOverlay
-      title="Court Calendar"
-      description="Track hearing dates, filing deadlines, and courtroom details, synced automatically from national court systems."
-    >
-      <div className="min-h-screen bg-background pb-20">
-        <main className="container mx-auto px-6 py-8 max-w-7xl">
-          <div className="flex flex-col gap-12">
-            <PageHeader
+  const { enabled } = useFeatureEnabled('court_calendar');
+
+  const content = (
+    <div className="min-h-screen bg-background pb-20">
+      <main className="container mx-auto px-6 py-8 max-w-7xl">
+        <div className="flex flex-col gap-12">
+          <PageHeader
               icon={<CalendarDays />}
               title="Court Calendar"
               description="Manage your upcoming appearances, hearings, and filing deadlines in one place."
@@ -168,6 +169,18 @@ export default function CourtCalendarPage() {
           </div>
         </main>
       </div>
-    </ComingSoonOverlay>
   );
+
+  if (!enabled) {
+    return (
+      <ComingSoonOverlay
+        title="Court Calendar"
+        description="Track hearing dates, filing deadlines, and courtroom details, synced automatically from national court systems."
+      >
+        {content}
+      </ComingSoonOverlay>
+    );
+  }
+
+  return content;
 }

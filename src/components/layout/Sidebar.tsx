@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useAccountType } from '@/hooks/useAccountType';
+import { useFeatures, type FeatureKey } from '@/hooks/useFeatures';
 import {
   Scale,
   LayoutDashboard,
@@ -170,6 +171,8 @@ export default function Sidebar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { accountType } = useAccountType();
   const isFirm = accountType === 'firm';
+  const { features } = useFeatures();
+  const isOff = (key: FeatureKey) => features !== undefined && !features[key];
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -295,7 +298,10 @@ export default function Sidebar() {
               <NavLink icon={<Mail className="w-5 h-5" />} label="Email" path="/email" isActive={Boolean(pathname?.endsWith('/email'))} />
             </div>
             <div onClick={handleNavClick}>
-              <NavLink icon={<IdCard className="w-5 h-5" />} label="Business Cards" path="/business-cards" isActive={pathname === '/business-cards'} />
+              {isOff('business_cards')
+                ? <ComingSoonLink icon={<IdCard className="w-5 h-5" />} label="Business Cards" path="/business-cards" isActive={pathname === '/business-cards'} />
+                : <NavLink icon={<IdCard className="w-5 h-5" />} label="Business Cards" path="/business-cards" isActive={pathname === '/business-cards'} />
+              }
             </div>
           </NavSection>
 
@@ -314,7 +320,10 @@ export default function Sidebar() {
               ]}
             />
             <div onClick={handleNavClick}>
-              <ComingSoonLink icon={<CalendarDays className="w-5 h-5" />} label="Court Calendar" path="/court-calendar" isActive={pathname === '/court-calendar'} />
+              {isOff('court_calendar')
+                ? <ComingSoonLink icon={<CalendarDays className="w-5 h-5" />} label="Court Calendar" path="/court-calendar" isActive={pathname === '/court-calendar'} />
+                : <NavLink icon={<CalendarDays className="w-5 h-5" />} label="Court Calendar" path="/court-calendar" isActive={pathname === '/court-calendar'} />
+              }
             </div>
           </NavSection>
 
