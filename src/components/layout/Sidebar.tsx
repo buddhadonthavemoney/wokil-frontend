@@ -298,10 +298,7 @@ export default function Sidebar() {
               <NavLink icon={<Mail className="w-5 h-5" />} label="Email" path="/email" isActive={Boolean(pathname?.endsWith('/email'))} />
             </div>
             <div onClick={handleNavClick}>
-              {isOff('business_cards')
-                ? <ComingSoonLink icon={<IdCard className="w-5 h-5" />} label="Business Cards" path="/business-cards" isActive={pathname === '/business-cards'} />
-                : <NavLink icon={<IdCard className="w-5 h-5" />} label="Business Cards" path="/business-cards" isActive={pathname === '/business-cards'} />
-              }
+              {(() => { const L = isOff('business_cards') ? ComingSoonLink : NavLink; return <L icon={<IdCard className="w-5 h-5" />} label="Business Cards" path="/business-cards" isActive={pathname === '/business-cards'} />; })()}
             </div>
           </NavSection>
 
@@ -320,10 +317,7 @@ export default function Sidebar() {
               ]}
             />
             <div onClick={handleNavClick}>
-              {isOff('court_calendar')
-                ? <ComingSoonLink icon={<CalendarDays className="w-5 h-5" />} label="Court Calendar" path="/court-calendar" isActive={pathname === '/court-calendar'} />
-                : <NavLink icon={<CalendarDays className="w-5 h-5" />} label="Court Calendar" path="/court-calendar" isActive={pathname === '/court-calendar'} />
-              }
+              {(() => { const L = isOff('court_calendar') ? ComingSoonLink : NavLink; return <L icon={<CalendarDays className="w-5 h-5" />} label="Court Calendar" path="/court-calendar" isActive={pathname === '/court-calendar'} />; })()}
             </div>
           </NavSection>
 
