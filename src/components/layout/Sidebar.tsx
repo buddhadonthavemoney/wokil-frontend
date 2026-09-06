@@ -13,6 +13,7 @@ import {
   Settings,
   LogOut,
   IdCard,
+  Lock,
   Menu,
   X,
   Building2,
@@ -52,34 +53,20 @@ function NavLink({ icon, label, path, isActive }: NavLinkProps) {
   );
 }
 
-interface ComingSoonLinkProps {
-  icon: React.ReactNode;
-  label: string;
-  path: string;
-  isActive: boolean;
-}
-
-function ComingSoonLink({ icon, label, path, isActive }: ComingSoonLinkProps) {
+function LockedLink({ icon, label }: { icon: React.ReactNode; label: string; path: string; isActive: boolean }) {
   return (
-    <Link
-      href={path}
-      prefetch={true}
-      title="Coming soon"
-      className={`
-        w-full flex items-center gap-3 px-4 py-2.5 rounded-lg border-r-4
-        transition-all duration-200 text-sm font-medium
-        ${isActive
-          ? 'bg-surface-low text-accent font-semibold border-accent'
-          : 'text-muted-foreground/70 border-transparent hover:bg-surface-low hover:text-primary'
-        }
-      `}
+    <div
+      className="group relative w-full flex items-center gap-3 px-4 py-2.5 rounded-lg border-r-4
+        border-transparent text-muted-foreground/50 cursor-not-allowed text-sm font-medium"
     >
-      <span className={isActive ? 'text-accent' : 'text-muted-foreground/70'}>{icon}</span>
+      <span className="text-muted-foreground/50">{icon}</span>
       <span className="flex-1">{label}</span>
-      <span className="text-[9px] label-caps text-accent border border-accent/40 rounded px-1.5 py-0.5">
-        Soon
+      <Lock className="w-3.5 h-3.5 text-muted-foreground/40" />
+      <span className="absolute left-1/2 -translate-x-1/2 -top-8 px-2 py-1 rounded bg-popover text-popover-foreground text-xs
+        shadow-md border border-border whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+        Available on request
       </span>
-    </Link>
+    </div>
   );
 }
 
@@ -97,14 +84,13 @@ function NavGroup({
 }: {
   icon: React.ReactNode;
   label: string;
-  items: { label: string; path: string }[];
+  items: { label: string; path: string; locked?: boolean }[];
   pathname: string | null;
   onNavigate: () => void;
 }) {
-  // Sub-routes count as the parent: /firm-roster/2 is still "Roster".
   const isChildActive = (path: string) =>
     pathname === path || Boolean(pathname?.startsWith(`${path}/`));
-  const hasActiveChild = items.some((item) => isChildActive(item.path));
+  const hasActiveChild = items.some((item) => !item.locked && isChildActive(item.path));
   const [isOpen, setIsOpen] = useState(hasActiveChild);
 
   return (
@@ -131,23 +117,37 @@ function NavGroup({
 
       {isOpen && (
         <div className="pl-11 flex flex-col gap-1 mt-1">
-          {items.map((item) => (
-            <Link
-              key={item.path}
-              href={item.path}
-              prefetch={true}
-              onClick={onNavigate}
-              className={`
-                py-2 text-sm transition-colors
-                ${isChildActive(item.path)
-                  ? 'text-accent font-semibold'
-                  : 'text-muted-foreground hover:text-accent'
-                }
-              `}
-            >
-              {item.label}
-            </Link>
-          ))}
+          {items.map((item) =>
+            item.locked ? (
+              <span
+                key={item.path}
+                className="group relative flex items-center gap-2 py-2 text-sm text-muted-foreground/50 cursor-not-allowed"
+              >
+                <span>{item.label}</span>
+                <Lock className="w-3 h-3 text-muted-foreground/40" />
+                <span className="absolute left-1/2 -translate-x-1/2 -top-7 px-2 py-1 rounded bg-popover text-popover-foreground text-xs
+                  shadow-md border border-border whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+                  Available on request
+                </span>
+              </span>
+            ) : (
+              <Link
+                key={item.path}
+                href={item.path}
+                prefetch={true}
+                onClick={onNavigate}
+                className={`
+                  py-2 text-sm transition-colors
+                  ${isChildActive(item.path)
+                    ? 'text-accent font-semibold'
+                    : 'text-muted-foreground hover:text-accent'
+                  }
+                `}
+              >
+                {item.label}
+              </Link>
+            )
+          )}
         </div>
       )}
     </div>
@@ -298,26 +298,30 @@ export default function Sidebar() {
               <NavLink icon={<Mail className="w-5 h-5" />} label="Email" path="/email" isActive={Boolean(pathname?.endsWith('/email'))} />
             </div>
             <div onClick={handleNavClick}>
-              {(() => { const L = isOff('business_cards') ? ComingSoonLink : NavLink; return <L icon={<IdCard className="w-5 h-5" />} label="Business Cards" path="/business-cards" isActive={pathname === '/business-cards'} />; })()}
+              {(() => { const L = isOff('business_cards') ? LockedLink : NavLink; return <L icon={<IdCard className="w-5 h-5" />} label="Business Cards" path="/business-cards" isActive={pathname === '/business-cards'} />; })()}
             </div>
           </NavSection>
 
           <NavSection label="Tools">
-            <NavGroup
-              icon={<Gavel className="w-5 h-5" />}
-              label="Legal Research"
-              pathname={pathname}
-              onNavigate={handleNavClick}
-              items={[
-                { label: 'Chat', path: '/legal-research' },
-                { label: 'People in Cases', path: '/legal-research/entities' },
-                { label: 'Most Cited', path: '/legal-research/most-cited' },
-                { label: 'Documents', path: '/legal-research/documents' },
-                { label: 'Repealed Laws', path: '/legal-research/repealed' },
-              ]}
-            />
+            {isOff('legal_research') ? (
+              <LockedLink icon={<Gavel className="w-5 h-5" />} label="Legal Research" path="/legal-research" isActive={false} />
+            ) : (
+              <NavGroup
+                icon={<Gavel className="w-5 h-5" />}
+                label="Legal Research"
+                pathname={pathname}
+                onNavigate={handleNavClick}
+                items={[
+                  { label: 'Chat', path: '/legal-research', locked: isOff('legal_research.chat') },
+                  { label: 'People in Cases', path: '/legal-research/entities', locked: isOff('legal_research.entities') },
+                  { label: 'Most Cited', path: '/legal-research/most-cited', locked: isOff('legal_research.most_cited') },
+                  { label: 'Documents', path: '/legal-research/documents', locked: isOff('legal_research.documents') },
+                  { label: 'Repealed Laws', path: '/legal-research/repealed', locked: isOff('legal_research.repealed') },
+                ]}
+              />
+            )}
             <div onClick={handleNavClick}>
-              {(() => { const L = isOff('court_calendar') ? ComingSoonLink : NavLink; return <L icon={<CalendarDays className="w-5 h-5" />} label="Court Calendar" path="/court-calendar" isActive={pathname === '/court-calendar'} />; })()}
+              {(() => { const L = isOff('court_calendar') ? LockedLink : NavLink; return <L icon={<CalendarDays className="w-5 h-5" />} label="Court Calendar" path="/court-calendar" isActive={pathname === '/court-calendar'} />; })()}
             </div>
           </NavSection>
 

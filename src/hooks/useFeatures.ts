@@ -10,6 +10,11 @@ export type FeatureKey =
   | 'custom_dns'
   | 'business_cards'
   | 'legal_research'
+  | 'legal_research.chat'
+  | 'legal_research.entities'
+  | 'legal_research.most_cited'
+  | 'legal_research.documents'
+  | 'legal_research.repealed'
   | 'court_calendar'
   | 'public_directory'
   | 'firm_roster';
@@ -21,5 +26,5 @@ export function useFeatures() {
 
 export function useFeatureEnabled(key: FeatureKey) {
   const { features, isLoading } = useFeatures();
-  return { enabled: features?.[key] ?? true, isLoading };
+  return { enabled: features?.[key] ?? false, isLoading };
 }
