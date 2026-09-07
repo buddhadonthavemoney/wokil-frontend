@@ -1,0 +1,48 @@
+name: sync-personal-mirror
+
+# Mirrors main to buddhadonthavemoney/wokil-frontend, which Vercel watches.
+# Runs on every merge to main.
+#
+# .github is stripped and the tip amended before pushing: GitHub rejects
+# deploy-key pushes that create or update workflow files, so the mirror must
+# never carry workflow diffs. The mirror's history is rewritten on every sync
+# — it exists purely as a Vercel deploy source.
+#
+# Author/committer is reset to buddhadonthavemoney: Vercel's Commit Author
+# Approval skips deploys for authors outside its team.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: sync-personal-mirror
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Strip CI config
+        run: |
+          set -euo pipefail
+          git config user.name "buddhadonthavemoney"
+          git config user.email "52292457+buddhadonthavemoney@users.noreply.github.com"
+          git rm -rq .github
+          git commit --amend --no-edit --reset-author
+
+      - name: Force-push to personal mirror
+        env:
+          SSH_KEY: ${{ secrets.PERSONAL_SYNC_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          printenv SSH_KEY > ~/.ssh/mirror_key
+          chmod 600 ~/.ssh/mirror_key
+          export GIT_SSH_COMMAND="ssh -i ~/.ssh/mirror_key -o StrictHostKeyChecking=accept-new"
+          git remote add personal git@github.com:buddhadonthavemoney/wokil-frontend.git
+          git push --force personal HEAD:refs/heads/main
