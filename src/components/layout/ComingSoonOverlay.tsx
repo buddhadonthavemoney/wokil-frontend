@@ -30,7 +30,7 @@ export function ComingSoonOverlay({ title, description, children }: ComingSoonOv
             <Lock className="w-6 h-6 text-accent" />
           </div>
           <div className="space-y-1.5">
-            <p className="text-[10px] label-caps text-accent">Coming Soon</p>
+            <p className="text-[10px] label-caps text-accent">Feature Locked</p>
             <h2 className="text-lg font-heading font-bold text-foreground">{title}</h2>
             <p className="text-sm text-muted-foreground leading-relaxed">{description}</p>
           </div>

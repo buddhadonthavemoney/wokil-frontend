@@ -36,14 +36,20 @@ export const googleCallback = <ThrowOnError extends boolean = false>(options: Op
 export const listUsers = <ThrowOnError extends boolean = false>(options?: Options<ListUsersData, ThrowOnError>): RequestResult<ListUsersResponses, ListUsersErrors, ThrowOnError> => (options?.client ?? client).get<ListUsersResponses, ListUsersErrors, ThrowOnError>({ url: '/api/users/', ...options });
 
 /**
- * Get effective feature flags
- */
-export const getFeatures = <ThrowOnError extends boolean = false>(options?: Options<GetFeaturesData, ThrowOnError>): RequestResult<GetFeaturesResponses, GetFeaturesErrors, ThrowOnError> => (options?.client ?? client).get<GetFeaturesResponses, GetFeaturesErrors, ThrowOnError>({ url: '/api/features', ...options });
-
-/**
  * List public profiles
  */
 export const getPublicDirectory = <ThrowOnError extends boolean = false>(options?: Options<GetPublicDirectoryData, ThrowOnError>): RequestResult<GetPublicDirectoryResponses, GetPublicDirectoryErrors, ThrowOnError> => (options?.client ?? client).get<GetPublicDirectoryResponses, GetPublicDirectoryErrors, ThrowOnError>({ url: '/api/public/people', ...options });
+
+/**
+ * Get effective feature map
+ *
+ * Returns the effective on/off state of every feature. Works without a bearer (returns the global map). With a bearer, per-user overrides are merged in — a user override can only restrict, never grant.
+ */
+export const getFeatures = <ThrowOnError extends boolean = false>(options?: Options<GetFeaturesData, ThrowOnError>): RequestResult<GetFeaturesResponses, GetFeaturesErrors, ThrowOnError> => (options?.client ?? client).get<GetFeaturesResponses, GetFeaturesErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/features',
+    ...options
+});
 
 /**
  * List active themes

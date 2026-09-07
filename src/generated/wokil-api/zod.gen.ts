@@ -41,6 +41,10 @@ export const zPublicDirectoryResponse = z.object({
     meta: zPublicDirectoryMeta
 });
 
+export const zFeatureMap = z.object({
+    features: z.record(z.string(), z.boolean())
+});
+
 export const zTheme = z.object({
     id: z.string(),
     name: z.string(),
@@ -902,6 +906,11 @@ export const zGetPublicDirectoryQuery = z.object({
  * OK
  */
 export const zGetPublicDirectoryResponse = zPublicDirectoryResponse;
+
+/**
+ * Feature map
+ */
+export const zGetFeaturesResponse = zFeatureMap;
 
 export const zListThemesQuery = z.object({
     category: z.enum(['individual', 'firm']).optional()

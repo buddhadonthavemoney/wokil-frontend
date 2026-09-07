@@ -1,6 +1,6 @@
 'use client';
 
-import { Globe, ExternalLink, Edit, Loader2, ShieldCheck, Plus, Trash2, Copy, AlertCircle, Mail, ShoppingCart, Clock } from 'lucide-react';
+import { Globe, ExternalLink, Edit, Loader2, Lock, ShieldCheck, Plus, Trash2, Copy, AlertCircle, Mail, ShoppingCart, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -46,6 +46,7 @@ import QRCode from "react-qr-code";
 import { toast } from "sonner";
 import { useDeployStream } from '@/hooks/useDeployStream';
 import { DeployProgressModal } from '@/components/deploy/DeployProgressModal';
+import { useFeatureEnabled } from '@/hooks/useFeatures';
 
 // The two rows the cname dialog renders. A view shape, not an API one — the
 // wire type is generated, and the hand-written duplicates that used to shadow
@@ -68,6 +69,8 @@ const dnsModeCardClass =
 
 export default function Sites() {
   const router = useRouter();
+  const { enabled: canBuyDomain } = useFeatureEnabled('domain_purchase');
+  const { enabled: canEmailRoute } = useFeatureEnabled('email_routing');
   const queryClient = useQueryClient();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [newSite, setNewSite] = useState<{ domain: string, dns_mode: 'cname' | 'nameserver' }>({
@@ -465,8 +468,8 @@ export default function Sites() {
                   <Edit className="w-4 h-4" />
                   Finish Your Profile
                 </Button>
-                <Button variant="outline" onClick={() => router.push('/sites/buy')} className="gap-2">
-                  <ShoppingCart className="w-4 h-4" />
+                <Button variant="outline" onClick={() => router.push('/sites/buy')} className="gap-2" disabled={!canBuyDomain}>
+                  {canBuyDomain ? <ShoppingCart className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
                   Buy a domain
                 </Button>
                 <Button variant="outline" onClick={() => setIsCreateDialogOpen(true)} className="gap-2">
@@ -487,7 +490,7 @@ export default function Sites() {
                 // Email routing needs us to hold the zone, which only nameserver
                 // mode does — without this a CNAME domain offered an Email button
                 // that failed after navigation.
-                const canEmail = site.type === 'external' && site.dns_mode === 'nameserver' && isLive;
+                const canEmail = canEmailRoute && site.type === 'external' && site.dns_mode === 'nameserver' && isLive;
                 return (
                 <Card key={site.reference} className="border-none shadow-premium bg-card overflow-hidden group rounded-xl relative">
                   {isDeletingThisSite && (
@@ -603,8 +606,8 @@ export default function Sites() {
                 </div>
 
                 <div className="flex flex-col gap-3 w-full max-w-[240px]">
-                    <Button className="gap-2 w-full" onClick={() => router.push('/sites/buy')}>
-                        <ShoppingCart className="w-4 h-4" />
+                    <Button className="gap-2 w-full" onClick={() => router.push('/sites/buy')} disabled={!canBuyDomain}>
+                        {canBuyDomain ? <ShoppingCart className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
                         Buy a new domain
                     </Button>
                     <p className="text-xs text-muted-foreground text-center leading-relaxed">

@@ -7,6 +7,8 @@ import { useQuery } from '@tanstack/react-query';
 import { ChevronRight, Loader2, Mail } from 'lucide-react';
 
 import { listSites } from '@/generated/wokil-api';
+import { useFeatureEnabled } from '@/hooks/useFeatures';
+import { ComingSoonOverlay } from '@/components/layout/ComingSoonOverlay';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Card, CardContent } from '@/components/ui/card';
@@ -21,6 +23,7 @@ import { Card, CardContent } from '@/components/ui/card';
  */
 export default function EmailPage() {
   const router = useRouter();
+  const { enabled: emailEnabled } = useFeatureEnabled('email_routing');
 
   const emailEligible = { dns_mode: 'nameserver', status: 'deployed', type: 'external' } as const;
 
@@ -38,7 +41,7 @@ export default function EmailPage() {
     if (onlyDomain) router.replace(`/sites/${onlyDomain}/email`);
   }, [onlyDomain, router]);
 
-  return (
+  const content = (
     <div className="min-h-screen bg-background pb-20">
       <main className="container mx-auto px-6 py-8 max-w-4xl">
         <div className="flex flex-col gap-10">
@@ -81,4 +84,7 @@ export default function EmailPage() {
       </main>
     </div>
   );
+
+  if (!emailEnabled) return <ComingSoonOverlay title="Email Forwarding" description="Forward mail from your domain to an inbox you already use.">{content}</ComingSoonOverlay>;
+  return content;
 }

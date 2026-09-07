@@ -7,6 +7,8 @@ import { ArrowLeft, ExternalLink, Loader2, Save, User } from 'lucide-react';
 
 import { useFirmForm } from '@/hooks/useFirmForm';
 import { useRequireAccountType } from '@/hooks/useAccountType';
+import { useFeatureEnabled } from '@/hooks/useFeatures';
+import { ComingSoonOverlay } from '@/components/layout/ComingSoonOverlay';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -24,6 +26,7 @@ import { RosterMember } from '@/types/firm';
  * for as long as this page is open.
  */
 export default function RosterMemberPage() {
+  const { enabled: rosterEnabled } = useFeatureEnabled('firm_roster');
   const params = useParams<{ index: string }>();
   const index = Number(params?.index);
   const { firm, updateNestedFirm, saveFirmData, loaded } = useFirmForm();
@@ -69,7 +72,7 @@ export default function RosterMemberPage() {
     );
   }
 
-  return (
+  const content = (
     <div className="min-h-screen bg-[hsl(210,20%,98%)]/50 pb-32">
       <main className="container mx-auto px-6 py-6 max-w-4xl">
         <Link
@@ -124,4 +127,7 @@ export default function RosterMemberPage() {
       </div>
     </div>
   );
+
+  if (!rosterEnabled) return <ComingSoonOverlay title="Firm Roster" description="Manage the lawyers shown on your firm's site.">{content}</ComingSoonOverlay>;
+  return content;
 }

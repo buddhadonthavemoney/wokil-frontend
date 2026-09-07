@@ -3,6 +3,8 @@
 import { useDeferredValue, useState } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { FileText, Loader2, Search } from 'lucide-react';
+import { ComingSoonOverlay } from '@/components/layout/ComingSoonOverlay';
+import { useFeatureEnabled } from '@/hooks/useFeatures';
 
 import {
   getLegalResearchDocumentFacetsOptions,
@@ -17,6 +19,7 @@ import { NepaliSearchInput } from '../components/NepaliSearchInput';
 const PAGE_SIZE = 25;
 
 export default function DocumentsPage() {
+  const { enabled } = useFeatureEnabled('legal_research.documents');
   const [search, setSearch] = useState('');
   const query = useDeferredValue(search.trim());
   const [offset, setOffset] = useState(0);
@@ -52,7 +55,7 @@ export default function DocumentsPage() {
   const totalPages = data ? Math.ceil(data.total / PAGE_SIZE) : 0;
   const currentPage = Math.floor(offset / PAGE_SIZE) + 1;
 
-  return (
+  const content = (
     <div className="flex-1 flex flex-col min-h-0">
       <PageHeader
         icon={<FileText className="w-5 h-5" />}
@@ -202,4 +205,17 @@ export default function DocumentsPage() {
       )}
     </div>
   );
+
+  if (!enabled) {
+    return (
+      <ComingSoonOverlay
+        title="Documents"
+        description="Browse and search all documents in the legal corpus."
+      >
+        {content}
+      </ComingSoonOverlay>
+    );
+  }
+
+  return content;
 }

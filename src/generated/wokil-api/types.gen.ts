@@ -1318,31 +1318,6 @@ export type ListUsersResponses = {
 
 export type ListUsersResponse = ListUsersResponses[keyof ListUsersResponses];
 
-export type GetFeaturesData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/features';
-};
-
-export type GetFeaturesErrors = {
-    /**
-     * Internal server error
-     */
-    500: string;
-};
-
-export type GetFeaturesError = GetFeaturesErrors[keyof GetFeaturesErrors];
-
-export type GetFeaturesResponses = {
-    /**
-     * Feature map
-     */
-    200: FeatureMap;
-};
-
-export type GetFeaturesResponse = GetFeaturesResponses[keyof GetFeaturesResponses];
-
 export type GetPublicDirectoryData = {
     body?: never;
     path?: never;
@@ -1372,6 +1347,31 @@ export type GetPublicDirectoryResponses = {
 };
 
 export type GetPublicDirectoryResponse = GetPublicDirectoryResponses[keyof GetPublicDirectoryResponses];
+
+export type GetFeaturesData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/features';
+};
+
+export type GetFeaturesErrors = {
+    /**
+     * Internal server error
+     */
+    500: string;
+};
+
+export type GetFeaturesError = GetFeaturesErrors[keyof GetFeaturesErrors];
+
+export type GetFeaturesResponses = {
+    /**
+     * Feature map
+     */
+    200: FeatureMap;
+};
+
+export type GetFeaturesResponse = GetFeaturesResponses[keyof GetFeaturesResponses];
 
 export type ListThemesData = {
     body?: never;

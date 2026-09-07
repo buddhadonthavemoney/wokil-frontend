@@ -271,7 +271,7 @@ export default function Sidebar() {
                 onNavigate={handleNavClick}
                 items={[
                   { label: 'Builder', path: '/firm-builder' },
-                  { label: 'Roster', path: '/firm-roster' },
+                  { label: 'Roster', path: '/firm-roster', locked: isOff('firm_roster') },
                   { label: 'All Details', path: '/firm-details' },
                 ]}
               />
@@ -295,7 +295,7 @@ export default function Sidebar() {
             </div>
             <div onClick={handleNavClick}>
               {/* /email resolves the domain, then hands off to /sites/[domain]/email. */}
-              <NavLink icon={<Mail className="w-5 h-5" />} label="Email" path="/email" isActive={Boolean(pathname?.endsWith('/email'))} />
+              {(() => { const L = isOff('email_routing') ? LockedLink : NavLink; return <L icon={<Mail className="w-5 h-5" />} label="Email" path="/email" isActive={Boolean(pathname?.endsWith('/email'))} />; })()}
             </div>
             <div onClick={handleNavClick}>
               {(() => { const L = isOff('business_cards') ? LockedLink : NavLink; return <L icon={<IdCard className="w-5 h-5" />} label="Business Cards" path="/business-cards" isActive={pathname === '/business-cards'} />; })()}

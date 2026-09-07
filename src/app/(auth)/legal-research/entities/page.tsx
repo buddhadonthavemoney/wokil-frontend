@@ -3,6 +3,8 @@
 import { useDeferredValue, useMemo, useState } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { Loader2, Search, Users } from 'lucide-react';
+import { ComingSoonOverlay } from '@/components/layout/ComingSoonOverlay';
+import { useFeatureEnabled } from '@/hooks/useFeatures';
 
 import {
   listLegalResearchEntities,
@@ -22,6 +24,7 @@ import { EntityDetail } from './EntityDetail';
 const PAGE_SIZE = 25;
 
 export default function LegalResearchEntitiesPage() {
+  const { enabled } = useFeatureEnabled('legal_research.entities');
   const [search, setSearch] = useState('');
   const query = useDeferredValue(search.trim());
   const [role, setRole] = useState<string | null>(null);
@@ -74,7 +77,7 @@ export default function LegalResearchEntitiesPage() {
     [rolesQuery.data],
   );
 
-  return (
+  const content = (
     <div className="min-h-screen bg-background">
       <main className="container mx-auto px-6 py-6 max-w-7xl w-full">
         <PageHeader
@@ -227,4 +230,17 @@ export default function LegalResearchEntitiesPage() {
       )}
     </div>
   );
+
+  if (!enabled) {
+    return (
+      <ComingSoonOverlay
+        title="People in Cases"
+        description="Explore advocates, judges, and parties extracted from legal decisions."
+      >
+        {content}
+      </ComingSoonOverlay>
+    );
+  }
+
+  return content;
 }

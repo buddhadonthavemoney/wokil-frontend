@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { AlertTriangle, Loader2 } from 'lucide-react';
+import { ComingSoonOverlay } from '@/components/layout/ComingSoonOverlay';
+import { useFeatureEnabled } from '@/hooks/useFeatures';
 
 import { getLegalResearchRepealedRegisterOptions } from '@/generated/wokil-api/@tanstack/react-query.gen';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -13,6 +15,7 @@ import { CitationGraph } from '../components/CitationGraph';
 const PAGE_SIZE = 25;
 
 export default function RepealedPage() {
+  const { enabled } = useFeatureEnabled('legal_research.repealed');
   const [offset, setOffset] = useState(0);
   const [documentTarget, setDocumentTarget] = useState<DocumentTarget | null>(null);
   const [graphSeed, setGraphSeed] = useState<string | null>(null);
@@ -25,7 +28,7 @@ export default function RepealedPage() {
   const totalPages = data ? Math.ceil(data.total / PAGE_SIZE) : 0;
   const currentPage = Math.floor(offset / PAGE_SIZE) + 1;
 
-  return (
+  const content = (
     <div className="flex-1 flex flex-col min-h-0">
       <PageHeader
         icon={<AlertTriangle className="w-5 h-5" />}
@@ -142,4 +145,17 @@ export default function RepealedPage() {
       )}
     </div>
   );
+
+  if (!enabled) {
+    return (
+      <ComingSoonOverlay
+        title="Repealed Laws"
+        description="Acts, regulations, and ordinances no longer in force."
+      >
+        {content}
+      </ComingSoonOverlay>
+    );
+  }
+
+  return content;
 }

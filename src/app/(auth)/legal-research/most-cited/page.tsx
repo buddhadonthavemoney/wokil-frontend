@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Loader2, Trophy } from 'lucide-react';
+import { ComingSoonOverlay } from '@/components/layout/ComingSoonOverlay';
+import { useFeatureEnabled } from '@/hooks/useFeatures';
 
 import { listLegalResearchMostCitedOptions } from '@/generated/wokil-api/@tanstack/react-query.gen';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -11,6 +13,7 @@ import { CitationGraph } from '../components/CitationGraph';
 import { DocumentPanel, type DocumentTarget } from '../components/DocumentPanel';
 
 export default function MostCitedPage() {
+  const { enabled } = useFeatureEnabled('legal_research.most_cited');
   const [documentTarget, setDocumentTarget] = useState<DocumentTarget | null>(null);
   const [graphSeed, setGraphSeed] = useState<string | null>(null);
 
@@ -18,7 +21,7 @@ export default function MostCitedPage() {
     ...listLegalResearchMostCitedOptions({ query: { limit: 50 } }),
   });
 
-  return (
+  const content = (
     <div className="flex-1 flex flex-col min-h-0">
       <PageHeader
         icon={<Trophy className="w-5 h-5" />}
@@ -98,4 +101,17 @@ export default function MostCitedPage() {
       )}
     </div>
   );
+
+  if (!enabled) {
+    return (
+      <ComingSoonOverlay
+        title="Most Cited Decisions"
+        description="Decisions ranked by how often they are cited across the legal corpus."
+      >
+        {content}
+      </ComingSoonOverlay>
+    );
+  }
+
+  return content;
 }
