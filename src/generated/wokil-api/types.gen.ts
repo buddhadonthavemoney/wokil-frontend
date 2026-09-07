@@ -43,6 +43,12 @@ export type PublicDirectoryResponse = {
     meta: PublicDirectoryMeta;
 };
 
+export type FeatureMap = {
+    features: {
+        [key: string]: boolean;
+    };
+};
+
 export type Theme = {
     id: string;
     name: string;
@@ -1311,6 +1317,31 @@ export type ListUsersResponses = {
 };
 
 export type ListUsersResponse = ListUsersResponses[keyof ListUsersResponses];
+
+export type GetFeaturesData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/features';
+};
+
+export type GetFeaturesErrors = {
+    /**
+     * Internal server error
+     */
+    500: string;
+};
+
+export type GetFeaturesError = GetFeaturesErrors[keyof GetFeaturesErrors];
+
+export type GetFeaturesResponses = {
+    /**
+     * Feature map
+     */
+    200: FeatureMap;
+};
+
+export type GetFeaturesResponse = GetFeaturesResponses[keyof GetFeaturesResponses];
 
 export type GetPublicDirectoryData = {
     body?: never;
