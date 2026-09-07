@@ -13,8 +13,10 @@ import { useReactToPrint } from 'react-to-print';
 import { BusinessCard, CardLayout, CardColor } from '@/components/BusinessCard';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { ComingSoonOverlay } from '@/components/layout/ComingSoonOverlay';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAccountType } from '@/hooks/useAccountType';
+import { useFeatureEnabled } from '@/hooks/useFeatures';
 import {
   Printer, IdCard, Loader2, AlertCircle, ArrowRight, Nfc, Building2, Users,
 } from 'lucide-react';
@@ -30,9 +32,24 @@ import { useRouter } from 'next/navigation';
  */
 export default function BusinessCardPage() {
   const { accountType, isLoading } = useAccountType();
+  const { enabled } = useFeatureEnabled('business_cards');
 
   if (isLoading) return <PageSpinner />;
-  return accountType === 'firm' ? <FirmBusinessCards /> : <IndividualBusinessCards />;
+
+  const content = accountType === 'firm' ? <FirmBusinessCards /> : <IndividualBusinessCards />;
+
+  if (!enabled) {
+    return (
+      <ComingSoonOverlay
+        title="Business Cards"
+        description="Design and print professional business cards directly from your profile."
+      >
+        {content}
+      </ComingSoonOverlay>
+    );
+  }
+
+  return content;
 }
 
 function PageSpinner() {

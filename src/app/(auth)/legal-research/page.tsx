@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Check, FileText, Gavel, History, Pencil, SquarePen, Loader2, Scale, Trash2, Users, X } from 'lucide-react';
+import { ComingSoonOverlay } from '@/components/layout/ComingSoonOverlay';
+import { useFeatureEnabled } from '@/hooks/useFeatures';
 import { toast } from 'sonner';
 
 import {
@@ -71,6 +73,7 @@ function CorpusStats() {
 }
 
 export default function LegalResearchPage() {
+  const { enabled } = useFeatureEnabled('legal_research.chat');
   const [query, setQuery] = useState('');
   const [activeConversationId, setActiveConversationId] = useState<number | null>(null);
   const [mode, setMode] = useState<ChatMode>('ask');
@@ -299,7 +302,7 @@ export default function LegalResearchPage() {
   const isBusy = stream.streaming || searchMutation.isPending;
   const isEmpty = activeTurns.length === 0 && stream.question == null && !searchMutation.isPending;
 
-  return (
+  const content = (
     <div className="h-screen bg-background flex flex-col overflow-hidden">
       <main className="container mx-auto px-6 py-6 max-w-7xl w-full flex-1 min-h-0 flex flex-col">
         <PageHeader
@@ -532,4 +535,17 @@ export default function LegalResearchPage() {
       )}
     </div>
   );
+
+  if (!enabled) {
+    return (
+      <ComingSoonOverlay
+        title="Legal Research"
+        description="AI-powered search across Nepali constitutional law, civil codes, and criminal precedents."
+      >
+        {content}
+      </ComingSoonOverlay>
+    );
+  }
+
+  return content;
 }
