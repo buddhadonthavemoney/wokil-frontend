@@ -122,8 +122,15 @@ export function useNepaliIME(
       if (newVal.length < value.length) {
         setValue(newVal);
         if (composing.length > 0) {
-          const newComp = composing.slice(0, -1);
-          if (newComp) {
+          const removed = value.length - newVal.length;
+          // A cut (or multi-char delete) can remove more than one character,
+          // or characters outside the composing suffix entirely. Only keep
+          // composing alive if this was a clean trailing truncation of it —
+          // otherwise the composing/suggestions state would go stale and
+          // stick around after the text it referred to is gone.
+          const isTrailingRemoval = value.slice(0, newVal.length) === newVal;
+          if (isTrailingRemoval && removed < composing.length) {
+            const newComp = composing.slice(0, composing.length - removed);
             setComposing(newComp);
             compStartRef.current = newVal.length - newComp.length;
           } else {
