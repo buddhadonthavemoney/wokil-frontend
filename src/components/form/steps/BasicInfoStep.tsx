@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Scale } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { LawyerProfile, PROFESSIONAL_TITLES } from '@/types/lawyer';
+import { FirmCombobox } from '@/components/form/FirmCombobox';
 
 interface BasicInfoStepProps {
   profile: LawyerProfile;
@@ -19,7 +20,7 @@ export function BasicInfoStep({ profile, onUpdate, onFillSample }: BasicInfoStep
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-2">
           <h2 className="heading-section text-foreground">Basic Information</h2>
-          <p className="text-muted-foreground">Let's start with your professional details.</p>
+          <p className="text-muted-foreground">Let&apos;s start with your professional details.</p>
         </div>
       </div>
 
@@ -56,12 +57,10 @@ export function BasicInfoStep({ profile, onUpdate, onFillSample }: BasicInfoStep
 
         <div className="space-y-2">
           <Label htmlFor="lawFirmName">Law Firm Name (Optional)</Label>
-          <Input
-            id="lawFirmName"
-            placeholder="e.g., Smith & Associates"
+          <FirmCombobox
             value={basicInformation.lawFirmName || ''}
-            onChange={(e) => onUpdate({ lawFirmName: e.target.value })}
-            className="h-12"
+            firmId={basicInformation.firmId}
+            onChange={onUpdate}
           />
         </div>
 

@@ -1,0 +1,31 @@
+name: Jira Deploy Status Sync
+
+# Fires on every push to main — whether that push is a squash-merge (one new
+# commit whose message is the PR title) or a merge commit (several new
+# commits). Either way we scan every commit newly introduced by the push for
+# ticket keys, so both merge strategies are covered without special-casing.
+on:
+  push:
+    branches: [main]
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Move deployed ticket(s) to "Deployed"
+        env:
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          BEFORE_SHA: ${{ github.event.before }}
+          AFTER_SHA: ${{ github.event.after }}
+        run: |
+          git log "$BEFORE_SHA..$AFTER_SHA" --format=%B | python .github/scripts/jira.py "Deployed"

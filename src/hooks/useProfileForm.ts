@@ -1,7 +1,14 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { LawyerProfile } from '@/types/lawyer';
-import { profile as profileApi, site as siteApi } from '@/lib/api';
+import { saveProfile, deploySite } from '@/generated/wokil-api';
+import { getProfileOptions } from '@/generated/wokil-api/@tanstack/react-query.gen';
 import { useToast } from '@/hooks/use-toast';
+import { createBlankLawyerProfile, toLawyerProfile } from '@/lib/lawyer-profile-adapter';
+import { PROFILE_STEPS } from '@/components/form/steps';
+
+/** Found by key so reordering the wizard cannot mislocate the locked step. */
+const SUBDOMAIN_STEP = PROFILE_STEPS.findIndex((s) => s.key === 'subdomainSelection') + 1;
 
 const generateSlug = (name: string): string => {
   return name
@@ -14,63 +21,44 @@ const generateId = (): string => {
   return 'profile-' + Date.now() + '-' + Math.random().toString(36).substring(2, 9);
 };
 
-const initialProfile: Omit<LawyerProfile, 'id' | 'slug'> = {
-  basicInformation: {
-    fullName: '',
-    professionalTitle: '',
-    lawFirmName: '',
-    yearsOfExperience: 0,
-  },
-  practiceDetails: {
-    areasOfPractice: [],
-    jurisdictions: [],
-  },
-  contactInformation: {
-    phoneNumber: '',
-    email: '',
-    officeAddress: '',
-  },
-  professionalProfile: {
-    bio: '',
-    officeHours: '',
-    profilePhoto: '',
-  },
-  onlinePresence: {
-    website: '',
-    linkedIn: '',
-  },
-  themeSelection: {
-    theme: 'classic',
-  },
-  subdomainSelection: {
-    subdomain: '',
-  },
-  isPublished: false,
-};
+// Same blank profile the adapter falls back to. Every optional field it omits
+// (lawFirmName, profilePhoto, website, linkedIn) is already guarded with `|| ''`
+// at its input, so the steps stay controlled.
+const initialProfile = createBlankLawyerProfile();
 
 export function useProfileForm() {
-  const totalSteps = 6;
+  const totalSteps = PROFILE_STEPS.length;
   const { toast } = useToast();
-  const [loading, setLoading] = useState(false);
 
-  // Check if we're editing an existing profile
   const [profile, setProfile] = useState<LawyerProfile>(() => {
-    return {
-      id: generateId(),
-      slug: '',
-      ...initialProfile,
-    } as LawyerProfile;
+    return { ...initialProfile, id: generateId() };
   });
 
   const [currentStep, setCurrentStep] = useState(1);
   const lastSavedProfile = useRef(JSON.stringify(profile));
+  const seeded = useRef(false);
 
-  // Initialize lastSavedProfile when data is fetched
+  const { data: fetchedProfile, isLoading: loading } = useQuery({
+    ...getProfileOptions(),
+    enabled: typeof window !== 'undefined' && !!localStorage.getItem('token'),
+  });
+
+  /* eslint-disable react-hooks/set-state-in-effect -- seeding local state from query cache once */
   useEffect(() => {
-    if (loading === false) {
+    if (!fetchedProfile || seeded.current) return;
+    seeded.current = true;
+    setProfile(prev => toLawyerProfile(fetchedProfile, prev));
+    if (fetchedProfile.slug) {
+      setCurrentStep(fetchedProfile.professionalProfile?.deploymentURL ? totalSteps - 1 : totalSteps);
+    }
+  }, [fetchedProfile, totalSteps]);
+  /* eslint-enable react-hooks/set-state-in-effect */
+
+  useEffect(() => {
+    if (!loading) {
       lastSavedProfile.current = JSON.stringify(profile);
     }
-  }, [loading]); // Only reset when loading state changes (i.e. after initial fetch)
+  }, [loading]);
 
   // Handle manual saves
   const saveProfileData = useCallback(async () => {
@@ -78,55 +66,17 @@ export function useProfileForm() {
     if (currentProfileJson === lastSavedProfile.current) return;
 
     try {
-      // If already deployed, don't send subdomainSelection as it causes 400 errors
-      const dataToSave = { ...profile };
+      const dataToSave: Partial<LawyerProfile> = { ...profile };
       if (profile.professionalProfile?.deploymentURL) {
-        delete (dataToSave as any).subdomainSelection;
+        delete dataToSave.subdomainSelection;
       }
 
-      await profileApi.save(dataToSave as LawyerProfile);
+      await saveProfile({ body: dataToSave as LawyerProfile, throwOnError: true });
       lastSavedProfile.current = currentProfileJson;
     } catch (error) {
       console.error("Failed to auto-save profile:", error);
     }
   }, [profile]);
-  useEffect(() => {
-    const fetchProfile = async () => {
-      const token = localStorage.getItem('token');
-      if (!token) return;
-
-      try {
-        setLoading(true);
-        const data = await profileApi.get();
-        // Merge with initial to ensure all nested fields exist
-        setProfile(prev => ({
-          ...prev,
-          ...data,
-          basicInformation: { ...prev.basicInformation, ...data.basicInformation },
-          practiceDetails: {
-            ...prev.practiceDetails,
-            ...data.practiceDetails,
-            areasOfPractice: data.practiceDetails?.areasOfPractice || [],
-            jurisdictions: data.practiceDetails?.jurisdictions || [],
-          },
-          contactInformation: { ...prev.contactInformation, ...data.contactInformation },
-          professionalProfile: { ...prev.professionalProfile, ...data.professionalProfile },
-          onlinePresence: { ...prev.onlinePresence, ...data.onlinePresence },
-          themeSelection: { ...prev.themeSelection, ...data.themeSelection },
-          subdomainSelection: { ...prev.subdomainSelection, ...data.subdomainSelection },
-        }));
-        if (data.slug) {
-          setCurrentStep(totalSteps);
-        }
-      } catch (error) {
-        console.error("Failed to fetch profile", error);
-        // If 404/empty, that's fine, we start fresh
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchProfile();
-  }, []);
 
   const updateProfile = useCallback(<K extends keyof LawyerProfile>(
     field: K,
@@ -162,39 +112,39 @@ export function useProfileForm() {
     // Priority: Nested subdomain > existing slug > generated slug
     const finalSlug = profile.subdomainSelection?.subdomain || profile.slug || generateSlug(profile.basicInformation.fullName);
 
-    let updatedProfile: LawyerProfile = {
+    // Deliberately does NOT set isPublished/siteUrl here. Both are derived
+    // server-side from the sites table (the API strips them on write), and
+    // deploySite below only *queues* the deploy - the DNS record is created
+    // several steps later. Claiming "live" now enables "View Site" while the
+    // name still NXDOMAINs, and one click (or the browser omnibox resolving
+    // as you type) caches that miss for the zone's 30-minute SOA minimum,
+    // leaving the site unreachable from that machine long after it is up.
+    // The deploy stream's terminal event refetches the profile for the truth.
+    const updatedProfile: LawyerProfile = {
       ...profile,
       slug: finalSlug,
       subdomainSelection: {
         ...profile.subdomainSelection,
         subdomain: finalSlug
       },
-      isPublished: true,
       publishedAt: profile.publishedAt || new Date().toISOString(),
     };
 
     setProfile(updatedProfile);
 
     try {
-      const dataToSave = { ...updatedProfile };
+      const dataToSave: Partial<LawyerProfile> = { ...updatedProfile };
       if (profile.professionalProfile?.deploymentURL) {
-        delete (dataToSave as any).subdomainSelection;
+        delete dataToSave.subdomainSelection;
       }
-      await profileApi.save(dataToSave as LawyerProfile);
+      await saveProfile({ body: dataToSave as LawyerProfile, throwOnError: true });
 
-      const { url } = await siteApi.deploy({ slug: finalSlug });
-
-      if (url) {
-        const finalProfile = { ...updatedProfile, siteUrl: url };
-        setProfile(finalProfile);
-        // Also save again with the siteUrl
-        const finalDataToSave = { ...finalProfile };
-        if (profile.professionalProfile?.deploymentURL || finalProfile.professionalProfile?.deploymentURL) {
-          delete (finalDataToSave as any).subdomainSelection;
-        }
-        await profileApi.save(finalDataToSave as LawyerProfile);
-      }
-      return updatedProfile.siteUrl || finalSlug;
+      // Only queues the deploy - progress arrives on the deploy stream
+      // (see useDeployStream / DeployProgressModal), which refetches the
+      // profile once the backend confirms DNS resolves. No second save:
+      // siteUrl is derived server-side, so writing it back is a no-op.
+      await deploySite({ throwOnError: true });
+      return finalSlug;
     } catch (err) {
       toast({
         title: "Error",
@@ -205,22 +155,25 @@ export function useProfileForm() {
     }
   }, [profile, toast]);
 
-  const fetchPreview = useCallback(async () => {
-    try {
-      return await siteApi.getPreview();
-    } catch (err) {
-      console.error("Failed to fetch preview:", err);
-      return "";
-    }
-  }, []);
+  /**
+   * The subdomain is frozen server-side once a site is deployed, so its step
+   * becomes read-only — and, being last, it also moves where the wizard ends.
+   * Derived here so the builder page and the shell can't answer differently.
+   */
+  const lockedSteps = useMemo(
+    () => (profile.professionalProfile?.deploymentURL ? [SUBDOMAIN_STEP] : []),
+    [profile.professionalProfile?.deploymentURL]
+  );
+  // The subdomain is the last step, so a locked tail is exactly one step:
+  // finishing one short of the end.
+  const finishStep = lockedSteps.includes(totalSteps) ? totalSteps - 1 : totalSteps;
 
   const resetProfile = useCallback(() => {
-    setProfile({
-      id: profile.id, // Keep the same ID so we overwrite the same record if saved
-      slug: '',
-      ...initialProfile,
-    } as LawyerProfile);
-    
+    // Spread first: initialProfile now carries id/slug, so keeping the existing
+    // id (to overwrite the same record if saved) means overriding after it.
+    setProfile({ ...initialProfile, id: profile.id });
+
+
     toast({
       title: "Selection Cleared",
       description: "All entered data has been removed.",
@@ -228,16 +181,7 @@ export function useProfileForm() {
   }, [profile.id, toast]);
 
   const resetCurrentStep = useCallback(() => {
-    const stepKeys: (keyof Omit<LawyerProfile, 'id' | 'slug' | 'isPublished' | 'publishedAt' | 'siteUrl'>)[] = [
-      'basicInformation',
-      'practiceDetails',
-      'contactInformation',
-      'professionalProfile',
-      'onlinePresence',
-      'subdomainSelection'
-    ];
-    
-    const key = stepKeys[currentStep - 1];
+    const key = PROFILE_STEPS[currentStep - 1]?.key;
     if (key) {
       setProfile(prev => ({
         ...prev,
@@ -255,6 +199,8 @@ export function useProfileForm() {
     profile,
     currentStep,
     totalSteps,
+    lockedSteps,
+    finishStep,
     loading,
     updateProfile,
     updateNestedProfile,
@@ -262,7 +208,6 @@ export function useProfileForm() {
     prevStep,
     goToStep,
     publishProfile,
-    fetchPreview,
     saveProfileData,
     setProfile,
     resetProfile,

@@ -1,0 +1,27 @@
+name: PR Title Convention
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize]
+
+jobs:
+  check-title:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate PR title
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = context.payload.pull_request.title;
+            // e.g. "[FEAT | SCRUM-43 | SCRUM-44] Add deploy rollback compensation"
+            const re = /^\[(FEAT|FIX|CHORE|REFACTOR|DOCS)(\s*\|\s*SCRUM-\d+)+\]\s+\S/;
+
+            if (!re.test(title)) {
+              core.setFailed(
+                `PR title does not match the required convention.\n\n` +
+                `Got:      "${title}"\n` +
+                `Expected: [TYPE | SCRUM-<num> | SCRUM-<num> ...] Description\n` +
+                `TYPE is one of: FEAT, FIX, CHORE, REFACTOR, DOCS\n\n` +
+                `Example: [FEAT | SCRUM-43 | SCRUM-44] Add deploy rollback compensation`
+              );
+            }

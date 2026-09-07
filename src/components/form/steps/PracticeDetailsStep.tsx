@@ -6,7 +6,9 @@ import { X } from 'lucide-react';
 import { CourtSelector } from '../CourtSelector';
 
 interface PracticeDetailsStepProps {
-  profile: LawyerProfile;
+  // Only the group this step edits, so the firm wizard - whose practiceDetails
+  // has the identical shape - can reuse this component as-is.
+  profile: Pick<LawyerProfile, 'practiceDetails'>;
   onUpdate: (fields: Partial<LawyerProfile['practiceDetails']>) => void;
 }
 
@@ -73,7 +75,7 @@ export function PracticeDetailsStep({ profile, onUpdate }: PracticeDetailsStepPr
         </div>
 
         <div className="space-y-3">
-          <Label htmlFor="jurisdictions">Jurisdictions Served (Courts)</Label>
+          <Label htmlFor="jurisdictions">Courts</Label>
           <CourtSelector 
             selectedCourts={practiceDetails.jurisdictions || []}
             onSelect={toggleJurisdiction}

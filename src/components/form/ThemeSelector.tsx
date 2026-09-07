@@ -7,9 +7,10 @@ import {
 import { Palette, Check, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
+import type { Theme } from "@/generated/wokil-api";
 
 interface ThemeSelectorProps {
-  themes: string[];
+  themes: Theme[];
   currentTheme?: string;
   onThemeSelect: (theme: string) => void;
   isLoading?: boolean;
@@ -18,8 +19,7 @@ interface ThemeSelectorProps {
 export function ThemeSelector({ themes, currentTheme, onThemeSelect, isLoading }: ThemeSelectorProps) {
   const [open, setOpen] = useState(false);
 
-  // Format theme name for display
-  const formatName = (name: string) => name.replace(/-/g, ' ');
+  const currentThemeName = themes.find((t) => t.id === currentTheme)?.name;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -27,11 +27,11 @@ export function ThemeSelector({ themes, currentTheme, onThemeSelect, isLoading }
         <Button
           variant="outline"
           size="sm"
-          className="h-9 rounded-full px-4 border-border/50 bg-white hover:bg-white/80 shadow-sm gap-2 transition-all hover:scale-105 pr-3"
+          className="h-9 rounded-full px-4 border-border/50 bg-card hover:bg-card/80 shadow-sm gap-2 transition-all hover:scale-105 pr-3"
         >
           <Palette className="w-3.5 h-3.5 text-muted-foreground" />
-          <span className="text-[10px] font-bold uppercase tracking-wider text-foreground">
-            {currentTheme ? formatName(currentTheme) : "Select Theme"}
+          <span className="text-[10px] label-caps text-foreground">
+            {currentThemeName ?? "Select Theme"}
           </span>
           <ChevronDown className="w-3 h-3 text-muted-foreground/50 ml-0.5" />
         </Button>
@@ -40,23 +40,23 @@ export function ThemeSelector({ themes, currentTheme, onThemeSelect, isLoading }
         <div className="grid grid-cols-1 gap-1">
           {themes.map((theme) => (
             <button
-              key={theme}
+              key={theme.id}
               onClick={() => {
-                onThemeSelect(theme);
+                onThemeSelect(theme.id);
                 setOpen(false);
               }}
               className={cn(
                 "flex items-center justify-between w-full px-3 py-2 rounded-xl text-left transition-colors",
-                currentTheme === theme
+                currentTheme === theme.id
                   ? "bg-primary/10 text-primary"
                   : "hover:bg-muted text-muted-foreground hover:text-foreground"
               )}
               disabled={isLoading}
             >
-              <span className="text-xs font-bold uppercase tracking-wide">
-                {formatName(theme)}
+              <span className="label-caps text-xs">
+                {theme.name}
               </span>
-              {currentTheme === theme && (
+              {currentTheme === theme.id && (
                 <Check className="w-3.5 h-3.5" />
               )}
             </button>

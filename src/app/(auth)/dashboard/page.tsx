@@ -2,53 +2,39 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { LawyerProfile } from '@/types/lawyer';
+import { toLawyerProfile } from '@/lib/lawyer-profile-adapter';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
-import { cn } from '@/lib/utils'
+import { cn, siteHref } from '@/lib/utils'
 import QRCode from "react-qr-code";
 import {
   Scale,
   User,
-  Eye,
-  Users,
   QrCode,
   ExternalLink,
   Copy,
   Edit,
-  TrendingUp,
   Calendar,
   Globe,
   Plus,
   Shield,
-  Sparkles,
-  Loader2,
-  XCircle,
   ArrowLeft,
-  Clock
+  MapPin,
+  Gavel
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { toast as sonnerToast } from "sonner";
 import { InfoModal } from '@/components/InfoModal';
 import { useQuery } from '@tanstack/react-query';
-import { profile as profileApi, site as siteApi } from '@/lib/api';
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell
-} from 'recharts';
+import { getProfile } from '@/generated/wokil-api';
+import { getProfileOptions } from '@/generated/wokil-api/@tanstack/react-query.gen';
+import { useDeployHandoff } from '@/hooks/useDeployHandoff';
+import { useRequireAccountType } from '@/hooks/useAccountType';
+import { DeployProgressModal } from '@/components/deploy/DeployProgressModal';
+import { InsightsSection } from '@/components/dashboard/InsightsSection';
 import AuthGuard from '@/components/auth/AuthGuard';
-
-const COLORS = ['#0f172a', '#d97706', '#2563eb', '#059669', '#4338ca'];
 
 export default function Dashboard() {
   return (
@@ -59,51 +45,46 @@ export default function Dashboard() {
 }
 
 function DashboardContent() {
-  const [profile, setProfile] = useState<LawyerProfile | null>(null);
-  const [loading, setLoading] = useState(true);
+  // This whole page reads getProfile, which a firm account has no rows behind —
+  // it would render an empty name, an empty avatar and empty stats rather than
+  // an error. The firm's equivalent home is /firm-dashboard.
+  const { redirecting } = useRequireAccountType('individual', '/firm-dashboard');
+
   const [highlightViewSite, setHighlightViewSite] = useState(false);
   const [showGuideArrow, setShowGuideArrow] = useState(false);
 
-  const [showInfoModal, setShowInfoModal] = useState(false);
-  const [modalContent, setModalContent] = useState({
-    title: '',
-    description: '',
-    type: 'info' as 'info' | 'success' | 'error',
-  });
-
   const searchParams = useSearchParams();
+
+  // Seeded from the query string the page was opened with — the effect below
+  // then strips those params, so this is read once and never re-derived.
+  const [showInfoModal, setShowInfoModal] = useState(() => !!searchParams?.get('showInfoModal'));
+  const [modalContent] = useState(() => ({
+    title: searchParams?.get('modalTitle') || 'Info',
+    description: searchParams?.get('modalDescription') || '',
+    type: (searchParams?.get('modalType') as 'info' | 'success' | 'error') || 'info',
+  }));
+
   const router = useRouter();
   const { toast } = useToast();
 
-  const { data: analytics } = useQuery({
-    queryKey: ['analytics'],
-    queryFn: siteApi.getAnalytics,
-    enabled: !!profile?.googleAnalyticsId,
-    refetchInterval: 30000,
-  });
+  // Keyed in the query cache rather than local state so other pages can
+  // invalidate it — deleting a site on /sites has to be able to tell the
+  // dashboard its derived siteUrl/isPublished just changed. Routed through
+  // toLawyerProfile (not a raw cast) because the generated API type has no
+  // `id` and marks everything optional; existing cache data fills the gaps
+  // the response omits.
+  const { data, isLoading: loading, refetch: fetchProfile } = useQuery(getProfileOptions());
 
-  const fetchProfile = async () => {
-    try {
-      const data = await profileApi.get();
-      if (data && (data.id || data.basicInformation)) {
-        setProfile(data);
-      }
-    } catch (error) {
-      console.error("Failed to fetch profile:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Mapped here rather than in the queryFn so the cache holds the raw API
+  // response: it is the same entry every other page (and useProfileForm) reads,
+  // and accountType rides on it — see useAccountType.
+  const profile =
+    data && (data.slug || data.basicInformation) ? toLawyerProfile(data) : null;
 
+  // The modal's content is already in state; drop the params so a refresh (or
+  // the back button) doesn't reopen it.
   useEffect(() => {
-    const showInfo = searchParams.get('showInfoModal');
-    if (showInfo) {
-      setShowInfoModal(true);
-      setModalContent({
-        title: searchParams.get('modalTitle') || 'Info',
-        description: searchParams.get('modalDescription') || '',
-        type: (searchParams.get('modalType') as any) || 'info',
-      });
+    if (searchParams?.get('showInfoModal')) {
       const newParams = new URLSearchParams(searchParams.toString());
       newParams.delete('showInfoModal');
       newParams.delete('modalTitle');
@@ -113,165 +94,33 @@ function DashboardContent() {
     }
   }, [searchParams, router]);
 
-  const [activeDeployment, setActiveDeployment] = useState(false);
-
-  useEffect(() => {
-    const isDeploying = searchParams.get('deploying');
-    if (isDeploying === 'true') {
-      setActiveDeployment(true);
-      const newParams = new URLSearchParams(searchParams.toString());
-      newParams.delete('deploying');
-      router.replace(`/dashboard?${newParams.toString()}`, { scroll: false });
-    }
-  }, [searchParams, router]);
-
-  useEffect(() => {
-    if (!activeDeployment) return;
-
-    const token = localStorage.getItem('token');
-    const streamUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/sites/deploy/stream`;
-    const abortController = new AbortController();
-    let toastId: string | number = "deploy-toast";
-
-    const showToast = (variant: 'loading' | 'success' | 'error', message: string, detail?: string) => {
-      sonnerToast.custom((t) => (
-        <div className="w-full max-w-sm bg-white/80 backdrop-blur-xl rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-white/20 p-5 flex items-start gap-4 animate-in slide-in-from-bottom-5 fade-in duration-500 ring-1 ring-black/5">
-          <div className={`
-            mt-0.5 w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-lg transition-transform duration-300 hover:scale-105
-            ${variant === 'loading' ? 'bg-primary/10 text-primary' : ''}
-            ${variant === 'success' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : ''}
-            ${variant === 'error' ? 'bg-rose-50 text-rose-600 border border-rose-100' : ''}
-          `}>
-            {variant === 'loading' && <Loader2 className="w-6 h-6 animate-spin" />}
-            {variant === 'success' && <Sparkles className="w-6 h-6 animate-bounce" />}
-            {variant === 'error' && <XCircle className="w-6 h-6" />}
-          </div>
-          <div className="flex-1 space-y-1.5 pt-0.5">
-            <div className="flex items-center justify-between">
-              <h3 className="font-heading font-extrabold text-[15px] text-foreground tracking-tight leading-none">
-                {variant === 'loading' && 'Deploying Website'}
-                {variant === 'success' && 'Deployment Complete'}
-                {variant === 'error' && 'Deployment Failed'}
-              </h3>
-            </div>
-            <p className="text-sm font-medium text-muted-foreground/90 leading-relaxed font-body">
-              {message}
-            </p>
-          </div>
-        </div>
-      ), { id: toastId, duration: variant === 'loading' ? Infinity : 5000 });
-    };
-
-    const handleSuccess = async (message: string) => {
-      showToast('success', message, "LIVE");
+  const deployStream = useDeployHandoff({
+    redirectTo: '/dashboard',
+    // Disambiguates the stream's "no ongoing deployment" 400: only trust it
+    // as a finished deploy if the profile itself confirms publish, so a
+    // subscribe that raced a deploy which never actually ran doesn't get
+    // reported as a success.
+    confirmPublished: async () => {
+      const data = (await getProfile({ throwOnError: true })).data;
+      return !!(data && (data.isPublished || data.professionalProfile?.deploymentURL));
+    },
+    // Refetch regardless of outcome: a failed deploy can still have rolled
+    // some state forward (or back) that the profile needs to reflect.
+    onDone: async (status) => {
+      await fetchProfile();
+      if (status !== 'success') return;
       setShowGuideArrow(true);
       setTimeout(() => {
         setShowGuideArrow(false);
         setHighlightViewSite(true);
         setTimeout(() => setHighlightViewSite(false), 10000);
       }, 4000);
-      await fetchProfile();
-    };
-
-    const startStream = async () => {
-      showToast('loading', 'Initializing deployment...', 'Preparing assets');
-      try {
-        const response = await fetch(streamUrl, {
-          headers: { 'Authorization': `Bearer ${token}` },
-          signal: abortController.signal,
-        });
-
-        if (!response.ok) {
-           const errorText = await response.text();
-           if (errorText.toLowerCase().includes("no ongoing deployment") || response.status === 400) {
-              const data = await profileApi.get();
-              if (data && (data.isPublished || data.professionalProfile?.deploymentURL)) {
-                 await handleSuccess('Deployment complete!');
-                 setActiveDeployment(false);
-                 return;
-              }
-           }
-           throw new Error(`Stream request failed: ${response.status} ${errorText}`);
-        }
-
-        const reader = response.body?.getReader();
-        const decoder = new TextDecoder();
-        if (!reader) return;
-
-        let buffer = '';
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          const chunk = decoder.decode(value, { stream: true });
-          buffer += chunk;
-          const lines = buffer.split('\n');
-          buffer = lines.pop() || '';
-
-          for (const line of lines) {
-            const trimmed = line.trim();
-            if (!trimmed || !trimmed.startsWith('data: ')) continue;
-            try {
-              const eventStr = trimmed.substring(6);
-              const event = JSON.parse(eventStr);
-              if (event.type === 'status') {
-                showToast('loading', event.message || 'Processing...', event.status?.toUpperCase() || 'DEPLOYING');
-              } else if (event.type === 'done') {
-                if (event.status === 'success') {
-                  await handleSuccess(event.message);
-                } else {
-                  showToast('error', event.message, "FAILED");
-                }
-                setActiveDeployment(false);
-                return;
-              }
-            } catch (e) {
-               console.error("Failed to parse event", e);
-            }
-          }
-        }
-
-        if (buffer.trim()) {
-          const lines = buffer.split('\n');
-          for (const line of lines) {
-            const trimmed = line.trim();
-            if (!trimmed || !trimmed.startsWith('data: ')) continue;
-            try {
-              const eventStr = trimmed.substring(6);
-              const event = JSON.parse(eventStr);
-              if (event.type === 'done') {
-                if (event.status === 'success') {
-                  await handleSuccess(event.message);
-                } else {
-                  showToast('error', event.message, "FAILED");
-                }
-              }
-            } catch (e) {}
-          }
-        }
-      } catch (err: any) {
-        if (err.name !== 'AbortError') {
-          console.error("Deployment stream error:", err);
-          showToast('error', "The connection was lost.", "CONNECTION LOST");
-        }
-      } finally {
-        setActiveDeployment(false);
-      }
-    };
-
-    startStream();
-    return () => abortController.abort();
-  }, [activeDeployment]);
-
-  useEffect(() => {
-    fetchProfile();
-  }, []);
+    },
+  });
 
   const getPublicUrl = () => {
     if (!profile || !profile.siteUrl) return '';
-    const url = profile.siteUrl;
-    if (url.startsWith('http://') || url.startsWith('https://')) return url;
-    return `https://${url}`;
+    return siteHref(profile.siteUrl);
   };
 
   const copyUrl = () => {
@@ -284,7 +133,9 @@ function DashboardContent() {
     }
   };
 
-  if (loading) {
+  // `redirecting` holds the loading state for a firm account on its way to
+  // /firm-dashboard, so it never flashes the empty lawyer dashboard first.
+  if (loading || redirecting) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="animate-pulse text-muted-foreground">Loading...</div>
@@ -313,7 +164,7 @@ function DashboardContent() {
   }
 
   return (
-    <div className="min-h-screen bg-[hsl(210,20%,98%)]/50 pb-20">
+    <div className="min-h-screen bg-background pb-20">
       <main className="container mx-auto px-6 py-8 max-w-7xl">
         <div className="flex flex-col gap-12">
           <section>
@@ -342,8 +193,8 @@ function DashboardContent() {
                     <HoverCardTrigger asChild>
                       <div className="relative">
                         {showGuideArrow && (
-                          <div className="absolute -right-10 top-1/2 animate-bounce-horizontal text-emerald-600 z-10 pointer-events-none">
-                            <ArrowLeft className="w-8 h-8 fill-emerald-600/10" />
+                          <div className="absolute -right-10 top-1/2 animate-bounce-horizontal text-success z-10 pointer-events-none">
+                            <ArrowLeft className="w-8 h-8 fill-success/10" />
                           </div>
                         )}
                         <Button
@@ -351,9 +202,9 @@ function DashboardContent() {
                           size="sm"
                           className={cn(
                             "gap-2 rounded-lg font-medium shadow-lg shadow-primary/10 hover:shadow-primary/20 transition-all text-primary-foreground bg-primary hover:bg-primary/90 border-none relative overflow-visible",
-                            highlightViewSite && "animate-highlight-glow ring-2 ring-emerald-500 ring-offset-2 ring-offset-background"
+                            highlightViewSite && "animate-highlight-glow ring-2 ring-success ring-offset-2 ring-offset-background"
                           )}
-                          disabled={(!profile.slug && !profile.id) || !profile.isPublished}
+                          disabled={(!profile.slug && !profile.id) || !profile.isPublished || !getPublicUrl()}
                         >
                           <ExternalLink className="w-4 h-4" />
                           View Site
@@ -361,17 +212,23 @@ function DashboardContent() {
                         </Button>
                       </div>
                     </HoverCardTrigger>
-                    <HoverCardContent className="w-auto p-4 bg-white" align="end">
+                    <HoverCardContent className="w-auto p-4 bg-card" align="end">
                       <div className="flex flex-col items-center gap-2">
-                        <div className="p-2 bg-white rounded-lg border border-border">
-                          <QRCode
-                            value={getPublicUrl()}
-                            size={128}
-                            style={{ height: "auto", maxWidth: "100%", width: "100%" }}
-                            viewBox={`0 0 256 256`}
-                          />
-                        </div>
-                        <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest text-center mt-1">Scan to Visit</p>
+                        {getPublicUrl() ? (
+                          <>
+                            <div className="p-2 bg-card rounded-lg border border-border">
+                              <QRCode
+                                value={getPublicUrl()}
+                                size={128}
+                                style={{ height: "auto", maxWidth: "100%", width: "100%" }}
+                                viewBox={`0 0 256 256`}
+                              />
+                            </div>
+                            <p className="text-[10px] text-muted-foreground label-caps text-center mt-1">Scan to Visit</p>
+                          </>
+                        ) : (
+                          <p className="text-[10px] text-muted-foreground label-caps text-center max-w-[128px]">No live site yet</p>
+                        )}
                       </div>
                     </HoverCardContent>
                   </HoverCard>
@@ -379,7 +236,8 @@ function DashboardContent() {
               }
             />
 
-            <Card className="border-none shadow-premium bg-white overflow-hidden rounded-3xl">
+            <Card className="relative border border-border shadow-sm bg-card overflow-hidden rounded-xl">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-accent/5 rounded-bl-full pointer-events-none" />
               <CardContent className="p-8 md:p-10">
                 <div className="flex flex-col md:flex-row gap-10 items-center md:items-start text-center md:text-left">
                   <div className="relative group shrink-0">
@@ -416,134 +274,71 @@ function DashboardContent() {
                       </p>
                     </div>
 
-                    <div className="flex flex-col md:flex-row flex-wrap gap-3 md:gap-4 pt-2 items-center md:items-start w-full">
-                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/50 border border-border/50 text-sm font-medium max-w-full">
-                        <Globe className="w-4 h-4 text-primary shrink-0" />
-                        <code className="text-foreground/80 truncate max-w-[200px] sm:max-w-xs md:max-w-md">{getPublicUrl().replace(/^https?:\/\//, '')}</code>
-                        <button
-                          onClick={copyUrl}
-                          className="ml-1 p-1 hover:bg-primary/10 rounded transition-colors"
-                          title="Copy Link"
-                        >
-                          <Copy className="w-3.5 h-3.5 text-muted-foreground hover:text-primary" />
-                        </button>
+                    {/* Credential chips — only ever rendered for fields that
+                        actually exist on the profile, never fabricated. */}
+                    {(profile.practiceDetails.jurisdictions.length > 0 ||
+                      profile.basicInformation.yearsOfExperience > 0 ||
+                      profile.contactInformation.officeAddress) && (
+                      <div className="flex flex-wrap justify-center md:justify-start gap-2">
+                        {profile.practiceDetails.jurisdictions.map((jurisdiction) => (
+                          <Badge
+                            key={jurisdiction}
+                            variant="outline"
+                            className="gap-1 rounded-md border-border bg-muted/30 px-3 py-1 text-[10px] label-caps text-muted-foreground"
+                          >
+                            <Gavel className="w-3 h-3" />
+                            {jurisdiction}
+                          </Badge>
+                        ))}
+                        {profile.basicInformation.yearsOfExperience > 0 && (
+                          <Badge
+                            variant="outline"
+                            className="rounded-md border-border bg-muted/30 px-3 py-1 text-[10px] label-caps text-muted-foreground"
+                          >
+                            {profile.basicInformation.yearsOfExperience}+ Years Exp.
+                          </Badge>
+                        )}
+                        {profile.contactInformation.officeAddress && (
+                          <Badge
+                            variant="outline"
+                            className="gap-1 rounded-md border-border bg-muted/30 px-3 py-1 text-[10px] label-caps text-muted-foreground"
+                          >
+                            <MapPin className="w-3 h-3" />
+                            {profile.contactInformation.officeAddress}
+                          </Badge>
+                        )}
                       </div>
-                    </div>
+                    )}
+
+                    {/* Only rendered when a site is actually live. siteUrl is
+                        derived from the sites table, so deleting a site clears
+                        it and this chip disappears instead of showing a dead
+                        link (or an empty pill with a copy button). */}
+                    {getPublicUrl() && (
+                      <div className="flex flex-col md:flex-row flex-wrap gap-3 md:gap-4 pt-2 items-center md:items-start w-full">
+                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/50 border border-border/50 text-sm font-medium max-w-full">
+                          <Globe className="w-4 h-4 text-primary shrink-0" />
+                          <code className="text-foreground/80 truncate max-w-[200px] sm:max-w-xs md:max-w-md">{getPublicUrl().replace(/^https?:\/\//, '')}</code>
+                          <button
+                            onClick={copyUrl}
+                            className="ml-1 p-1 hover:bg-primary/10 rounded transition-colors"
+                            title="Copy Link"
+                          >
+                            <Copy className="w-3.5 h-3.5 text-muted-foreground hover:text-primary" />
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </CardContent>
             </Card>
           </section>
 
-          <section className="space-y-6 relative">
-             <div className="flex items-center justify-between">
-                <h2 className="font-heading text-2xl font-bold tracking-tight text-foreground">Insights</h2>
-                <div className="text-xs text-muted-foreground font-medium uppercase tracking-widest flex items-center gap-2">
-                  <TrendingUp className="w-3.5 h-3.5 text-green-600" />
-                  Live Activity
-                </div>
-              </div>
-
-            {!analytics && !profile?.googleAnalyticsId ? (
-                <div className="bg-white border-none rounded-3xl p-10 md:p-16 text-center shadow-premium">
-                    <div className="w-16 h-16 bg-primary/5 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <TrendingUp className="w-8 h-8 text-primary" />
-                    </div>
-                    <h3 className="text-xl font-bold mb-3">Enable Site Analytics</h3>
-                    <p className="text-muted-foreground max-w-md mx-auto mb-8">
-                        Get detailed insights about your visitors, page views, and traffic sources by enabling Google Analytics integration in Settings.
-                    </p>
-                    <Button 
-                        size="lg" 
-                        onClick={() => router.push('/settings')}
-                        className="px-8"
-                    >
-                        Go to Settings
-                    </Button>
-                </div>
-            ) : (
-                <div className="space-y-6 animate-fade-in">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        <div className="bg-white border-none rounded-3xl p-8 shadow-premium">
-                            <div className="flex items-center justify-between mb-4">
-                                <span className="text-sm font-medium text-muted-foreground">Total Views</span>
-                                <Eye className="w-4 h-4 text-blue-500" />
-                            </div>
-                            <div className="text-3xl font-bold">{analytics?.totalViews || 0}</div>
-                        </div>
-                        <div className="bg-white border-none rounded-3xl p-8 shadow-premium">
-                            <div className="flex items-center justify-between mb-4">
-                                <span className="text-sm font-medium text-muted-foreground">Unique Visitors</span>
-                                <Users className="w-4 h-4 text-green-500" />
-                            </div>
-                            <div className="text-3xl font-bold">{analytics?.visitors || 0}</div>
-                        </div>
-                        {/* Placeholders for future stats */}
-                        <div className="bg-white border-none rounded-3xl p-8 shadow-premium opacity-60">
-                            <div className="flex items-center justify-between mb-4">
-                                <span className="text-sm font-medium text-muted-foreground">QR Scans</span>
-                                <QrCode className="w-4 h-4 text-purple-500" />
-                            </div>
-                            <div className="text-3xl font-bold">-</div>
-                            <p className="text-xs text-muted-foreground mt-2">Coming Soon</p>
-                        </div>
-                        <div className="bg-white border-none rounded-3xl p-8 shadow-premium opacity-60">
-                            <div className="flex items-center justify-between mb-4">
-                                <span className="text-sm font-medium text-muted-foreground">Avg. Time</span>
-                                <Clock className="w-4 h-4 text-orange-500" />
-                            </div>
-                            <div className="text-3xl font-bold">-</div>
-                            <p className="text-xs text-muted-foreground mt-2">Coming Soon</p>
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        <div className="lg:col-span-2 bg-white border-none rounded-3xl p-8 shadow-premium">
-                            <h3 className="font-bold mb-6 flex items-center gap-2">
-                                <TrendingUp className="w-4 h-4 text-primary" />
-                                Traffic History
-                            </h3>
-                            <div className="h-[300px] w-full">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <LineChart data={analytics?.history || []}>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                                        <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fill: '#888', fontSize: 12}} dy={10} />
-                                        <YAxis axisLine={false} tickLine={false} tick={{fill: '#888', fontSize: 12}} />
-                                        <Tooltip contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}} />
-                                        <Line type="monotone" dataKey="views" stroke="#0f172a" strokeWidth={3} dot={false} activeDot={{r: 6, fill: '#0f172a', strokeWidth: 0}} />
-                                    </LineChart>
-                                </ResponsiveContainer>
-                            </div>
-                        </div>
-
-                        <div className="bg-white border-none rounded-3xl p-8 shadow-premium">
-                            <h3 className="font-bold mb-6 flex items-center gap-2">
-                                <Globe className="w-4 h-4 text-primary" />
-                                Traffic Sources
-                            </h3>
-                            <div className="h-[300px] w-full">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <PieChart>
-                                        <Pie
-                                            data={Object.entries(analytics?.sources || {}).map(([name, value]) => ({ name, value }))}
-                                            cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value"
-                                        >
-                                            {Object.entries(analytics?.sources || {}).map((entry, index) => (
-                                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                            ))}
-                                        </Pie>
-                                        <Tooltip />
-                                    </PieChart>
-                                </ResponsiveContainer>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-          </section>
+          <InsightsSection enabled={!!profile?.googleAnalyticsId} />
 
           {profile.publishedAt && (
-            <footer className="pt-8 border-t border-border/50 flex flex-col sm:flex-row items-center gap-4 sm:gap-6 text-[10px] text-muted-foreground font-bold uppercase tracking-widest">
+            <footer className="pt-8 border-t border-border/50 flex flex-col sm:flex-row items-center gap-4 sm:gap-6 text-[10px] text-muted-foreground label-caps">
               <div className="flex items-center gap-2">
                 <Calendar className="w-3.5 h-3.5 text-primary/60" />
                 <span>Established {new Date(profile.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
@@ -563,6 +358,13 @@ function DashboardContent() {
         description={modalContent.description}
         type={modalContent.type}
         actionLabel="Got it"
+      />
+      <DeployProgressModal
+        phase={deployStream.phase}
+        steps={deployStream.steps}
+        message={deployStream.message}
+        onClose={deployStream.reset}
+        siteUrl={getPublicUrl()}
       />
     </div>
   );

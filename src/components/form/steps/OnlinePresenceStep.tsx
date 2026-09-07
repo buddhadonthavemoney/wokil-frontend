@@ -4,7 +4,8 @@ import { LawyerProfile } from '@/types/lawyer';
 import { Globe, Linkedin } from 'lucide-react';
 
 interface OnlinePresenceStepProps {
-  profile: LawyerProfile;
+  // See PracticeDetailsStep: narrowed so the firm wizard can share it.
+  profile: Pick<LawyerProfile, 'onlinePresence'>;
   onUpdate: (fields: Partial<LawyerProfile['onlinePresence']>) => void;
 }
 

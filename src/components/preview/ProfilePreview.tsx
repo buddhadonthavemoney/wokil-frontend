@@ -1,132 +1,63 @@
 import { LawyerProfile } from '@/types/lawyer';
+import { fromLawyerProfile } from '@/types/site-model';
 import { ClassicTheme } from './themes/ClassicTheme';
-import { ModernTheme } from './themes/ModernTheme';
-import { MinimalTheme } from './themes/MinimalTheme';
-import { ExecutiveTheme } from './themes/ExecutiveTheme';
-import { LegalCraftTheme } from './themes/LegalCraftTheme';
-import { useState, useEffect } from 'react';
+import { THEMES } from './themes/registry';
+import { ContactQrWidget, buildVCard } from './ContactQrWidget';
+import { useSiteHydration } from './useSiteHydration';
+import { useMemo, useRef } from 'react';
 
 interface ProfilePreviewProps {
   profile: LawyerProfile;
-  html?: string;
   zoom?: number;
 }
 
-export function ProfilePreview({ profile, html, zoom = 1 }: ProfilePreviewProps) {
-  const [blobUrl, setBlobUrl] = useState<string | null>(null);
+// Renders the actual production theme component directly — no server round
+// trip, no iframe/blob-URL indirection. The profile is already local state
+// here, so there's nothing to fetch; switching themes is just picking a
+// different component, not waiting on a network response.
+//
+// `@container` here (not on the inner zoom wrapper — transform: scale()
+// doesn't change layout size, only the outer box's real rendered width
+// should decide breakpoints) makes the theme components' `@sm:`/`@md:`/`@lg:`
+// classes respond to the actual box they're rendered in — a few hundred
+// px in the profile-builder's phone mockup, the full page on /preview —
+// instead of the browser viewport, which is what let a "mobile" preview
+// silently render in desktop layout before.
+export function ProfilePreview({ profile, zoom = 1 }: ProfilePreviewProps) {
+  // Unlike the deploy path, an unknown theme here falls back to Classic rather
+  // than failing: this renders live as the user types, and a wizard that showed
+  // an error card mid-edit would be worse than showing the default theme.
+  const Theme = THEMES[profile.themeSelection?.theme] ?? ClassicTheme;
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (!html) {
-      if (blobUrl) {
-        URL.revokeObjectURL(blobUrl);
-        setBlobUrl(null);
-      }
-      return;
-    }
+  const site = useMemo(() => fromLawyerProfile(profile), [profile]);
 
-    try {
-      // Parse the HTML string into a DOM document
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(html, 'text/html');
-      const origin = window.location.origin;
-
-      // 1. Rewrite relative ASSETS (CSS, JS, Images) to use absolute URLs pointing to the main app/backend
-      // This ensures styles and scripts load correctly without a <base> tag
-      const assetSelectors = [
-        'link[href^="/"]',
-        'script[src^="/"]',
-        'img[src^="/"]'
-      ];
-      
-      assetSelectors.forEach(selector => {
-        doc.querySelectorAll(selector).forEach(el => {
-          if (el.tagName === 'LINK') {
-            const href = el.getAttribute('href');
-            if (href) el.setAttribute('href', `${origin}${href}`);
-          } else {
-            const src = el.getAttribute('src');
-            if (src) el.setAttribute('src', `${origin}${src}`);
-          }
-        });
-      });
-
-      // 2. Kill all Navigation Links and Hide Scrollbars
-      // We inject a style tag to hide scrollbars for a cleaner mobile look
-      const style = doc.createElement('style');
-      style.textContent = `
-        /* Hide scrollbar for Chrome, Safari and Opera */
-        ::-webkit-scrollbar {
-          display: none;
-        }
-        /* Hide scrollbar for IE, Edge and Firefox */
-        html {
-          -ms-overflow-style: none;  /* IE and Edge */
-          scrollbar-width: none;  /* Firefox */
-        }
-      `;
-      doc.head.appendChild(style);
-
-      // Instead of relying on script interception (which can be flaky), we modify the HMTL directly
-      doc.querySelectorAll('a').forEach(anchor => {
-        const href = anchor.getAttribute('href');
-        // Allow pure hash links (scrolling)
-        if (!href || href.startsWith('#')) return;
-        
-        // Disable the link
-        anchor.setAttribute('href', 'javascript:void(0)');
-        anchor.setAttribute('onclick', 'return false;');
-        anchor.style.cursor = 'default';
-        anchor.style.pointerEvents = 'none'; // Optional: makes it unclickable visually too
-      });
-
-      // 3. Serialize back to HTML string
-      const processedHtml = `<!DOCTYPE html>\n${doc.documentElement.outerHTML}`;
-
-      // 4. Create Blob from the clean, safe HTML
-      const blob = new Blob([processedHtml], { type: 'text/html' });
-      const url = URL.createObjectURL(blob);
-      setBlobUrl(url);
-
-      // Cleanup previous blob URL if it exists
-      return () => {
-        if (url) {
-          URL.revokeObjectURL(url);
-        }
-      };
-    } catch (e) {
-      console.error("Error processing preview HTML:", e);
-      // Fallback if parsing fails (unlikely)
-      const blob = new Blob([html], { type: 'text/html' });
-      const url = URL.createObjectURL(blob);
-      setBlobUrl(url);
-      return () => {
-        if (url) {
-          URL.revokeObjectURL(url);
-        }
-      };
-    }
-  }, [html]);
-
-  if (!html || !blobUrl) return null;
+  // Replays the [data-reveal] and [data-nav] scripts that site-shell.ts bakes
+  // into the published page. Shared with FirmPreview — see useSiteHydration.
+  useSiteHydration(containerRef, [Theme, profile, zoom]);
 
   return (
-    <div className="w-full h-full animate-fade-in relative overflow-hidden bg-white">
-      <div 
-        className="absolute top-0 left-0 origin-top-left"
-        style={{ 
-          width: `${(1 / zoom) * 100}%`,
-          height: `${(1 / zoom) * 100}%`,
-          transform: `scale(${zoom})`,
-        }}
-      >
-        <iframe 
-          key={blobUrl} 
-          src={blobUrl}
-          title="Profile Preview"
-          className="w-full h-full border-none"
-          sandbox="allow-scripts allow-forms allow-popups"
-        />
+    // The QR widget is a sibling of the scroll container, not a child: inside it
+    // `absolute` would scroll away, and `fixed` would escape the phone mockup.
+    // `@container` mirrors the published page's `<body class="@container">`, so
+    // the widget's `@sm:`/`@md:` classes size against the preview box.
+    <div className="@container relative w-full h-full">
+      {/* container-type: size (not @container's default inline-size) so `cqh`
+          resolves against this box's real height — themes use min-h-[100cqh] on
+          their hero to fill exactly one "screen": this box here, or (per the CSS
+          spec's no-container fallback) the viewport on a published site. */}
+      <div ref={containerRef} className="[container-type:size] w-full h-full overflow-auto bg-white no-scrollbar">
+        <div
+          className="origin-top-left"
+          style={{
+            width: `${(1 / zoom) * 100}%`,
+            transform: `scale(${zoom})`,
+          }}
+        >
+          <Theme site={site} />
+        </div>
       </div>
+      <ContactQrWidget vcard={buildVCard(profile)} className="absolute" />
     </div>
   );
 }

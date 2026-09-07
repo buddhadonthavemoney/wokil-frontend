@@ -1,0 +1,24 @@
+version: "3"
+
+tasks:
+  dev:
+    desc: Dev server (:3000; needs NEXT_PUBLIC_API_BASE_URL)
+    cmd: pnpm dev
+
+  build:
+    desc: Production build (also the typecheck gate)
+    cmd: pnpm build
+
+  start:
+    desc: Serve the production build
+    cmd: pnpm start
+
+  lint:
+    desc: ESLint
+    cmd: pnpm lint
+
+  verify:
+    desc: Lint + build — run before finishing any change
+    cmds:
+      - task: lint
+      - task: build

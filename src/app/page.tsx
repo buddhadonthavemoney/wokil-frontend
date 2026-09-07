@@ -1,4 +1,6 @@
 import { publicPeopleServer } from '@/lib/api-server';
+
+
 import { HomeClient } from './HomeClient';
 import type { Metadata } from 'next';
 
@@ -10,6 +12,8 @@ export const metadata: Metadata = {
     description: "Discover legal professionals and create your own professional profile with Wokil. Build beautiful websites and business cards for lawyers.",
   },
 };
+
+export const revalidate = 300;
 
 export default async function Home() {
     const professionals = await publicPeopleServer.list();

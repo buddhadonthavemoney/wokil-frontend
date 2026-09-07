@@ -3,12 +3,17 @@
 import { Settings as SettingsIcon, ArrowLeft, TrendingUp, CheckCircle2, Loader2, Eye, Image as ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
+import { Card, CardContent } from '@/components/ui/card';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { profile as profileApi, site as siteApi } from '@/lib/api';
+import { createGaProperty, updateProfileVisibility } from '@/generated/wokil-api';
 import { useToast } from '@/hooks/use-toast';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Label } from '@/components/ui/label';
+import { AccountTypeSetting } from '@/components/settings/AccountTypeSetting';
+import { useAccountType } from '@/hooks/useAccountType';
+import { getMyFirmOptions, getProfileOptions, getProfileQueryKey } from '@/generated/wokil-api/@tanstack/react-query.gen';
+import { apiErrorMessage } from '@/lib/client-ui';
 
 export default function Settings() {
   const router = useRouter();
@@ -16,25 +21,32 @@ export default function Settings() {
   const queryClient = useQueryClient();
 
   // Fetch Profile to check for Google Analytics ID
-  const { data: profile, isLoading: isProfileLoading } = useQuery({
-    queryKey: ['profile'],
-    queryFn: profileApi.get,
-  });
+  const { data: profile, isLoading: isProfileLoading } = useQuery(getProfileOptions());
+
+  // A firm's analytics flag lives on the firm, not the profile — `getProfile`
+  // returns an empty object for a firm account, so reading googleAnalyticsId
+  // from it would leave this card stuck on "not enabled" forever.
+  const { accountType } = useAccountType();
+  const isFirm = accountType === 'firm';
+  const firmQuery = getMyFirmOptions();
+  const { data: firm } = useQuery({ ...firmQuery, enabled: isFirm });
+  const analyticsId = isFirm ? firm?.googleAnalyticsId : profile?.googleAnalyticsId;
 
   // Enable Analytics Mutation
   const enableAnalyticsMutation = useMutation({
-    mutationFn: siteApi.enableAnalytics,
+    mutationFn: async () => (await createGaProperty({ throwOnError: true })).data,
     onSuccess: () => {
       toast({
         title: "Analytics Enabled",
-        description: "Google Analytics has been successfully enabled for your site.",
+        description:
+          "Google Analytics has been enabled. Collection starts after your next publish — the measurement ID is baked into the site when it renders.",
       });
-      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      queryClient.invalidateQueries({ queryKey: isFirm ? firmQuery.queryKey : getProfileQueryKey() });
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       toast({
         title: "Error",
-        description: error.message || "Failed to enable analytics.",
+        description: apiErrorMessage(error, "Failed to enable analytics."),
         variant: "destructive",
       });
     },
@@ -42,18 +54,18 @@ export default function Settings() {
 
   // Visibility Mutation
   const updateVisibilityMutation = useMutation({
-    mutationFn: (data: { isPublic: boolean; showPicture: boolean }) => profileApi.updateVisibility(data),
+    mutationFn: (data: { isPublic: boolean; showPicture: boolean }) => updateProfileVisibility({ body: data, throwOnError: true }),
     onSuccess: () => {
       toast({
         title: "Visibility Updated",
         description: "Your profile visibility settings have been updated.",
       });
-      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      queryClient.invalidateQueries({ queryKey: getProfileQueryKey() });
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       toast({
         title: "Error",
-        description: error.response?.data?.message || "Failed to update visibility.",
+        description: apiErrorMessage(error, "Failed to update visibility."),
         variant: "destructive",
       });
     },
@@ -110,8 +122,10 @@ export default function Settings() {
         {/* Analytics Section */}
         <section className="space-y-8 pt-4">
             <div className="grid gap-8">
+                <AccountTypeSetting />
+
                 {/* Visibility Settings */}
-                <div className="bg-white border-none rounded-3xl p-8 shadow-premium space-y-6">
+                <div className="bg-card border-none rounded-xl p-8 shadow-premium space-y-6">
                     <div className="flex items-center gap-3 border-b border-border pb-4">
                         <div className="p-2 bg-primary/5 rounded-lg">
                             <Eye className="w-5 h-5 text-primary" />
@@ -152,8 +166,8 @@ export default function Settings() {
                     </div>
                 </div>
 
-                {!profile?.googleAnalyticsId ? (
-                <div className="bg-white border-none rounded-3xl p-10 md:p-14 text-center shadow-premium">
+                {!analyticsId ? (
+                <div className="bg-card border-none rounded-xl p-10 md:p-14 text-center shadow-premium">
                     <div className="w-16 h-16 bg-primary/5 rounded-full flex items-center justify-center mx-auto mb-6">
                         <TrendingUp className="w-8 h-8 text-primary" />
                     </div>
@@ -172,9 +186,9 @@ export default function Settings() {
                     </Button>
                 </div>
             ) : (
-                <div className="bg-white border-none rounded-3xl p-10 md:p-14 text-center shadow-premium">
-                    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <CheckCircle2 className="w-8 h-8 text-green-600" />
+                <div className="bg-card border-none rounded-xl p-10 md:p-14 text-center shadow-premium">
+                    <div className="w-16 h-16 bg-success/12 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <CheckCircle2 className="w-8 h-8 text-success" />
                     </div>
                     <h3 className="text-xl font-bold mb-3">Analytics Active</h3>
                     <p className="text-muted-foreground max-w-md mx-auto mb-8">
@@ -182,7 +196,7 @@ export default function Settings() {
                     </p>
                     <Button 
                         variant="outline"
-                        onClick={() => router.push('/dashboard')} 
+                        onClick={() => router.push(isFirm ? '/firm-dashboard' : '/dashboard')} 
                     >
                         Go to Dashboard
                     </Button>
