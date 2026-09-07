@@ -164,7 +164,7 @@ export function HomeClient({ professionals }: HomeClientProps) {
 
             <main className="pt-20">
                 {/* Hero */}
-                <section className="relative overflow-hidden bg-gradient-to-b from-background to-secondary/40 px-4 md:px-16 pt-24 pb-32 flex flex-col items-center text-center">
+                <section className="relative overflow-hidden bg-gradient-to-b from-background to-secondary/40 px-4 md:px-16 pt-24 pb-16 flex flex-col items-center text-center">
                     <div className="absolute -top-20 -left-20 w-64 h-64 bg-accent/10 rounded-full blur-3xl" />
                     <div className="absolute top-40 -right-20 w-80 h-80 bg-primary/5 rounded-full blur-3xl" />
 
