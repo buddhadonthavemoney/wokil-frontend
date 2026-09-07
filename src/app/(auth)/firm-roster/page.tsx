@@ -7,6 +7,8 @@ import { ChevronRight, Loader2, Plus, Trash2, UserPlus, Users } from 'lucide-rea
 
 import { useFirmForm } from '@/hooks/useFirmForm';
 import { useRequireAccountType } from '@/hooks/useAccountType';
+import { useFeatureEnabled } from '@/hooks/useFeatures';
+import { ComingSoonOverlay } from '@/components/layout/ComingSoonOverlay';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -27,6 +29,7 @@ import { RosterMember } from '@/types/firm';
  * are append and remove-at-index.
  */
 export default function FirmRosterPage() {
+  const { enabled: rosterEnabled } = useFeatureEnabled('firm_roster');
   const { firm, updateNestedFirm, saveFirmData, loaded } = useFirmForm();
   const { redirecting } = useRequireAccountType('firm', '/profile-details');
   const { toast } = useToast();
@@ -65,7 +68,7 @@ export default function FirmRosterPage() {
     }
   };
 
-  return (
+  const content = (
     <div className="min-h-screen bg-[hsl(210,20%,98%)]/50 pb-20">
       <main className="container mx-auto px-6 py-6 max-w-4xl">
         <PageHeader
@@ -148,4 +151,7 @@ export default function FirmRosterPage() {
       </main>
     </div>
   );
+
+  if (!rosterEnabled) return <ComingSoonOverlay title="Firm Roster" description="Manage the lawyers shown on your firm's site.">{content}</ComingSoonOverlay>;
+  return content;
 }

@@ -38,6 +38,8 @@ import { Separator } from '@/components/ui/separator';
 import { cn, siteHref } from '@/lib/utils';
 import { apiErrorMessage, rateLimitError } from '@/lib/client-ui';
 import { toast } from 'sonner';
+import { useFeatureEnabled } from '@/hooks/useFeatures';
+import { ComingSoonOverlay } from '@/components/layout/ComingSoonOverlay';
 import { useDeployStream } from '@/hooks/useDeployStream';
 import { DeployProgressModal } from '@/components/deploy/DeployProgressModal';
 
@@ -877,11 +879,14 @@ function StatusStep({ order, onGoToSites }: { order: DomainOrder; onGoToSites: (
 }
 
 export default function BuyDomainPage() {
-  // useSearchParams needs a Suspense boundary to avoid opting the whole route
-  // into client-side rendering, same as the firm builder.
-  return (
+  const { enabled } = useFeatureEnabled('domain_purchase');
+
+  const content = (
     <Suspense fallback={null}>
       <BuyDomainContent />
     </Suspense>
   );
+
+  if (!enabled) return <ComingSoonOverlay title="Buy a Domain" description="Search for a domain name and register it through us.">{content}</ComingSoonOverlay>;
+  return content;
 }

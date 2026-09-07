@@ -28,6 +28,8 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { apiErrorMessage, copyToClipboard } from '@/lib/client-ui';
+import { useFeatureEnabled } from '@/hooks/useFeatures';
+import { ComingSoonOverlay } from '@/components/layout/ComingSoonOverlay';
 
 // New rows slide up into the list while the add form below is pushed down —
 // the two together read as a swap. motion-safe: leaves it still for anyone who
@@ -130,6 +132,7 @@ function SendAsGuide({ addresses }: { addresses: string[] }) {
 }
 
 export default function SiteEmailPage() {
+  const { enabled: emailEnabled } = useFeatureEnabled('email_routing');
   const params = useParams<{ domain: string }>();
   const domain = decodeURIComponent(params?.domain ?? '');
   const router = useRouter();
@@ -322,6 +325,8 @@ export default function SiteEmailPage() {
       </main>
     </div>
   );
+
+  if (!emailEnabled) return <ComingSoonOverlay title="Email Forwarding" description="Forward mail from your domain to an inbox you already use.">{shell(null)}</ComingSoonOverlay>;
 
   if (zoneLoading || (zoneActive && emailLoading)) {
     return shell(
