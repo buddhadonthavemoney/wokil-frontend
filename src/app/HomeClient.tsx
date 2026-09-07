@@ -141,14 +141,19 @@ export function HomeClient({ professionals }: HomeClientProps) {
             <StructuredData type="WebSite" />
 
             {/* Navbar */}
-            <header className="fixed top-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-md border-b border-border">
+            <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-b border-border">
                 <div className="max-w-[1440px] mx-auto px-4 md:px-16 h-20 flex items-center justify-between">
                     <span className="text-xl font-heading font-bold text-primary">Wokil</span>
                     <nav className="hidden md:flex items-center gap-10">
-                        <a href="#" className="text-xs font-semibold uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors">Features</a>
-                        <a href="/professionals" className="text-xs font-semibold uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors">Directory</a>
-                        <a href="#" className="text-xs font-semibold uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors">Pricing</a>
-                        <a href="#" className="text-xs font-semibold uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors">About</a>
+                        {['Features', 'Directory', 'Pricing', 'About'].map((item) => (
+                            <a
+                                key={item}
+                                href={item === 'Directory' ? '/professionals' : '#'}
+                                className="text-xs font-semibold uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors"
+                            >
+                                {item}
+                            </a>
+                        ))}
                     </nav>
                     <div className="flex items-center gap-6">
                         <button onClick={handleLogin} className="hidden md:inline-flex text-xs font-semibold uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors">
@@ -162,38 +167,43 @@ export function HomeClient({ professionals }: HomeClientProps) {
                 </div>
             </header>
 
-            <main className="pt-20">
+            <main>
                 {/* Hero */}
-                <section className="relative overflow-hidden bg-gradient-to-b from-background to-secondary/40 px-4 md:px-16 pt-24 pb-32 flex flex-col items-center text-center">
-                    <div className="absolute -top-20 -left-20 w-64 h-64 bg-accent/10 rounded-full blur-3xl" />
-                    <div className="absolute top-40 -right-20 w-80 h-80 bg-primary/5 rounded-full blur-3xl" />
+                <section className="relative overflow-hidden min-h-screen flex items-center pt-20">
+                    <div
+                        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+                        style={{ backgroundImage: 'url(/hero-bg.jpg)' }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-r from-[#0f1c2e]/90 via-[#0f1c2e]/75 to-[#0f1c2e]/50" />
 
-                    <div className="relative max-w-3xl mx-auto">
-                        <h1 className="text-4xl md:text-6xl font-bold text-primary leading-tight mb-8">
-                            Establish Your Authority.<br />Elevate Your Practice.
-                        </h1>
-                        <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-12">
-                            A comprehensive digital infrastructure designed exclusively for Nepalese advocates and law firms. From verified credentials to intelligent legal research, seamlessly manage your professional presence.
-                        </p>
-                        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                            <Button onClick={handleLogin} size="lg" className="w-full sm:w-auto gap-2 h-14 px-8 rounded-xl text-xs font-semibold uppercase tracking-widest shadow-card">
-                                <UserCircle className="w-5 h-5" />
-                                Join Wokil Network
-                            </Button>
-                            <Button
-                                variant="outline"
-                                size="lg"
-                                className="w-full sm:w-auto h-14 px-8 rounded-xl text-xs font-semibold uppercase tracking-widest"
-                                onClick={() => router.push('/professionals')}
-                            >
-                                Explore Directory
-                            </Button>
-                        </div>
-                        {professionalsCount > 0 && (
-                            <p className="mt-6 text-sm text-muted-foreground">
-                                Joined by <span className="text-foreground font-semibold">{professionalsCount.toLocaleString()}+</span> legal professionals
+                    <div className="relative w-full max-w-[1280px] mx-auto px-4 md:px-16 py-20 md:py-24">
+                        <div className="max-w-2xl">
+                            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight mb-6">
+                                Establish Your Authority.<br />Elevate Your Practice.
+                            </h1>
+                            <p className="text-lg md:text-xl text-white/70 max-w-xl mb-8">
+                                A comprehensive digital infrastructure designed exclusively for Nepalese advocates and law firms. From verified credentials to intelligent legal research, seamlessly manage your professional presence.
                             </p>
-                        )}
+                            <div className="flex flex-col sm:flex-row items-start gap-4">
+                                <Button onClick={handleLogin} size="lg" className="w-full sm:w-auto gap-2 h-14 px-8 rounded-xl text-xs font-semibold uppercase tracking-widest shadow-card">
+                                    <UserCircle className="w-5 h-5" />
+                                    Join Wokil Network
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="lg"
+                                    className="w-full sm:w-auto h-14 px-8 rounded-xl text-xs font-semibold uppercase tracking-widest bg-white/10 border-white/20 text-white hover:bg-white/20"
+                                    onClick={() => router.push('/professionals')}
+                                >
+                                    Explore Directory
+                                </Button>
+                            </div>
+                            {professionalsCount > 0 && (
+                                <p className="mt-6 text-sm text-white/50">
+                                    Joined by <span className="text-white font-semibold">{professionalsCount.toLocaleString()}+</span> legal professionals
+                                </p>
+                            )}
+                        </div>
                     </div>
                 </section>
 
@@ -342,12 +352,7 @@ export function HomeClient({ professionals }: HomeClientProps) {
                             <div className="w-12 h-12 rounded-lg bg-primary flex items-center justify-center text-primary-foreground shadow-sm">
                                 <Gavel className="w-5 h-5" />
                             </div>
-                            <div className="flex items-center gap-3">
-                                <h2 className="heading-section">Intelligent Legal Research Hub</h2>
-                                <span className="px-3 py-1 rounded-full bg-accent/10 border border-accent/30 text-accent text-[10px] font-semibold uppercase tracking-widest">
-                                    Coming Soon
-                                </span>
-                            </div>
+                            <h2 className="heading-section">Intelligent Legal Research Hub</h2>
                             <p className="text-lg text-muted-foreground leading-relaxed">
                                 Navigate Nepal&apos;s legal landscape with unprecedented speed. Our proprietary RAG (Retrieval-Augmented Generation) system allows natural language querying across critical legal texts.
                             </p>
